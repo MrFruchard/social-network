@@ -11,7 +11,7 @@ import {MainMenu} from "@/components/MainMenu";
 export default function Home(): React.ReactElement {
     return (
         <div className="grid grid-cols-7 grid-rows-5 gap-4">
-            <div className="col-span-2 row-span-5 border h-full">
+            <div className="col-span-2 row-span-5 h-full">
                 <MainMenu />
             </div>
             <div className="col-span-3 row-span-4 col-start-3 row-start-2 border" >

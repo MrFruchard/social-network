@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 
 export function Header(): React.ReactElement {
     return (
-        <div className="flex justify-between items-center px-4 py-3 border-b border-gray-800">
+        <div className="flex fixed justify-between items-center px-4 py-3 border-b border-gray-800">
             <div className="flex items-center">
                 <h1 className="text-xl font-bold text-white">ACTU / FEED</h1>
             </div>
