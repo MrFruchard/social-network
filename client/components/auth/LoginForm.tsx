@@ -21,7 +21,7 @@ export function LoginForm() {
         try {
             await login(email, password);
             // Rediriger vers le feed après connexion réussie
-            router.push('/feed');
+            router.push('/');
         } catch (error) {
             // L'erreur est déjà gérée dans le hook useAuth
             console.error('Erreur dans le formulaire:', error);

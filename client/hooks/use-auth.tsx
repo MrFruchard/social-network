@@ -10,7 +10,6 @@ type User = {
     email: string;
     first_name: string;
     last_name: string;
-    // autres champs...
 };
 
 type AuthContextType = {
@@ -37,7 +36,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     async function checkAuth() {
         try {
             setLoading(true);
-            const response = await fetch('https://api-sn.mtliche.com/me', {
+            const response = await fetch('https://api-sn.mtliche.com/', {
                 method: 'GET',
                 credentials: 'include', // Important pour les cookies
             });
