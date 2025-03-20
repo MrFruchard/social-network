@@ -2,14 +2,18 @@ services:
   web:
     build:
       context: ./front
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile  # Utilise le Dockerfile de développement
     ports:
       - "3000:3000"
+    volumes:
+      - ./front:/app  # Monte le code source en volume
+      - /app/node_modules  # Ignore node_modules pour éviter les conflits
     depends_on:
       - api
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
       - HOSTNAME=0.0.0.0
+    command: [ "npm", "run", "dev" ] # Démarre Next.js en mode dev
     restart: unless-stopped
 
   api:
@@ -23,9 +27,9 @@ services:
   caddy:
     image: caddy:latest
     ports:
-       - "80:80"
+      - "80:80"
     volumes:
-        - ./Caddyfile:/etc/caddy/Caddyfile
+      - ./Caddyfile:/etc/caddy/Caddyfile
     depends_on:
-        - web
-        - api
+      - web
+      - api
