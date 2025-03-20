@@ -35,7 +35,7 @@ export default function Login() {
                   type="text"
                   value={credentials}
                   onChange={(e) => setCredentials(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-black"
                   required
               />
             </div>
@@ -46,7 +46,7 @@ export default function Login() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-black"
                   required
               />
             </div>
