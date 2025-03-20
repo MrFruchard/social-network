@@ -3,7 +3,7 @@ package middlewares
 import (
 	"database/sql"
 	"net/http"
-	"social-network-back/services"
+	"social-network/services"
 )
 
 func AuthMiddleware(r *http.Request, db *sql.DB) (string, bool) {

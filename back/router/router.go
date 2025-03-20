@@ -3,8 +3,8 @@ package router
 import (
 	"database/sql"
 	"net/http"
-	"social-network-back/handlers"
-	"social-network-back/websocketFile"
+	"social-network/handlers"
+	"social-network/websocketFile"
 )
 
 func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
@@ -76,9 +76,15 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	//FOLLOWER
-	mux.HandleFunc("GET /api/follow/", func(w http.ResponseWriter, r *http.Request) {
+	// ask to follow
+	mux.HandleFunc("GET /api/requestfollow/", func(w http.ResponseWriter, r *http.Request) {
 
 	})
+	// accept follow
+
+	// decline follow
+
+	// delete follow
 
 	//MESSAGE
 

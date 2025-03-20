@@ -4,10 +4,10 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"social-network-back/middlewares"
-	"social-network-back/pkg/db/sqlite"
-	"social-network-back/router"
-	"social-network-back/websocketFile"
+	"social-network/middlewares"
+	"social-network/pkg/db/sqlite"
+	"social-network/router"
+	"social-network/websocketFile"
 	"time"
 )
 

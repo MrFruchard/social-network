@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
-	"social-network-back/services"
-	"social-network-back/utils"
+	"social-network/services"
+	"social-network/utils"
 )
 
 func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {

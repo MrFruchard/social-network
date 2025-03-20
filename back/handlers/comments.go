@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"social-network-back/services"
-	"social-network-back/utils"
+	"social-network/services"
+	"social-network/utils"
 	"strings"
 )
 
