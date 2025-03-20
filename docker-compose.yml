@@ -1,0 +1,31 @@
+services:
+  web:
+    build:
+      context: ./front
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    depends_on:
+      - api
+    environment:
+      - NODE_ENV=production
+      - HOSTNAME=0.0.0.0
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    ports:
+      - "3002:3002"
+    restart: unless-stopped
+
+  caddy:
+    image: caddy:latest
+    ports:
+       - "80:80"
+    volumes:
+        - ./Caddyfile:/etc/caddy/Caddyfile
+    depends_on:
+        - web
+        - api
