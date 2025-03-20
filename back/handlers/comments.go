@@ -72,3 +72,25 @@ func HandleEventComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	utils.SuccessResponse(w, http.StatusOK, "Comment event successfully")
 }
+
+func HandleDeleteComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	commentId, err := utils.ParseUrl(r)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Invalid Post ID")
+		return
+	}
+
+	err = services.DeleteComment(db, userID, commentId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Comment not found")
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Comment successfully")
+}

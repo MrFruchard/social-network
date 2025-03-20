@@ -13,12 +13,10 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/register", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Register(w, r, db)
 	})
-
 	// Login
 	mux.HandleFunc("POST /api/login", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Login(w, r, db)
 	})
-
 	// Logout
 	mux.HandleFunc("GET /api/logout", func(w http.ResponseWriter, r *http.Request) {
 		handlers.Logout(w, r, db)
@@ -49,20 +47,19 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	// delete post
 	mux.HandleFunc("DELETE /api/post/", func(w http.ResponseWriter, r *http.Request) {
-
+		handlers.HandleDeletePost(w, r, db)
 	})
-
 	// update post
 	mux.HandleFunc("PATCH /api/post/", func(w http.ResponseWriter, r *http.Request) {
-
+		handlers.HandleUpdatePost(w, r, db)
 	})
 
 	// COMMENT
-	// create a comment
+	// create comment
 	mux.HandleFunc("POST /api/comment/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCreateComment(w, r, db)
 	})
-	// like/dislike a comment
+	// like/dislike comment
 	mux.HandleFunc("GET /api/eventcomment/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleEventComment(w, r, db)
 	})

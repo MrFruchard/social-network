@@ -8,10 +8,10 @@ import (
 
 func ParseUrl(r *http.Request) (string, error) {
 	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 || parts[2] == "" {
+	if len(parts) < 4 || parts[3] == "" {
 		return "", errors.New("missing comment ID")
 	}
-	id := parts[2]
+	id := parts[3]
 
 	return id, nil
 }

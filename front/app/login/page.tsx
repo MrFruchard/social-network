@@ -41,7 +41,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-gray-700">Mot de passe</label>
+              <label className="block text-gray-700">Mot de passeeeeeeeee</label>
               <input
                   type="password"
                   value={password}
