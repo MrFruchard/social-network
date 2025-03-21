@@ -22,13 +22,13 @@ var allowedExtensions = map[string]bool{
 // HandleImages sert les images stockées localement
 func HandleImages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 || parts[2] == "" {
+	if len(parts) < 4 || parts[3] == "" {
 		http.Error(w, "Missing image ID", http.StatusBadRequest)
 		return
 	}
 
-	typeImg := parts[1]
-	id := parts[2]
+	typeImg := parts[2]
+	id := parts[3]
 
 	// Vérifier l'extension
 	ext := filepath.Ext(id)

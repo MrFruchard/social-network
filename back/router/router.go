@@ -65,11 +65,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	// delete comment
 	mux.HandleFunc("DELETE /api/comment/", func(w http.ResponseWriter, r *http.Request) {
-
+		handlers.HandleDeleteComment(w, r, db)
 	})
 	// update post
 	mux.HandleFunc("PATCH /api/comment/", func(w http.ResponseWriter, r *http.Request) {
-
+		handlers.HandleUpdateComment(w, r, db)
 	})
 
 	//FOLLOWER

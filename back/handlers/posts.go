@@ -60,15 +60,14 @@ func HandleEventPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 || parts[2] == "" {
-		utils.ErrorResponse(w, http.StatusBadRequest, "Missing post ID")
+	postId, err := utils.ParseUrl(r)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
-	commentId := parts[2]
 
 	var event Event
-	err := json.NewDecoder(r.Body).Decode(&event)
+	err = json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Invalid JSON")
 		return
@@ -79,7 +78,7 @@ func HandleEventPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	err = services.AddPostEvent(db, userID, commentId, event.Event)
+	err = services.AddPostEvent(db, userID, postId, event.Event)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Post not found")
 		return
