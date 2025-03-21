@@ -1,7 +1,5 @@
-Select * from COMMENT;
+SELECT * from SESSION;
 
-SELECT * from POSTS;
-
-SELECT * from SESSION
+SELECT * FROM REQUEST_FOLLOW;
 
 

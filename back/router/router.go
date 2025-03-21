@@ -74,14 +74,23 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 
 	//FOLLOWER
 	// ask to follow
-	mux.HandleFunc("GET /api/requestfollow/", func(w http.ResponseWriter, r *http.Request) {
-
+	mux.HandleFunc("POST /api/user/follow", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleAskFollow(w, r, db)
 	})
 	// accept follow
+	mux.HandleFunc("POST /api/user/agree", func(w http.ResponseWriter, r *http.Request) {
 
+	})
 	// decline follow
+	mux.HandleFunc("POST /api/user/decline", func(w http.ResponseWriter, r *http.Request) {
 
-	// delete follow
+	})
+	//  unfollow
+	mux.HandleFunc("POST /api/user/unfollow", func(w http.ResponseWriter, r *http.Request) {
+
+	})
+
+	//USER PARAMETER
 
 	//MESSAGE
 

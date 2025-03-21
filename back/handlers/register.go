@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
+	"strings"
 )
 
 func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -17,7 +18,7 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	nickname := r.FormValue("username")
 	about := r.FormValue("about_me")
 
-	if email == "" || password == "" || firstName == "" || lastName == "" || dateOfBirth == "" {
+	if strings.TrimSpace(email) == "" || strings.TrimSpace(password) == "" || strings.TrimSpace(firstName) == "" || strings.TrimSpace(lastName) == "" || strings.TrimSpace(dateOfBirth) == "" {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Empty fields")
 		return
 	}
