@@ -34,9 +34,89 @@ func HandleAskFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	err = services.AddRequestFollowHandler(db, userID, user.Id)
 	if err != nil {
-		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	utils.SuccessResponse(w, http.StatusOK, "Request Added")
+}
+
+func HandleFollowAgreement(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	var user UserId
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil || strings.TrimSpace(user.Id) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	if user.Id == userID {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	err = services.AcceptFollow(db, userID, user.Id)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Follow Agreement")
+}
+
+func HandleUnfollowAgreement(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	var user UserId
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil || strings.TrimSpace(user.Id) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+	if user.Id == userID {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	err = services.Unfollow(db, userID, user.Id)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Unfollow Agreement")
+}
+
+func HandleDeclineFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	var user UserId
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil || strings.TrimSpace(user.Id) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+	if user.Id == userID {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	err = services.DeclineFollow(db, userID, user.Id)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Decline Follow")
+
 }
