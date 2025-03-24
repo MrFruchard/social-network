@@ -36,6 +36,10 @@ export function LoginForm({
             const data = await response.json();
             localStorage.setItem("userId", data.id);
             localStorage.setItem("userName", email);
+
+            // Déclencher l'événement de connexion WebSocket
+            window.dispatchEvent(new Event('login'));
+
             router.push("/home");
         } else {
             alert("Login failed");

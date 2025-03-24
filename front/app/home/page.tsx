@@ -1,4 +1,11 @@
+"use client"
+
+import CheckAuth from "@/hooks/checkAuth";
+
 export default function HomePage(){
+
+    CheckAuth();
+
     return (
 
         <div className="grid grid-cols-5 grid-rows-5 gap-4">
