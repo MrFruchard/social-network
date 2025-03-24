@@ -3,7 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
-	"social-network-back/utils"
+	"social-network/utils"
 )
 
 func Logout(w http.ResponseWriter, r *http.Request, db *sql.DB) {

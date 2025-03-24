@@ -4,7 +4,7 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
-	"social-network-back/utils"
+	"social-network/utils"
 )
 
 func CheckCredential(db *sql.DB, credentials, password string) (bool, string) {

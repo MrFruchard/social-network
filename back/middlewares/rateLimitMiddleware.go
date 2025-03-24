@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"golang.org/x/time/rate"
 	"net/http"
+	"social-network/utils"
 	"sync"
 	"time"
 )
@@ -62,6 +63,12 @@ func RateLimitMiddleware(next http.Handler, db *sql.DB) http.Handler {
 			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
 			return
 		}
+
+		if r.URL.Path == "/api/checkAuth" {
+			utils.SuccessResponse(w, http.StatusOK, "Ok")
+			return
+		}
+
 		limiter := getLimiter(userId)
 		if !limiter.Allow() {
 			http.Error(w, http.StatusText(http.StatusTooManyRequests), http.StatusTooManyRequests)

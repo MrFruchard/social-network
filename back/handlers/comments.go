@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"social-network-back/services"
-	"social-network-back/utils"
+	"social-network/services"
+	"social-network/utils"
 	"strings"
 )
 
@@ -16,16 +16,15 @@ func HandleCreateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 || parts[2] == "" {
-		utils.ErrorResponse(w, http.StatusBadRequest, "Missing Post ID")
+	postId, err := utils.ParseUrl(r)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	postId := parts[2]
 
 	content := r.FormValue("content")
 
-	err := services.CreateComment(userID, postId, content, db)
+	err = services.CreateComment(userID, postId, content, db)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Post not found")
 		return
@@ -45,15 +44,14 @@ func HandleEventComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	parts := strings.Split(r.URL.Path, "/")
-	if len(parts) < 3 || parts[2] == "" {
-		utils.ErrorResponse(w, http.StatusBadRequest, "Missing comment ID")
+	commentId, err := utils.ParseUrl(r)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	commentId := parts[2]
 
 	var event Event
-	err := json.NewDecoder(r.Body).Decode(&event)
+	err = json.NewDecoder(r.Body).Decode(&event)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Invalid JSON")
 		return
@@ -71,4 +69,52 @@ func HandleEventComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	utils.SuccessResponse(w, http.StatusOK, "Comment event successfully")
+}
+
+func HandleDeleteComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	commentId, err := utils.ParseUrl(r)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Invalid Post ID")
+		return
+	}
+
+	err = services.DeleteComment(db, userID, commentId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Comment not found")
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Comment successfully")
+}
+
+func HandleUpdateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	commentId, err := utils.ParseUrl(r)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Invalid comment ID")
+		return
+	}
+	content := r.FormValue("content")
+	if strings.TrimSpace(content) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Content is required")
+		return
+	}
+
+	err = services.UpdateComment(db, commentId, content, userID)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Comment not found")
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Update comment successfully")
 }
