@@ -14,7 +14,7 @@ COPY package.json package-lock.json ./
 RUN npm install --legacy-peer-deps
 
 # Copier tout le code du projet
-COPY . .
+COPY front .
 
 # Exposer le port de Next.js
 EXPOSE 3000

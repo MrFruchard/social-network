@@ -1,9 +1,10 @@
-import LoginPage from "@/app/login/page";
+import Image from "next/image";
+import Page from "@/login/page";
 
 export default function Home() {
   return (
-    <>
-      <LoginPage />
-    </>
+    <div>
+      <Page />
+    </div>
   );
 }
