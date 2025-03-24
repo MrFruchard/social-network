@@ -1,41 +1,62 @@
-import {useEffect, useState} from "react";
-import {useRouter} from "next/navigation";
+"use client"
 
-export default function CheckAuth() {
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+
+// Options pour personnaliser le comportement du hook
+interface UseAuthOptions {
+    redirectTo?: string; // URL de redirection si non authentifié
+    redirectIfAuthenticated?: string; // URL de redirection si authentifié
+    required?: boolean; // Si true, redirige automatiquement si non authentifié
+}
+
+export default function useAuth(options: UseAuthOptions = {}) {
+    const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [user, setUser] = useState(null);
     const router = useRouter();
+
+    const {
+        redirectTo = '/',
+        redirectIfAuthenticated = null,
+        required = false
+    } = options;
 
     useEffect(() => {
         // Vérification de l'authentification
-        fetch('http://localhost:80/api/checkAuth', {
-            credentials: 'include', // Important pour envoyer les cookies
-        })
-            .then(res => {
-                if (res.ok) {
-                    return res.json();
+        const checkAuth = async () => {
+            try {
+                const res = await fetch('http://localhost:80/api/checkAuth', {
+                    credentials: 'include',
+                });
+
+                if (!res.ok) {
+                    throw new Error('Not authenticated');
                 }
-                // Si la réponse n'est pas ok, l'utilisateur n'est pas authentifié
-                throw new Error('Not authenticated');
-            })
-            .then(data => {
-                console.log("Authentication successful:", data);
+
+                const data = await res.json();
+                setUser(data);
                 setIsAuthenticated(true);
-                setIsLoading(false);
-            })
-            .catch(error => {
+
+                // Rediriger si l'utilisateur est déjà authentifié et qu'une redirection est spécifiée
+                if (redirectIfAuthenticated) {
+                    router.push(redirectIfAuthenticated);
+                }
+            } catch (error) {
                 console.error("Authentication error:", error);
                 setIsAuthenticated(false);
-                setIsLoading(false);
-                // Rediriger vers la page de connexion
-                router.push('/');
-            });
-    }, [router]);
-    if (isLoading) {
-        return <div>Loading...</div>;
-    }
 
-    if (!isAuthenticated) {
-        return null; // Ne rien afficher si l'utilisateur n'est pas authentifié (sera redirigé)
-    }
+                // Rediriger si l'authentification est requise
+                if (required && redirectTo) {
+                    router.push(redirectTo);
+                }
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        checkAuth();
+    }, [router, redirectTo, redirectIfAuthenticated, required]);
+
+    return { isAuthenticated, isLoading, user };
 }

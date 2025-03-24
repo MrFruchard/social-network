@@ -1,15 +1,16 @@
 "use client"
 
-import CheckAuth from "@/hooks/checkAuth";
+import useAuth from "@/hooks/checkAuth";
+import {LoginForm} from "@/components/login-form";
 
-export default function ProfilePage() {
+export function LoginPage() {
+    const { isLoading } = useAuth({
+        redirectIfAuthenticated: '/home'
+    });
 
-    CheckAuth();
+    if (isLoading) {
+        return <div>Loading...</div>;
+    }
 
-    return (
-        <div className="p-4">
-            <h1 className="text-2xl font-bold mb-4">Profile Page</h1>
-            <p>You are authenticated and can view this protected content!</p>
-        </div>
-    );
+    return <LoginForm />;
 }
