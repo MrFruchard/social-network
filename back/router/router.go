@@ -102,7 +102,19 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleFollow(w, r, db)
 	})
 
-	//USER PARAMETER
+	//USER
+	//  get personal infos
+	mux.HandleFunc("GET /api/user/info", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleUserPersonal(w, r, db)
+	})
+	// get user infos
+	mux.HandleFunc("GET /api/user/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleUserInfos(w, r, db)
+	})
+	// switch public status
+	mux.HandleFunc("PATCH /api/user/public", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSwitchPublicStatus(w, r, db)
+	})
 
 	//MESSAGE
 
