@@ -1,10 +1,9 @@
-import Image from "next/image";
-import Page from "@/login/page";
+import Page from "@/app/login/page";
 
 export default function Home() {
   return (
     <div>
-      <Page />
+        <Page />
     </div>
   );
 }
