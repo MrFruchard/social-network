@@ -5,7 +5,7 @@ import (
 	"log"
 )
 
-type ListOfFollowers struct {
+type ListOfFollow struct {
 	UserID    string `json:"user_id"`
 	FirstName string `json:"first_name"`
 	LastName  string `json:"last_name"`
@@ -15,41 +15,32 @@ type ListOfFollowers struct {
 	Followed  bool   `json:"followed"`
 }
 
-func SendListFollower(db *sql.DB, userId, target string) ([]ListOfFollowers, error) {
-	var listOfFollowers []ListOfFollowers
-
-	listOfFollowers = list(db, userId, target)
-
-	return listOfFollowers, nil
-}
-
-func list(db *sql.DB, userID, target string) []ListOfFollowers {
-	var listOfFollowers []ListOfFollowers
+func SendListFollow(db *sql.DB, userID, target string) ([]ListOfFollow, error) {
+	var listOfFollow []ListOfFollow
 
 	query := `
 		SELECT u.id, u.FIRSTNAME, u.LASTNAME, u.ABOUT_ME, u.IMAGE, u.USERNAME
 		FROM FOLLOWERS f
-		JOIN USER u ON f.FOLLOWERS = u.id
-		WHERE f.USER_ID = ?
+		JOIN USER u ON f.USER_ID = u.id
+		WHERE f.FOLLOWERS = ?
 	`
-
 	rows, err := db.Query(query, userID)
 	if err != nil {
 		log.Println("Erreur lors de l'exécution de la requête :", err)
-		return listOfFollowers
+		return listOfFollow, err
 	}
 	defer rows.Close()
 
 	for rows.Next() {
-		var follower ListOfFollowers
+		var follow ListOfFollow
 		var image sql.NullString
 		var aboutMe sql.NullString
 		var username sql.NullString
 
 		err := rows.Scan(
-			&follower.UserID,
-			&follower.FirstName,
-			&follower.LastName,
+			&follow.UserID,
+			&follow.FirstName,
+			&follow.LastName,
 			&aboutMe,
 			&image,
 			&username,
@@ -61,34 +52,33 @@ func list(db *sql.DB, userID, target string) []ListOfFollowers {
 
 		// Gestion des NULL
 		if image.Valid {
-			follower.Image = image.String
+			follow.Image = image.String
 		} else {
-			follower.Image = "" // ou une image par défaut
+			follow.Image = "" // ou une image par défaut
 		}
 		if aboutMe.Valid {
-			follower.AboutMe = aboutMe.String
+			follow.AboutMe = aboutMe.String
 		} else {
-			follower.AboutMe = ""
+			follow.AboutMe = ""
 		}
 
 		if username.Valid {
-			follower.Username = username.String
+			follow.Username = username.String
 		} else {
-			follower.Username = ""
+			follow.Username = ""
 		}
 
-		// Vérifier si c'est un "follow back"
 		var id string
 		checkFollowQuery := `SELECT ID FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ? LIMIT 1`
-		err = db.QueryRow(checkFollowQuery, follower.UserID, target).Scan(&id)
-		follower.Followed = err == nil
+		err = db.QueryRow(checkFollowQuery, follow.UserID, target).Scan(&id)
+		follow.Followed = err == nil
 
-		listOfFollowers = append(listOfFollowers, follower)
+		listOfFollow = append(listOfFollow, follow)
 	}
 
 	if err = rows.Err(); err != nil {
 		log.Println("Erreur après l'itération des lignes :", err)
 	}
 
-	return listOfFollowers
+	return listOfFollow, nil
 }

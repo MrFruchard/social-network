@@ -85,17 +85,21 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/user/decline", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleDeclineFollow(w, r, db)
 	})
-	//  unfollow
+	// unfollow
 	mux.HandleFunc("POST /api/user/unfollow", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleUnfollowAgreement(w, r, db)
 	})
 	// delete follower
-	mux.HandleFunc("POST /api/user/deletefollower", func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Not implemented", http.StatusNotImplemented)
+	mux.HandleFunc("DELETE /api/user/deletefollower", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleDeleteFollow(w, r, db)
 	})
 	// list followers
 	mux.HandleFunc("GET /api/user/listfollower", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleListFollowers(w, r, db)
+	})
+	// list follow
+	mux.HandleFunc("GET /api/user/listfollow", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleFollow(w, r, db)
 	})
 
 	//USER PARAMETER
