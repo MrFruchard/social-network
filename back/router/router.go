@@ -94,8 +94,8 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		http.Error(w, "Not implemented", http.StatusNotImplemented)
 	})
 	// list followers
-	mux.HandleFunc("POST /api/user/listfollower", func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Not implemented", http.StatusNotImplemented)
+	mux.HandleFunc("GET /api/user/listfollower", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleListFollowers(w, r, db)
 	})
 
 	//USER PARAMETER

@@ -31,6 +31,7 @@ func applyMiddlewares(handler http.Handler, middlewares []interface{}, db *sql.D
 }
 
 func main() {
+	x
 	// Applique les migrations
 	sqlite.StartMigration()
 	log.Println("Migrations terminées.")
