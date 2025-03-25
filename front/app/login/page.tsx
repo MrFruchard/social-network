@@ -41,7 +41,7 @@ export default function Login() {
             </div>
 
             <div>
-              <label className="block text-gray-700">Mot de passeeeeeeeee</label>
+              <label className="block text-gray-700">Mot de </label>
               <input
                   type="password"
                   value={password}
@@ -54,7 +54,7 @@ export default function Login() {
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full bg-red-500 text-white p-2 rounded-lg hover:bg-blue-600 transition disabled:bg-blue-300"
+                className="w-full bg-blue-500 text-white p-2 rounded-lg hover:bg-blue-600 transition disabled:bg-blue-300"
             >
               {loading ? "Connexion en cours..." : "Se connecter"}
             </button>

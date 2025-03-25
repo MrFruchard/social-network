@@ -116,6 +116,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleSwitchPublicStatus(w, r, db)
 	})
 
+	// PROFILE
+	mux.HandleFunc("GET /api/profile/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetPostProfile(w, r, db)
+	})
+
 	//MESSAGE
 
 	// WS
