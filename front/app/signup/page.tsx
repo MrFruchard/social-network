@@ -1,9 +1,9 @@
 "use client";
 
+import { SignupForm } from "@/components/signup-form";
 import useAuth from "@/hooks/checkAuth";
-import { LoginForm } from "@/components/login-form";
 
-export default function LoginPage() {
+export default function SignupPage() {
   const { isLoading } = useAuth({
     redirectIfAuthenticated: "/home",
   });
@@ -12,5 +12,5 @@ export default function LoginPage() {
     return <div>Loading...</div>;
   }
 
-  return <LoginForm />;
+  return <SignupForm />;
 }

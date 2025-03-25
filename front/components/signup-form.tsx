@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-export function LoginForm({
+export function SignupForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
@@ -93,9 +93,9 @@ export function LoginForm({
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
-              Don&apos;t have an account?{" "}
-              <a href="/signup" className="underline underline-offset-4">
-                Sign up
+              Already signup?{" "}
+              <a href="/login" className="underline underline-offset-4">
+                Login
               </a>
             </div>
           </form>
