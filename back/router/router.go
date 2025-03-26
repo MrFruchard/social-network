@@ -123,6 +123,16 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 
 	//MESSAGE
 
+	//GROUPS
+
+	//CHECK
+	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleCheckUsername(w, r, db)
+	})
+	mux.HandleFunc("GET /api/check/email", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleCheckEmail(w, r, db)
+	})
+
 	// WS
 	mux.Handle("/api/ws", http.HandlerFunc(hub.WsHandler))
 
