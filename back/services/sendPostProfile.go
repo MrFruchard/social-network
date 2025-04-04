@@ -2,7 +2,6 @@ package services
 
 import (
 	"database/sql"
-	"github.com/pkg/errors"
 	"log"
 )
 
@@ -18,8 +17,9 @@ type PostProfile struct {
 	ImageContent string  `json:"image_content_url"` // null x
 	CreatedAt    string  `json:"created_at"`        // x
 	Liked        bool    `json:"liked"`             // x
-	LikeCount    int     `json:"like_count"`        // x
-	DislikeCount int     `json:"dislike_count"`     // x
+	Disliked     bool    `json:"disliked"`
+	LikeCount    int     `json:"like_count"`    // x
+	DislikeCount int     `json:"dislike_count"` // x
 	CommentCount int     `json:"comment_count"`
 	Followed     bool    `json:"followed"` // x
 	GroupId      GroupId `json:"group_id"` // null x
@@ -33,28 +33,7 @@ type GroupId struct {
 }
 
 func SendPostProfile(db *sql.DB, userId, targetId string) ([]PostProfile, error) {
-	var postProfile []PostProfile
-
-	var public int
-	query := `SELECT PUBLIC FROM USER WHERE ID = ?`
-	err := db.QueryRow(query, targetId).Scan(&public)
-	if err != nil {
-		return postProfile, err
-	}
-
-	if public == 0 {
-		var follow bool
-		query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
-		err = db.QueryRow(query, targetId, userId).Scan(&follow)
-		if err != nil {
-			return postProfile, err
-		}
-		if !follow && userId != targetId {
-			return postProfile, errors.New("Not Followed")
-		}
-	}
-
-	postProfile, err = structData(db, userId, targetId)
+	postProfile, err := structData(db, userId, targetId, 0)
 	if err != nil {
 		return postProfile, err
 	}
@@ -62,11 +41,11 @@ func SendPostProfile(db *sql.DB, userId, targetId string) ([]PostProfile, error)
 	return postProfile, nil
 }
 
-func structData(db *sql.DB, userId, targetId string) ([]PostProfile, error) {
+func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile, error) {
 	var postProfile []PostProfile
 
-	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY FROM POSTS WHERE USER_ID = ? LIMIT 10 OFFSET 0;`
-	rows, err := db.Query(query, targetId)
+	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY FROM POSTS WHERE USER_ID = ? LIMIT 20 OFFSET ?;`
+	rows, err := db.Query(query, targetId, offset)
 	if err != nil {
 		return postProfile, err
 	}
@@ -105,7 +84,16 @@ func structData(db *sql.DB, userId, targetId string) ([]PostProfile, error) {
 			p.ImageProfile = imageProfile.String
 		}
 
-		if privacy == 0 {
+		if privacy == 1 || targetId == userId {
+			query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
+			err = db.QueryRow(query, p.UserId, userId).Scan(&accessPrivate)
+			if err != nil || (!accessPrivate && userId != p.UserId) {
+				log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userId)
+				continue
+			}
+		}
+
+		if privacy == 0 || targetId == userId {
 			query = `SELECT EXISTS(SELECT ID FROM LIST_PRIVATE_POST WHERE USER_ID = ? AND POST_ID = ?)`
 			err = db.QueryRow(query, userId, p.Id).Scan(&accessPrivate)
 			if err != nil {
@@ -137,19 +125,19 @@ func structData(db *sql.DB, userId, targetId string) ([]PostProfile, error) {
 			}
 		}
 
-		var eventResult string
+		var eventResult sql.NullString
 
 		query = `SELECT LIKED FROM POST_EVENT WHERE POST_ID = ? AND USER_ID = ?`
 		err = db.QueryRow(query, p.Id, userId).Scan(&eventResult)
-		if err != nil {
-			if err != sql.ErrNoRows {
-				log.Println(err)
-			}
-		} else {
-			if eventResult == "liked" {
+		if err == sql.ErrNoRows {
+			// Pas d'interaction → p.Liked reste nil
+		} else if err != nil {
+			log.Println("Erreur récupération du vote :", err)
+		} else if eventResult.Valid {
+			if eventResult.String == "liked" {
 				p.Liked = true
-			} else if eventResult == "disliked" {
-				p.Liked = false
+			} else if eventResult.String == "disliked" {
+				p.Disliked = true
 			}
 		}
 

@@ -51,7 +51,7 @@ func Register(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		// Sauvegarde du fichier
 		uuidAvatar, err = utils.SaveImage("Images/avatars/", file, avatar)
 		if err != nil {
-			utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid ")
+			utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid")
 			return
 		}
 	}

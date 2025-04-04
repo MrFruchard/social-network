@@ -32,6 +32,14 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleImages(w, r, db)
 	})
 
+	// HOME
+	mux.HandleFunc("GET /api/home/post", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleHomePost(w, r, db)
+	})
+	mux.HandleFunc("GET /api/home/groups", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleHomeGroup(w, r, db)
+	})
+
 	// POSTS
 	// create a post
 	mux.HandleFunc("POST /api/posts", func(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +63,10 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// COMMENT
+	// get comment
+	mux.HandleFunc("GET /api/comment/", func(w http.ResponseWriter, r *http.Request) {
+
+	})
 	// create comment
 	mux.HandleFunc("POST /api/comment/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCreateComment(w, r, db)
@@ -124,6 +136,18 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	//MESSAGE
 
 	//GROUPS
+	// create group
+	mux.HandleFunc("POST /api/group/create", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleCreateGroup(w, r, db)
+	})
+	// modify group
+	mux.HandleFunc("PATCH /api/group/update", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleModifyGroup(w, r, db)
+	})
+	// delete group
+	mux.HandleFunc("DELETE /api/group/delete", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleDeleteGroup(w, r, db)
+	})
 
 	//CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {

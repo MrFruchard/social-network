@@ -11,9 +11,10 @@ import (
 )
 
 var allowedImages = map[string]bool{
-	"image/png": true,
-	"image/gif": true,
-	"image/jpg": true,
+	"image/png":  true,
+	"image/gif":  true,
+	"image/jpg":  true,
+	"image/jpeg": true,
 }
 
 func SaveImage(dir string, file multipart.File, header *multipart.FileHeader) (string, error) {
