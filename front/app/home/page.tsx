@@ -1,7 +1,6 @@
 "use client"
 
-import CheckAuth from "@/hooks/checkAuth";
-import useAuth from "@/hooks/checkAuth";
+import {useAuth} from "@/hooks/checkAuth";
 import {LogoutButton} from "@/components/logout-button";
 
 export default function HomePage(){

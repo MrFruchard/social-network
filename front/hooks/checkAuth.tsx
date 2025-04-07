@@ -10,7 +10,7 @@ interface UseAuthOptions {
     required?: boolean; // Si true, redirige automatiquement si non authentifié
 }
 
-export default function useAuth(options: UseAuthOptions = {}) {
+export function useAuth(options: UseAuthOptions = {}) {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState(true);
     const [user, setUser] = useState(null);

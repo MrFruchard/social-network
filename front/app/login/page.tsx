@@ -1,6 +1,6 @@
 "use client"
 
-import useAuth from "@/hooks/checkAuth";
+import {useAuth} from "@/hooks/checkAuth";
 import {LoginForm} from "@/components/login-form";
 
 export function LoginPage() {
