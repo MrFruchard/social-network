@@ -32,6 +32,14 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleImages(w, r, db)
 	})
 
+	// HOME
+	mux.HandleFunc("GET /api/home/post", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleHomePost(w, r, db)
+	})
+	mux.HandleFunc("GET /api/home/groups", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleHomeGroup(w, r, db)
+	})
+
 	// POSTS
 	// create a post
 	mux.HandleFunc("POST /api/posts", func(w http.ResponseWriter, r *http.Request) {
@@ -55,6 +63,10 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// COMMENT
+	// get comment
+	mux.HandleFunc("GET /api/comment/", func(w http.ResponseWriter, r *http.Request) {
+
+	})
 	// create comment
 	mux.HandleFunc("POST /api/comment/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCreateComment(w, r, db)
@@ -85,22 +97,65 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/user/decline", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleDeclineFollow(w, r, db)
 	})
-	//  unfollow
+	// unfollow
 	mux.HandleFunc("POST /api/user/unfollow", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleUnfollowAgreement(w, r, db)
 	})
 	// delete follower
-	mux.HandleFunc("POST /api/user/deletefollower", func(w http.ResponseWriter, r *http.Request) {
-		http.Error(w, "Not implemented", http.StatusNotImplemented)
+	mux.HandleFunc("DELETE /api/user/deletefollower", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleDeleteFollow(w, r, db)
 	})
 	// list followers
 	mux.HandleFunc("GET /api/user/listfollower", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleListFollowers(w, r, db)
 	})
+	// list follow
+	mux.HandleFunc("GET /api/user/listfollow", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleFollow(w, r, db)
+	})
 
-	//USER PARAMETER
+	//USER
+	//  get personal infos
+	mux.HandleFunc("GET /api/user/info", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleUserPersonal(w, r, db)
+	})
+	// get user infos
+	mux.HandleFunc("GET /api/user/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleUserInfos(w, r, db)
+	})
+	// switch public status
+	mux.HandleFunc("PATCH /api/user/public", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSwitchPublicStatus(w, r, db)
+	})
+
+	// PROFILE
+	mux.HandleFunc("GET /api/profile/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetPostProfile(w, r, db)
+	})
 
 	//MESSAGE
+
+	//GROUPS
+	// create group
+	mux.HandleFunc("POST /api/group/create", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleCreateGroup(w, r, db)
+	})
+	// modify group
+	mux.HandleFunc("PATCH /api/group/update", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleModifyGroup(w, r, db)
+	})
+	// delete group
+	mux.HandleFunc("DELETE /api/group/delete", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleDeleteGroup(w, r, db)
+	})
+
+	//CHECK
+	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleCheckUsername(w, r, db)
+	})
+	mux.HandleFunc("GET /api/check/email", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleCheckEmail(w, r, db)
+	})
 
 	// WS
 	mux.Handle("/api/ws", http.HandlerFunc(hub.WsHandler))

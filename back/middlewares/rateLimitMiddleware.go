@@ -49,7 +49,7 @@ func getLimiter(userID string) *rate.Limiter {
 
 func RateLimitMiddleware(next http.Handler, db *sql.DB) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/api/login" || r.URL.Path == "/api/register" || r.URL.Path == "/" {
+		if r.URL.Path == "/api/login" || r.URL.Path == "/api/register" || r.URL.Path == "/" || r.URL.Path == "/api/check/username" || r.URL.Path == "/api/check/email" {
 			if !loginLimiter.Allow() {
 				http.Error(w, "429 Too Many Requests", http.StatusTooManyRequests)
 				return

@@ -139,17 +139,9 @@ func HandleListFollowers(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	var self bool
-	if user.Id == userID {
-		self = true
-	} else {
-		userID = user.Id
-		self = false
-	}
-
 	var followers []services.ListOfFollowers
 
-	followers, err = services.SendListFollower(db, user.Id, userID, self)
+	followers, err = services.SendListFollower(db, user.Id, userID)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
@@ -169,8 +161,8 @@ func HandleListFollowers(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 }
 
 type FollowResponse struct {
-	Status    string                     `json:"status"`
-	Followers []services.ListOfFollowers `json:"followers"`
+	Status    string                  `json:"status"`
+	Followers []services.ListOfFollow `json:"follow"`
 }
 
 func HandleFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -179,4 +171,56 @@ func HandleFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
+
+	var user UserId
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil || strings.TrimSpace(user.Id) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	var follow []services.ListOfFollow
+	follow, err = services.SendListFollow(db, user.Id, userID)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	response := FollowResponse{
+		Status:    "success",
+		Followers: follow,
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	if err := json.NewEncoder(w).Encode(response); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Erreur d'encodage JSON")
+	}
+}
+
+func HandleDeleteFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	var user UserId
+	err := json.NewDecoder(r.Body).Decode(&user)
+	if err != nil || strings.TrimSpace(user.Id) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+	if user.Id == userID {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	err = services.DeleteFollower(db, userID, user.Id)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+	
+	utils.SuccessResponse(w, http.StatusOK, "Unfollow Agreement")
 }
