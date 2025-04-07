@@ -25,7 +25,7 @@ func SendGroupHome(db *sql.DB, userID string) ([]GroupHome, []GroupHome, error) 
 func listGroupHome(db *sql.DB, userID string) ([]GroupHome, []GroupHome, error) {
 	var listGroup []GroupHome
 	query := `
-	SELECT ag.ID, ag.OWNER, ag.TITLE,ag.DESC, ag.IMAGE,ag.CREATED_AT
+	SELECT ag.ID, ag.OWNER, ag.TITLE,ag.DESCRIPTION, ag.IMAGE,ag.CREATED_AT
 	FROM GROUPS_MEMBERS gm
 	JOIN ALL_GROUPS ag ON gm.GROUP_ID = ag.ID
 	WHERE gm.USER_ID = ?
@@ -46,7 +46,7 @@ func listGroupHome(db *sql.DB, userID string) ([]GroupHome, []GroupHome, error) 
 
 	var Discovery []GroupHome
 	query = `
-	SELECT ag.ID, ag.OWNER, ag.TITLE, ag.DESC, ag.IMAGE, ag.CREATED_AT
+	SELECT ag.ID, ag.OWNER, ag.TITLE, ag.DESCRIPTION, ag.IMAGE, ag.CREATED_AT
 	FROM ALL_GROUPS ag
 	WHERE ag.ID NOT IN (
 		SELECT gm.GROUP_ID

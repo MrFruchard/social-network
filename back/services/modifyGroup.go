@@ -11,7 +11,7 @@ func ModifyGroup(db *sql.DB, userID, title, desc, groupID, img string) error {
 	var groupTitle, groupDesc, groupOwner string
 	var image sql.NullString
 
-	query := `SELECT TITLE, DESC, OWNER, IMAGE FROM ALL_GROUPS WHERE ID = ?`
+	query := `SELECT TITLE, DESCRIPTION, OWNER, IMAGE FROM ALL_GROUPS WHERE ID = ?`
 	err := db.QueryRow(query, groupID).Scan(&groupTitle, &groupDesc, &groupOwner, &image)
 	if err != nil {
 		return err
