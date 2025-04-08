@@ -67,22 +67,24 @@ func GetOnePostInfo(db *sql.DB, userID, postId string) (OnePostInfo, error) {
 		return p, err
 	}
 
-	if groupID.Valid && p.UserId != userID {
+	if groupID.Valid {
 		p.GroupId.Id = groupID.String
 		query = `SELECT EXISTS(SELECT 1 FROM GROUPS_MEMBERS WHERE USER_ID = ? AND GROUP_ID = ?)`
 		err = db.QueryRow(query, userID, p.GroupId.Id).Scan(&accessGroup)
 		if err != nil || (!accessGroup && userID != p.UserId) {
 			log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userID)
-			return p, nil
+			return p, err
 		}
-		query = `SELECT TITLE, IMAGE, CREATED_AT FROM ALL_GROUPS WHERE ID = ?`
-		err = db.QueryRow(query, p.GroupId.Id).Scan(&p.GroupId.Name, &p.GroupId.GroupPicUrl, &p.GroupId.CreatedAt)
+		var groupImage sql.NullString
+		query = `SELECT TITLE, IMAGE, CREATED_AT,DESCRIPTION FROM ALL_GROUPS WHERE ID = ?`
+		err = db.QueryRow(query, p.GroupId.Id).Scan(&p.GroupId.Name, &groupImage, &p.GroupId.CreatedAt, &p.GroupId.Description)
 		if err != nil {
 			return p, err
 		}
-	}
-
-	if private == 1 && p.UserId != userID {
+		if groupImage.Valid {
+			p.GroupId.GroupPicUrl = groupImage.String
+		}
+	} else if private == 1 && p.UserId != userID {
 		var isFollowed bool
 		query = `
 		SELECT EXISTS(
@@ -97,9 +99,7 @@ func GetOnePostInfo(db *sql.DB, userID, postId string) (OnePostInfo, error) {
 		if !isFollowed {
 			return p, errors.New("user is not allowed to view this private profile")
 		}
-	}
-
-	if private == 0 && p.UserId != userID {
+	} else if private == 0 && p.UserId != userID {
 		var hasAccess bool
 		query = `
 		SELECT EXISTS(
@@ -129,10 +129,14 @@ func GetOnePostInfo(db *sql.DB, userID, postId string) (OnePostInfo, error) {
 		return p, err
 	}
 
+	var imageProfile sql.NullString
 	query = `SELECT FIRSTNAME, LASTNAME, IMAGE, USERNAME FROM USER WHERE ID = ?`
-	err = db.QueryRow(query, p.UserId).Scan(&p.FirstName, &p.LastName, &p.ImageProfile, &username)
+	err = db.QueryRow(query, p.UserId).Scan(&p.FirstName, &p.LastName, &imageProfile, &username)
 	if err != nil {
 		return p, err
+	}
+	if imageProfile.Valid {
+		p.ImageProfile = imageProfile.String
 	}
 
 	err = db.QueryRow(`SELECT COUNT(*) FROM POST_EVENT WHERE POST_ID = ? AND LIKED = 'liked'`, postId).Scan(&p.LikeCount)

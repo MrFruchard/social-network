@@ -84,16 +84,35 @@ func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile,
 			p.ImageProfile = imageProfile.String
 		}
 
-		if privacy == 1 || targetId == userId {
+		if groupId.Valid {
+			p.GroupId.Id = groupId.String
+
+			query = `SELECT EXISTS(SELECT 1 FROM GROUPS_MEMBERS WHERE USER_ID = ? AND GROUP_ID = ?)`
+			err = db.QueryRow(query, userId, p.GroupId.Id).Scan(&accessGroup)
+			if err != nil {
+				log.Printf("Erreur lors de la vérification d'accès au groupe : %v", err)
+				continue
+			}
+
+			if !accessGroup && userId != targetId {
+				log.Printf("Post %s ignoré (accès au groupe refusé pour l'utilisateur %s)", p.Id, userId)
+				continue
+			}
+
+			query = `SELECT TITLE, IMAGE, CREATED_AT FROM ALL_GROUPS WHERE ID = ?`
+			err = db.QueryRow(query, p.GroupId.Id).Scan(&p.GroupId.Name, &p.GroupId.GroupPicUrl, &p.GroupId.CreatedAt)
+			if err != nil {
+				log.Printf("Erreur lors de la récupération du groupe : %v", err)
+				continue
+			}
+		} else if privacy == 1 && targetId != userId {
 			query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
 			err = db.QueryRow(query, p.UserId, userId).Scan(&accessPrivate)
 			if err != nil || (!accessPrivate && userId != p.UserId) {
 				log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userId)
 				continue
 			}
-		}
-
-		if privacy == 0 || targetId == userId {
+		} else if privacy == 0 && targetId != userId {
 			query = `SELECT EXISTS(SELECT ID FROM LIST_PRIVATE_POST WHERE USER_ID = ? AND POST_ID = ?)`
 			err = db.QueryRow(query, userId, p.Id).Scan(&accessPrivate)
 			if err != nil {
@@ -101,26 +120,6 @@ func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile,
 				continue
 			}
 			if !accessPrivate && userId != targetId {
-				continue
-			}
-		}
-
-		if groupId.Valid {
-			p.GroupId.Id = groupId.String
-			query = `SELECT EXISTS(SELECT ID FROM GROUPS_MEMBERS WHERE USER_ID = ? AND GROUP_ID = ?)`
-			err = db.QueryRow(query, userId, p.GroupId.Id).Scan(&accessGroup)
-			if err != nil {
-				log.Printf("Erreur lors de la vérification d'accès privé : %v", err)
-				continue
-			}
-			if !accessPrivate && userId != targetId {
-				log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userId)
-				continue
-			}
-			query = `SELECT TITLE, IMAGE, CREATED_AT FROM ALL_GROUPS WHERE ID = ?`
-			err = db.QueryRow(query, p.GroupId.Id).Scan(&p.GroupId.Name, &p.GroupId.GroupPicUrl, &p.GroupId.CreatedAt)
-			if err != nil {
-				log.Printf("Erreur lors de la vérification d'accès privé : %v", err)
 				continue
 			}
 		}

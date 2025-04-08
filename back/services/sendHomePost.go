@@ -37,25 +37,7 @@ func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error
 			return postProfile, err
 		}
 
-		if privacy == 1 && p.UserId != userId {
-			query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
-			err = db.QueryRow(query, p.UserId, userId).Scan(&accessPrivate)
-			if err != nil || (!accessPrivate && userId != p.UserId) {
-				log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userId)
-				continue
-			}
-		}
-
-		if privacy == 0 && p.UserId != userId {
-			query = `SELECT EXISTS(SELECT 1 FROM LIST_PRIVATE_POST WHERE USER_ID = ? AND POST_ID = ?)`
-			err = db.QueryRow(query, userId, p.Id).Scan(&accessPrivate)
-			if err != nil || (!accessPrivate && userId != p.UserId) {
-				log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userId)
-				continue
-			}
-		}
-
-		if groupId.Valid && p.UserId != userId {
+		if groupId.Valid {
 			p.GroupId.Id = groupId.String
 			query = `SELECT EXISTS(SELECT 1 FROM GROUPS_MEMBERS WHERE USER_ID = ? AND GROUP_ID = ?)`
 			err = db.QueryRow(query, userId, p.GroupId.Id).Scan(&accessGroup)
@@ -66,6 +48,20 @@ func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error
 			query = `SELECT TITLE, IMAGE, CREATED_AT FROM ALL_GROUPS WHERE ID = ?`
 			err = db.QueryRow(query, p.GroupId.Id).Scan(&p.GroupId.Name, &p.GroupId.GroupPicUrl, &p.GroupId.CreatedAt)
 			if err != nil {
+				continue
+			}
+		} else if privacy == 1 && p.UserId != userId {
+			query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
+			err = db.QueryRow(query, p.UserId, userId).Scan(&accessPrivate)
+			if err != nil || (!accessPrivate && userId != p.UserId) {
+				log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userId)
+				continue
+			}
+		} else if privacy == 0 && p.UserId != userId {
+			query = `SELECT EXISTS(SELECT 1 FROM LIST_PRIVATE_POST WHERE USER_ID = ? AND POST_ID = ?)`
+			err = db.QueryRow(query, userId, p.Id).Scan(&accessPrivate)
+			if err != nil || (!accessPrivate && userId != p.UserId) {
+				log.Printf("Post %s ignoré (accès privé refusé pour l'utilisateur %s)", p.Id, userId)
 				continue
 			}
 		}
