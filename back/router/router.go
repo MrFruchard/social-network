@@ -50,8 +50,8 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleEventPost(w, r, db)
 	})
 	// handle post info ( comment info / count like or dislike )
-	mux.HandleFunc("GET /api/post/", func(w http.ResponseWriter, r *http.Request) {
-
+	mux.HandleFunc("GET /api/post", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetPost(w, r, db)
 	})
 	// delete post
 	mux.HandleFunc("DELETE /api/post/", func(w http.ResponseWriter, r *http.Request) {
