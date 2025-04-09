@@ -76,7 +76,7 @@ export default function HomePage() {
                 ></textarea>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/gif, image/jpeg, image/png"
                   className="border p-2 rounded"
                 />
                 <button
