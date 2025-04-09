@@ -63,7 +63,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// COMMENT
-	// get comment
+	// get comment donne déja dans /api/post?=
 	mux.HandleFunc("GET /api/comment/", func(w http.ResponseWriter, r *http.Request) {
 
 	})
@@ -134,6 +134,15 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	//MESSAGE
+	// send message with create conversation option
+	mux.HandleFunc("POST /api/message", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSendMessage(w, r, db, hub)
+	})
+	// get message with query param id conv + nb de message a envoyer
+	mux.HandleFunc("GET /api/message", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetMessage(w, r, db)
+	})
+	// send group message
 
 	//GROUPS
 	// create group
