@@ -224,11 +224,11 @@ export function SignupForm({
                 />
               </div>
               <Button type="submit" className="w-full">
-                Login
+                Signup
               </Button>
 
               <Button variant="outline" className="w-full">
-                Login with Google
+                Signup with Google
               </Button>
             </div>
             <div className="mt-4 text-center text-sm">
