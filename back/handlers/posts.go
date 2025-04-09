@@ -158,3 +158,28 @@ func HandleUpdatePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	utils.SuccessResponse(w, http.StatusOK, "Post updated")
 }
+
+func HandleGetPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	postID := r.URL.Query().Get("postId")
+	if postID == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing postId")
+		return
+	}
+
+	postInfo, err := services.GetOnePostInfo(db, userID, postID)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(postInfo); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+	}
+}

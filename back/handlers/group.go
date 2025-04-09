@@ -117,6 +117,7 @@ func HandleInviteGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+
 }
 
 func HandleBanMemberGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -125,14 +126,38 @@ func HandleBanMemberGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+	userTobBan := r.URL.Query().Get("userId")
+	groupId := r.URL.Query().Get("groupId")
 
+	err := services.DeleteGroupMember(db, userId, userTobBan, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	utils.SuccessResponse(w, http.StatusOK, "Member banned")
 }
 
-func AskToJoinGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func HandleAskToJoinGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	userId := utils.GetUserIdByCookie(r, db)
 	if userId == "" {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
 
+	groupId := r.URL.Query().Get("groupId")
+
+	err := services.AskToJoinGroup(db, groupId, userId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+	utils.SuccessResponse(w, http.StatusOK, "Asked to join group")
+}
+
+func HandleJoinGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 }
