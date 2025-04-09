@@ -2,6 +2,7 @@
 import { useAuth } from "@/hooks/checkAuth";
 import { LogoutButton } from "@/components/logout-button";
 import { useUserData } from "@/hooks/useUserData";
+import { createPost } from "@/api/post/postApi";
 
 export default function HomePage() {
   const { userData, loading: userDataLoading } = useUserData();
@@ -63,12 +64,6 @@ export default function HomePage() {
             <div className="bg-white p-4 rounded shadow-md">
               <h2 className="text-xl font-bold mb-4">Create a New Post</h2>
               <form id="post-form" className="flex flex-col gap-4">
-                <input
-                  type="text"
-                  placeholder="Title"
-                  className="border p-2 rounded"
-                  required
-                />
                 <textarea
                   placeholder="Content"
                   className="border p-2 rounded"
@@ -108,14 +103,11 @@ function openPostForm() {
       const fileInput = form.querySelector(
         'input[type="file"]'
       ) as HTMLInputElement;
-      const titleInput = form.querySelector(
-        'input[type="text"]'
-      ) as HTMLInputElement;
       const contentTextarea = form.querySelector(
         "textarea"
       ) as HTMLTextAreaElement;
 
-      if (!titleInput || !contentTextarea) {
+      if (!contentTextarea) {
         console.error("Form elements are missing");
         return;
       }
@@ -123,33 +115,24 @@ function openPostForm() {
       const myHeaders = new Headers();
       myHeaders.append("Cookie", "session_id=");
 
-      const formdata = new FormData();
-      formdata.append("content", contentTextarea.value);
-      formdata.append("tags", titleInput.value);
-      if (fileInput && fileInput.files && fileInput.files[0]) {
-        formdata.append("image", fileInput.files[0], "");
-      }
+      let tags = contentTextarea.value.split(" ");
+      const hashtags = tags.filter((tag) => tag.startsWith("#"));
 
-      const requestOptions = {
-        method: "POST",
-        headers: myHeaders,
-        body: formdata,
-      };
+      createPost({
+        tags: hashtags,
+        content: contentTextarea.value,
+        image: fileInput?.files?.[0],
+      })
+        .then((response) => {
+          console.log("Post created successfully:", response);
+        })
+        .catch((error) => {
+          console.error("Error creating post:", error);
+        });
 
-      try {
-        const response = await fetch(
-          "http://localhost:80/api/posts",
-          requestOptions
-        );
-        const result = await response.text();
-        console.log(result);
-
-        // Close the modal after successful submission
-        if (modal) {
-          modal.classList.add("hidden");
-        }
-      } catch (error) {
-        console.error("Error:", error);
+      // Close the modal after successful submission
+      if (modal) {
+        modal.classList.add("hidden");
       }
     };
   }
