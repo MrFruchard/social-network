@@ -1,0 +1,6 @@
+CREATE TABLE IF NOT EXISTS CONVERSATIONS (
+    ID TEXT NOT NULL PRIMARY KEY,
+    NAME TEXT, -- facultatif, pour nommer un groupe
+    IS_GROUP INT NOT NULL DEFAULT 0, -- 0 = privé, 1 = groupe
+    CREATED_AT TEXT NOT NULL
+);
