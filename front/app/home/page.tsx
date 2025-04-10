@@ -4,6 +4,7 @@ import { LogoutButton } from "@/components/logout-button";
 import { useUserData } from "@/hooks/user/useUserData";
 import { createPost } from "@/api/post/postApi";
 import TwitterLikeFeed from "@/components/feed";
+import { ProfileMenuItem } from "@/components/ProfileMenuItem";
 
 export default function HomePage() {
   const { userData, loading: userDataLoading } = useUserData();
@@ -26,15 +27,17 @@ export default function HomePage() {
       {isAuthenticated && (
         <div className="grid grid-cols-5 grid-rows-5 gap-4 h-screen">
           <div className="row-span-5 border p-2">
-            <ul>
-              <li>Profil</li>
-              <li>Notifications</li>
-              <li>Messages</li>
-              <li>Groupes</li>
-              <li>
-                <LogoutButton />
-              </li>
-            </ul>
+            <div className="flex flex-col gap-4">
+              <ul className="space-y-2">
+                <ProfileMenuItem />
+                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Notifications</li>
+                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Messages</li>
+                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Groupes</li>
+                <li>
+                  <LogoutButton />
+                </li>
+              </ul>
+            </div>
           </div>
           <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
           <div className="row-span-5 col-start-5 border p-2">3</div>

@@ -38,9 +38,19 @@ export const logoutUser = async () => {
 
 // Profil utilisateur
 export const fetchUserProfile = async (userId) => {
-    const response = await fetch(`http://localhost:80/api/user/${userId}`, {
+    // Si userId n'est pas fourni, récupérer le profil de l'utilisateur connecté
+    const url = userId 
+        ? `http://localhost:80/api/user/${userId}` 
+        : "http://localhost:80/api/user/info";
+    
+    const response = await fetch(url, {
         credentials: "include"
     });
+    
+    if (!response.ok) {
+        throw new Error(`Failed to fetch profile: ${response.status}`);
+    }
+    
     return response.json();
 };
 
