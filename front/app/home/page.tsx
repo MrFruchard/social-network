@@ -1,7 +1,7 @@
 "use client"
-import { useAuth } from "@/hooks/checkAuth";
+import { useAuth } from "@/hooks/user/checkAuth";
 import { LogoutButton } from "@/components/logout-button";
-import { useUserData } from "@/hooks/useUserData";
+import { useUserData } from "@/hooks/user/useUserData";
 
 export default function HomePage() {
     const { userData, loading: userDataLoading } = useUserData();

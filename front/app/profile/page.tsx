@@ -1,4 +1,4 @@
-import {useAuth} from "@/hooks/checkAuth";
+import {useAuth} from "@/hooks/user/checkAuth";
 
 function ProfilePage() {
     const { isLoading } = useAuth({

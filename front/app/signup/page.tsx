@@ -1,6 +1,6 @@
 "use client";
 
-import { useAuth } from "@/hooks/checkAuth";
+import { useAuth } from "@/hooks/user/checkAuth";
 import { SignupForm } from "@/components/signup-form";
 
 export default function SignupPage() {
