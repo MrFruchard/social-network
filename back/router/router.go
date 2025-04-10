@@ -32,6 +32,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleImages(w, r, db)
 	})
 
+	// Image Comment
+	mux.HandleFunc("GET /api/commentImages/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleImages(w, r, db)
+	})
+
 	// HOME
 	mux.HandleFunc("GET /api/home/post", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleHomePost(w, r, db)
