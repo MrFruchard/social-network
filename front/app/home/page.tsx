@@ -1,7 +1,7 @@
 "use client";
-import { useAuth } from "@/hooks/checkAuth";
+import { useAuth } from "@/hooks/user/checkAuth";
 import { LogoutButton } from "@/components/logout-button";
-import { useUserData } from "@/hooks/useUserData";
+import { useUserData } from "@/hooks/user/useUserData";
 import { createPost } from "@/api/post/postApi";
 import TwitterLikeFeed from "@/components/feed";
 
@@ -27,16 +27,16 @@ export default function HomePage() {
         <div className="grid grid-cols-5 grid-rows-5 gap-4 h-screen">
           <div className="row-span-5 border p-2">
             <ul>
-              <li>{userData.username}</li>
-              <li>2</li>
-              <li>3</li>
-              <li>4</li>
+              <li>Profil</li>
+              <li>Notifications</li>
+              <li>Messages</li>
+              <li>Groupes</li>
               <li>
                 <LogoutButton />
               </li>
             </ul>
           </div>
-          <div className="col-span-3 border p-4">{`Bienvenue, ${userData.username} !`}</div>
+          <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
           <div className="row-span-5 col-start-5 border p-2">3</div>
           <div
             className="col-span-3 row-span-4 col-start-2 row-start-2 border overflow-scroll"

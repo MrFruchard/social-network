@@ -13,36 +13,24 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useLogin } from "@/hooks/user/useLogin";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
-  const [email, setEmail] = useState("");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const router = useRouter();
+  const { login, loading, error } = useLogin();
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
     e.preventDefault();
-
-    const response = await fetch("http://localhost:80/api/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ credentials: email, password }),
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      localStorage.setItem("userId", data.id);
-      localStorage.setItem("userName", email);
-
-      // Déclencher l'événement de connexion WebSocket
-      window.dispatchEvent(new Event("login"));
-
-      router.push("/home");
-    } else {
-      alert("Login failed");
+    
+    try {
+      await login({ identifier, password });
+    } catch (err) {
+      // L'erreur est déjà gérée par le hook useLogin
     }
   };
   return (
@@ -51,21 +39,26 @@ export function LoginForm({
         <CardHeader>
           <CardTitle className="text-2xl">Login</CardTitle>
           <CardDescription>
-            Enter your email below to login to your account
+            Enter your email or username to login to your account
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
+            {error && (
+              <Alert variant="destructive" className="mb-4">
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+            )}
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="identifier">Email or Username</Label>
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="m@example.com"
+                  id="identifier"
+                  type="text"
+                  placeholder="example@mail.com or username"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                 />
               </div>
               <div className="grid gap-2">
@@ -86,11 +79,11 @@ export function LoginForm({
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-              <Button type="submit" className="w-full">
-                Login
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Connexion en cours..." : "Login"}
               </Button>
 
-              <Button variant="outline" className="w-full">
+              <Button variant="outline" className="w-full" disabled={loading}>
                 Login with Google
               </Button>
             </div>
