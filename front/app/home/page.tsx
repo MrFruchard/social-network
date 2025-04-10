@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/checkAuth";
 import { LogoutButton } from "@/components/logout-button";
 import { useUserData } from "@/hooks/useUserData";
 import { createPost } from "@/api/post/postApi";
+import TwitterLikeFeed from "@/components/feed";
 
 export default function HomePage() {
   const { userData, loading: userDataLoading } = useUserData();
@@ -38,10 +39,10 @@ export default function HomePage() {
           <div className="col-span-3 border p-4">{`Bienvenue, ${userData.username} !`}</div>
           <div className="row-span-5 col-start-5 border p-2">3</div>
           <div
-            className="col-span-3 row-span-4 col-start-2 row-start-2 border p-3"
+            className="col-span-3 row-span-4 col-start-2 row-start-2 border overflow-scroll"
             id="main_container"
           >
-            4
+            <TwitterLikeFeed />
           </div>
           <button
             className="absolute bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow"
@@ -50,7 +51,7 @@ export default function HomePage() {
             New Post
           </button>
           <div
-            className="fixed inset-0 flex items-center justify-center bg-blue-500 px-4 py-2 rounded shadow transition hidden"
+            className="fixed inset-0 flex items-center justify-center bg-black/60 px-4 py-2 rounded shadow transition hidden"
             id="modal"
             onClick={(e) => {
               if (e.target === e.currentTarget) {
