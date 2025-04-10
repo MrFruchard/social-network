@@ -3,23 +3,17 @@ package services
 import (
 	"database/sql"
 	"github.com/pkg/errors"
-	"log"
 )
 
-func CanPassPostImage(db *sql.DB, userID, imgID string) error {
+func CanPassCommentImages(db *sql.DB, userID, imgID string) error {
 	var privacy int
 	var userPostId string
 	var postId string
 
-	log.Println(imgID)
+	queryCom := `SELECT POST_ID FROM COMMENT WHERE IMAGE = ? LIMIT 1`
+	err := db.QueryRow(queryCom, imgID).Scan(&postId)
 
-	query := `SELECT ID FROM POSTS WHERE IMAGE = ? LIMIT 1`
-	err := db.QueryRow(query, imgID).Scan(&postId)
-	if err != nil {
-		return errors.Wrap(err, "CanPassPostImage")
-	}
-
-	query = `SELECT PRIVACY, USER_ID FROM POSTS WHERE ID = ? LIMIT 1`
+	query := `SELECT PRIVACY, USER_ID FROM POSTS WHERE ID = ? LIMIT 1`
 	err = db.QueryRow(query, postId).Scan(&privacy, &userPostId)
 	if err != nil {
 		return err

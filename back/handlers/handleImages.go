@@ -38,19 +38,19 @@ func HandleImages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	typeImg := parts[2]
 	id := parts[3]
 
-	if id == "postImages" {
+	if typeImg == "postImages" {
 		err := services.CanPassPostImage(db, userID, id)
+		if err != nil {
+			utils.ErrorResponse(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+	} else if typeImg == "commentImages" {
+		err := services.CanPassCommentImages(db, userID, id)
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-	} else if id == "commentImages" {
-		err := services.CanPassPostImage(db, userID, id)
-		if err != nil {
-			http.Error(w, "Unauthorized", http.StatusUnauthorized)
-			return
-		}
-	} else if id != "avatars" {
+	} else if typeImg != "avatars" {
 		utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid image type")
 		return
 	}

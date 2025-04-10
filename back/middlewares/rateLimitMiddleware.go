@@ -60,7 +60,7 @@ func RateLimitMiddleware(next http.Handler, db *sql.DB) http.Handler {
 
 		userId, pass := AuthMiddleware(r, db)
 		if !pass {
-			http.Error(w, http.StatusText(http.StatusUnauthorized), http.StatusUnauthorized)
+			utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 			return
 		}
 
