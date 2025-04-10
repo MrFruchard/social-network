@@ -23,73 +23,73 @@ export default function HomePage() {
   }
 
   return (
-    <>
-      {isAuthenticated && (
-        <div className="grid grid-cols-5 grid-rows-5 gap-4 h-screen">
-          <div className="row-span-5 border p-2">
-            <div className="flex flex-col gap-4">
-              <ul className="space-y-2">
-                <ProfileMenuItem />
-                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Notifications</li>
-                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Messages</li>
-                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Groupes</li>
-                <li>
+      <>
+        {isAuthenticated && (
+            <div className="grid grid-cols-5 grid-rows-5 gap-4 h-screen">
+              <div className="row-span-5 border p-2 flex flex-col justify-between">
+                <div className="flex flex-col gap-4">
+                  <ul className="space-y-2">
+                    <ProfileMenuItem />
+                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Notifications</li>
+                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Messages</li>
+                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Groupes</li>
+                  </ul>
+                </div>
+                <div className="flex justify-center mb-4">
                   <LogoutButton />
-                </li>
-              </ul>
-            </div>
-          </div>
-          <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
-          <div className="row-span-5 col-start-5 border p-2">3</div>
-          <div
-            className="col-span-3 row-span-4 col-start-2 row-start-2 border overflow-scroll"
-            id="main_container"
-          >
-            <TwitterLikeFeed />
-          </div>
-          <button
-            className="absolute bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow"
-            onClick={openPostForm}
-          >
-            New Post
-          </button>
-          <div
-            className="fixed inset-0 flex items-center justify-center bg-black/60 px-4 py-2 rounded shadow transition hidden"
-            id="modal"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                const modal = document.getElementById("modal");
-                if (modal) {
-                  modal.classList.add("hidden");
-                }
-              }
-            }}
-          >
-            <div className="bg-white p-4 rounded shadow-md">
-              <h2 className="text-xl font-bold mb-4">Create a New Post</h2>
-              <form id="post-form" className="flex flex-col gap-4">
+                </div>
+              </div>
+              <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
+              <div className="row-span-5 col-start-5 border p-2">3</div>
+              <div
+                  className="col-span-3 row-span-4 col-start-2 row-start-2 border overflow-scroll"
+                  id="main_container"
+              >
+                <TwitterLikeFeed />
+              </div>
+              <button
+                  className="absolute bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow"
+                  onClick={openPostForm}
+              >
+                New Post
+              </button>
+              <div
+                  className="fixed inset-0 flex items-center justify-center bg-black/60 px-4 py-2 rounded shadow transition hidden"
+                  id="modal"
+                  onClick={(e) => {
+                    if (e.target === e.currentTarget) {
+                      const modal = document.getElementById("modal");
+                      if (modal) {
+                        modal.classList.add("hidden");
+                      }
+                    }
+                  }}
+              >
+                <div className="bg-white p-4 rounded shadow-md">
+                  <h2 className="text-xl font-bold mb-4">Create a New Post</h2>
+                  <form id="post-form" className="flex flex-col gap-4">
                 <textarea
-                  placeholder="Content"
-                  className="border p-2 rounded"
-                  required
+                    placeholder="Content"
+                    className="border p-2 rounded"
+                    required
                 ></textarea>
-                <input
-                  type="file"
-                  accept="image/gif, image/jpeg, image/png"
-                  className="border p-2 rounded"
-                />
-                <button
-                  type="submit"
-                  className="bg-blue-500 text-white px-4 py-2 rounded shadow"
-                >
-                  Submit
-                </button>
-              </form>
+                    <input
+                        type="file"
+                        accept="image/gif, image/jpeg, image/png"
+                        className="border p-2 rounded"
+                    />
+                    <button
+                        type="submit"
+                        className="bg-blue-500 text-white px-4 py-2 rounded shadow"
+                    >
+                      Submit
+                    </button>
+                  </form>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
-    </>
+        )}
+      </>
   );
 }
 
@@ -105,10 +105,10 @@ function openPostForm() {
       event.preventDefault();
 
       const fileInput = form.querySelector(
-        'input[type="file"]'
+          'input[type="file"]'
       ) as HTMLInputElement;
       const contentTextarea = form.querySelector(
-        "textarea"
+          "textarea"
       ) as HTMLTextAreaElement;
 
       if (!contentTextarea) {
@@ -127,12 +127,12 @@ function openPostForm() {
         content: contentTextarea.value,
         image: fileInput?.files?.[0],
       })
-        .then((response) => {
-          console.log("Post created successfully:", response);
-        })
-        .catch((error) => {
-          console.error("Error creating post:", error);
-        });
+          .then((response) => {
+            console.log("Post created successfully:", response);
+          })
+          .catch((error) => {
+            console.error("Error creating post:", error);
+          });
 
       // Close the modal after successful submission
       if (modal) {
