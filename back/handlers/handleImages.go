@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"os"
 	"path/filepath"
+	"social-network/services"
+	"social-network/utils"
 	"strings"
 )
 
@@ -21,6 +23,12 @@ var allowedExtensions = map[string]bool{
 
 // HandleImages sert les images stockées localement
 func HandleImages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
 	parts := strings.Split(r.URL.Path, "/")
 	if len(parts) < 4 || parts[3] == "" {
 		http.Error(w, "Missing image ID", http.StatusBadRequest)
@@ -29,6 +37,23 @@ func HandleImages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	typeImg := parts[2]
 	id := parts[3]
+
+	if typeImg == "postImages" {
+		err := services.CanPassPostImage(db, userID, id)
+		if err != nil {
+			utils.ErrorResponse(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+	} else if typeImg == "commentImages" {
+		err := services.CanPassCommentImages(db, userID, id)
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+	} else if typeImg != "avatars" {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid image type")
+		return
+	}
 
 	// Vérifier l'extension
 	ext := filepath.Ext(id)

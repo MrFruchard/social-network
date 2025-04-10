@@ -29,6 +29,7 @@ export default function HomePage() {
               <div className="row-span-5 border p-2 flex flex-col justify-between">
                 <div className="flex flex-col gap-4">
                   <ul className="space-y-2">
+                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Home</li>
                     <ProfileMenuItem />
                     <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Notifications</li>
                     <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Messages</li>

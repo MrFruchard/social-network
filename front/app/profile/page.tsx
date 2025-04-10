@@ -1,216 +1,83 @@
 "use client";
 
 import { useAuth } from "@/hooks/user/checkAuth";
-import { useProfile } from "@/hooks/user/useProfile";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Separator } from "@/components/ui/separator";
-import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarIcon, UserIcon, MailIcon, ClockIcon, LockOpenIcon } from "lucide-react";
-
-function formatDate(dateString: string) {
-  if (!dateString) return "";
-  const date = new Date(dateString);
-  return date.toLocaleDateString();
-}
+import { ProfileContent } from "@/components/ProfileContent";
+import { LogoutButton } from "@/components/logout-button";
+import { ProfileMenuItem } from "@/components/ProfileMenuItem";
+import { useUserData } from "@/hooks/user/useUserData";
+import Link from "next/link";
 
 export default function ProfilePage() {
-  const { isLoading: authLoading } = useAuth({
+  const router = useRouter();
+  const { isLoading: authLoading, isAuthenticated } = useAuth({
     required: true,
     redirectTo: "/",
   });
-  
+
+  const { userData, loading: userDataLoading } = useUserData();
   const searchParams = useSearchParams();
   const userId = searchParams.get("id");
-  const { profile, loading, error, isOwner, togglePrivacy } = useProfile(userId || undefined);
-  
-  if (authLoading || loading) {
+
+  if (authLoading || userDataLoading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-      </div>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+        </div>
     );
   }
 
-  if (error) {
+  if (!userData) {
     return (
-      <div className="container mx-auto py-8">
-        <Alert variant="destructive">
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      </div>
+        <div className="container mx-auto py-8">
+          <Alert>
+            <AlertDescription>Impossible de charger les données utilisateur</AlertDescription>
+          </Alert>
+        </div>
     );
   }
 
-  if (!profile) {
-    return (
-      <div className="container mx-auto py-8">
-        <Alert>
-          <AlertDescription>Profile not found</AlertDescription>
-        </Alert>
-      </div>
-    );
-  }
-
-  const getInitials = () => {
-    if (profile.firstName && profile.lastName) {
-      return `${profile.firstName[0]}${profile.lastName[0]}`.toUpperCase();
-    }
-    if (profile.username) {
-      return profile.username[0].toUpperCase();
-    }
-    return "U";
-  };
-
-  const handleTogglePrivacy = async () => {
-    try {
-      await togglePrivacy();
-    } catch (err) {
-      console.error("Failed to toggle privacy", err);
-    }
+  const navigateTo = (path) => {
+    router.push(path);
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <Card className="mb-8">
-        <CardContent className="p-6">
-          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-            <div className="flex flex-col items-center gap-4">
-              <Avatar className="w-32 h-32 border-2 border-primary">
-                <AvatarImage src={profile.image ? `http://localhost:80/api/avatars/${profile.image}` : undefined} alt={profile.username || "profile"} />
-                <AvatarFallback className="text-3xl">{getInitials()}</AvatarFallback>
-              </Avatar>
-              
-              {isOwner && (
-                <div className="flex flex-col gap-2 items-center">
-                  <div className="flex items-center gap-2">
-                    <Switch checked={profile.isPublic} onCheckedChange={handleTogglePrivacy} />
-                    <span className="text-sm font-medium">
-                      {profile.isPublic ? "Public Profile" : "Private Profile"}
-                    </span>
-                  </div>
-                  <Badge variant={profile.isPublic ? "outline" : "secondary"}>
-                    {profile.isPublic ? <LockOpenIcon className="h-3 w-3 mr-1" /> : <LockOpenIcon className="h-3 w-3 mr-1" />}
-                    {profile.isPublic ? "Public" : "Private"}
-                  </Badge>
+      <>
+        {isAuthenticated && (
+            <div className="grid grid-cols-5 grid-rows-5 gap-4 h-screen">
+              <div className="row-span-5 border p-2 flex flex-col justify-between">
+                <div className="flex flex-col gap-4">
+                  <ul className="space-y-2">
+                    <li className="cursor-pointer" onClick={() => navigateTo("/home")}>
+                      <div className="px-2 py-1 hover:bg-gray-100 rounded">Home</div>
+                    </li>
+                    <ProfileMenuItem />
+                    <li className="cursor-pointer" onClick={() => navigateTo("/notifications")}>
+                      <div className="px-2 py-1 hover:bg-gray-100 rounded">Notifications</div>
+                    </li>
+                    <li className="cursor-pointer" onClick={() => navigateTo("/messages")}>
+                      <div className="px-2 py-1 hover:bg-gray-100 rounded">Messages</div>
+                    </li>
+                    <li className="cursor-pointer" onClick={() => navigateTo("/groups")}>
+                      <div className="px-2 py-1 hover:bg-gray-100 rounded">Groupes</div>
+                    </li>
+                  </ul>
                 </div>
-              )}
-            </div>
-            
-            <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold mb-2">
-                {profile.firstName} {profile.lastName}
-              </h1>
-              
-              {profile.username && (
-                <h2 className="text-xl text-muted-foreground mb-4">@{profile.username}</h2>
-              )}
-              
-              <div className="flex flex-col gap-2 mb-4">
-                <div className="flex items-center gap-2">
-                  <UserIcon className="text-muted-foreground h-4 w-4" />
-                  <span>{profile.role}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <MailIcon className="text-muted-foreground h-4 w-4" />
-                  <span>{profile.email}</span>
-                </div>
-                
-                {profile.dateOfBirth && (
-                  <div className="flex items-center gap-2">
-                    <CalendarIcon className="text-muted-foreground h-4 w-4" />
-                    <span>Born on {formatDate(profile.dateOfBirth)}</span>
-                  </div>
-                )}
-                
-                <div className="flex items-center gap-2">
-                  <ClockIcon className="text-muted-foreground h-4 w-4" />
-                  <span>Member since {formatDate(profile.createdAt)}</span>
+                <div className="flex justify-center mb-4">
+                  <LogoutButton />
                 </div>
               </div>
-              
-              <div className="flex gap-4 justify-center md:justify-start">
-                <div>
-                  <div className="text-2xl font-bold">{profile.followerCount}</div>
-                  <div className="text-sm text-muted-foreground">Followers</div>
-                </div>
-                
-                <div>
-                  <div className="text-2xl font-bold">{profile.followingCount}</div>
-                  <div className="text-sm text-muted-foreground">Following</div>
-                </div>
+              <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
+              <div className="row-span-5 col-start-5 border p-2">3</div>
+              <div
+                  className="col-span-3 row-span-4 col-start-2 row-start-2 border overflow-hidden"
+                  id="main_container"
+              >
+                <ProfileContent userId={userId || undefined} />
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-      
-      {profile.aboutMe && (
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>About</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p>{profile.aboutMe}</p>
-          </CardContent>
-        </Card>
-      )}
-      
-      <Tabs defaultValue="posts">
-        <TabsList className="mb-4">
-          <TabsTrigger value="posts">Posts</TabsTrigger>
-          <TabsTrigger value="followers">Followers</TabsTrigger>
-          <TabsTrigger value="following">Following</TabsTrigger>
-        </TabsList>
-        
-        <TabsContent value="posts">
-          <Card>
-            <CardHeader>
-              <CardTitle>Posts</CardTitle>
-              <CardDescription>
-                All posts from {profile.firstName} {profile.lastName}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No posts yet.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="followers">
-          <Card>
-            <CardHeader>
-              <CardTitle>Followers</CardTitle>
-              <CardDescription>
-                People who follow {profile.firstName} {profile.lastName}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">No followers yet.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-        
-        <TabsContent value="following">
-          <Card>
-            <CardHeader>
-              <CardTitle>Following</CardTitle>
-              <CardDescription>
-                People {profile.firstName} {profile.lastName} follows
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <p className="text-muted-foreground">Not following anyone yet.</p>
-            </CardContent>
-          </Card>
-        </TabsContent>
-      </Tabs>
-    </div>
+        )}
+      </>
   );
 }

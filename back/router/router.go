@@ -32,6 +32,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleImages(w, r, db)
 	})
 
+	// Image Comment
+	mux.HandleFunc("GET /api/commentImages/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleImages(w, r, db)
+	})
+
 	// HOME
 	mux.HandleFunc("GET /api/home/post", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleHomePost(w, r, db)
@@ -46,7 +51,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.CreatePostHandler(w, r, db)
 	})
 	// like/dislike a post
-	mux.HandleFunc("GET /api/eventpost/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/eventpost/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleEventPost(w, r, db)
 	})
 	// handle post info ( comment info / count like or dislike )
@@ -63,7 +68,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// COMMENT
-	// get comment
+	// get comment donne déja dans /api/post?=
 	mux.HandleFunc("GET /api/comment/", func(w http.ResponseWriter, r *http.Request) {
 
 	})
@@ -72,7 +77,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleCreateComment(w, r, db)
 	})
 	// like/dislike comment
-	mux.HandleFunc("GET /api/eventcomment/", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("POST /api/eventcomment/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleEventComment(w, r, db)
 	})
 	// delete comment
@@ -134,6 +139,18 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	//MESSAGE
+	// send message with create conversation option
+	mux.HandleFunc("POST /api/message", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSendMessage(w, r, db, hub)
+	})
+	// get conversation
+	mux.HandleFunc("GET /api/conversation", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetConversation(w, r, db)
+	})
+	// get messages
+	mux.HandleFunc("GET /api/messages", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetMessages(w, r, db)
+	})
 
 	//GROUPS
 	// create group
