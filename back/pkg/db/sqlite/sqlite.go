@@ -18,12 +18,6 @@ func StartMigration() {
 		log.Fatalf("Erreur de migrations fichiers : %v", err)
 	}
 
-	// Execute les migrations en do/**/wn
-	err = m.Down()
-	if err != nil {
-		log.Fatalf("Erreur de migrations down: %v", err)
-	}
-
 	// Execute les migrations en up
 	err = m.Up()
 	if err != nil && !errors.Is(err, migrate.ErrNoChange) {

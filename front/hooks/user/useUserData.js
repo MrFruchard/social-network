@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { fetchUserInfo } from "front/api/user/userInfo";
+import { fetchUserInfo } from "@/api/user/userInfo";
 
 export function useUserData() {
     const [userData, setUserData] = useState(null);
@@ -14,7 +14,7 @@ export function useUserData() {
                 const data = await fetchUserInfo();
                 setUserData(data);
             } catch (err) {
-                setError(err);
+                setError(error);
             } finally {
                 setLoading(false);
             }
