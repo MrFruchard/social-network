@@ -12,6 +12,7 @@ import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CalendarIcon, UserIcon, MailIcon, ClockIcon, LockIcon, LockOpenIcon } from "lucide-react";
+import { UserPostsList } from "@/components/UserPostsList";
 
 function formatDate(dateString: string) {
   if (!dateString) return "";
@@ -171,7 +172,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">No posts yet.</p>
+              <UserPostsList userId={profile.id} />
             </CardContent>
           </Card>
         </TabsContent>
