@@ -50,7 +50,7 @@ func HandleImages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
-	} else if typeImg != "avatars" {
+	} else if typeImg != "avatars" && typeImg != "groupImages" {
 		utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid image type")
 		return
 	}

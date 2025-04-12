@@ -22,18 +22,21 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.Logout(w, r, db)
 	})
 
+	//IMAGES
 	// Image Profile Picture
 	mux.HandleFunc("GET /api/avatars/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleImages(w, r, db)
 	})
-
 	// Image Post
 	mux.HandleFunc("GET /api/postImages/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleImages(w, r, db)
 	})
-
 	// Image Comment
 	mux.HandleFunc("GET /api/commentImages/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleImages(w, r, db)
+	})
+	// Image Group
+	mux.HandleFunc("GET /api/groupImages/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleImages(w, r, db)
 	})
 
@@ -153,25 +156,29 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	//GROUPS
-	// create group
+	// create group X
 	mux.HandleFunc("POST /api/group/create", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCreateGroup(w, r, db)
 	})
-	// modify group
+	// modify group X
 	mux.HandleFunc("PATCH /api/group/update", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleModifyGroup(w, r, db)
 	})
-	// delete group
+	// delete group X
 	mux.HandleFunc("DELETE /api/group/delete", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleDeleteGroup(w, r, db)
 	})
-	// delete member
+	// delete member X
 	mux.HandleFunc("DELETE /api/group/member", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleBanMemberGroup(w, r, db)
 	})
 	// ask to join
 	mux.HandleFunc("POST /api/group/ask", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleAskToJoinGroup(w, r, db)
+	})
+	// message conv
+	mux.HandleFunc("POST /api/group/message", func(w http.ResponseWriter, r *http.Request) {
+
 	})
 
 	//CHECK
