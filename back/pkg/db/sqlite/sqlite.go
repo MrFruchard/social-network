@@ -3,11 +3,12 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"log"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
 )
 
 func StartMigration() {

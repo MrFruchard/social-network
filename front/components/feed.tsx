@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { reactToPost } from "@/api/post/postApi";
 import {
   Heart,
   MessageCircle,
@@ -6,6 +7,7 @@ import {
   ThumbsDown,
   Users,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function TwitterLikeFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -42,62 +44,68 @@ export default function TwitterLikeFeed() {
     [key: string]: any; // To allow other properties in the post object
   }
 
-  const handleLike = (postId: number): void => {
-    setPosts(
-      posts.map((post: Post) => {
-        if (post.id === postId) {
-          // Si déjà liké, on retire le like, sinon on l'ajoute
-          const newLiked = !post.liked;
-          const likeCount = newLiked
-            ? post.like_count + 1
-            : post.like_count - 1;
+  const handleLike = async (postId: number): Promise<void> => {
+    try {
+      await reactToPost(postId, "liked");
+      setPosts(
+        posts.map((post: Post) => {
+          if (post.id === postId) {
+            const newLiked = !post.liked;
+            const likeCount = newLiked
+              ? post.like_count + 1
+              : post.like_count - 1;
 
-          // Si le post est disliké et qu'on like, on retire le dislike
-          const newDisliked = newLiked ? false : post.disliked;
-          const dislikeCount =
-            post.disliked && newLiked
-              ? post.dislike_count - 1
-              : post.dislike_count;
+            const newDisliked = newLiked ? false : post.disliked;
+            const dislikeCount =
+              post.disliked && newLiked
+                ? post.dislike_count - 1
+                : post.dislike_count;
 
-          return {
-            ...post,
-            liked: newLiked,
-            disliked: newDisliked,
-            like_count: likeCount,
-            dislike_count: dislikeCount,
-          };
-        }
-        return post;
-      })
-    );
+            return {
+              ...post,
+              liked: newLiked,
+              disliked: newDisliked,
+              like_count: likeCount,
+              dislike_count: dislikeCount,
+            };
+          }
+          return post;
+        })
+      );
+    } catch (error) {
+      console.error("Failed to like post:", error);
+    }
   };
 
-  const handleDislike = (postId: number): void => {
-    setPosts(
-      posts.map((post: Post) => {
-        if (post.id === postId) {
-          // Si déjà disliké, on retire le dislike, sinon on l'ajoute
-          const newDisliked: boolean = !post.disliked;
-          const dislikeCount: number = newDisliked
-            ? post.dislike_count + 1
-            : post.dislike_count - 1;
+  const handleDislike = async (postId: number): Promise<void> => {
+    try {
+      await reactToPost(postId, "disliked");
+      setPosts(
+        posts.map((post: Post) => {
+          if (post.id === postId) {
+            const newDisliked = !post.disliked;
+            const dislikeCount = newDisliked
+              ? post.dislike_count + 1
+              : post.dislike_count - 1;
 
-          // Si le post est liké et qu'on dislike, on retire le like
-          const newLiked: boolean = newDisliked ? false : post.liked;
-          const likeCount: number =
-            post.liked && newDisliked ? post.like_count - 1 : post.like_count;
+            const newLiked = newDisliked ? false : post.liked;
+            const likeCount =
+              post.liked && newDisliked ? post.like_count - 1 : post.like_count;
 
-          return {
-            ...post,
-            disliked: newDisliked,
-            liked: newLiked,
-            dislike_count: dislikeCount,
-            like_count: likeCount,
-          };
-        }
-        return post;
-      })
-    );
+            return {
+              ...post,
+              disliked: newDisliked,
+              liked: newLiked,
+              dislike_count: dislikeCount,
+              like_count: likeCount,
+            };
+          }
+          return post;
+        })
+      );
+    } catch (error) {
+      console.error("Failed to dislike post:", error);
+    }
   };
 
   if (loading) {
@@ -222,14 +230,16 @@ export default function TwitterLikeFeed() {
                 {/* Actions */}
                 <div className="flex justify-between mt-3 text-gray-500">
                   {/* Comment */}
-                  <button className="flex items-center group">
-                    <div className="p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-500 transition">
-                      <MessageCircle size={18} />
-                    </div>
-                    <span className="ml-1 text-sm group-hover:text-blue-500">
-                      {post.comment_count}
-                    </span>
-                  </button>
+                  <Link href={`/post/${post.id}`}>
+                    <button className="flex items-center group">
+                      <div className="p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-500 transition">
+                        <MessageCircle size={18} />
+                      </div>
+                      <span className="ml-1 text-sm group-hover:text-blue-500">
+                        {post.comment_count}
+                      </span>
+                    </button>
+                  </Link>
 
                   {/* Like */}
                   <button
