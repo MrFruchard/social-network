@@ -20,6 +20,7 @@ export function ProfileMenuItem() {
       return `${userData["firstName"][0]}${userData["lastName"][0]}`.toUpperCase();
     }
     if (userData["username"]) {
+      // @ts-ignore
       return userData["username"][0].toUpperCase();
     }
     return "U";
