@@ -190,6 +190,10 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	// accept to join
 	// decline to join
+	// send message group
+	mux.HandleFunc("POST /api/group/message", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleMessageGroups(w, r, db)
+	})
 
 	//CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
