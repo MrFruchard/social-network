@@ -69,6 +69,14 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("PATCH /api/post/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleUpdatePost(w, r, db)
 	})
+	// get private member post
+	mux.HandleFunc("GET /api/privateMember", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetPrivateMember(w, r, db)
+	})
+	// delete private member post
+	mux.HandleFunc("DELETE /api/privateMember", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleDeletePrivateMember(w, r, db)
+	})
 
 	// COMMENT
 	// get comment donne déja dans /api/post?=
