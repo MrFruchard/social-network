@@ -28,10 +28,10 @@ func CreatePost(content, userId, image, tag, groupId string, db *sql.DB) error {
 		tagNull = sql.NullString{Valid: false}
 	}
 
-	query := `INSERT INTO POSTS(ID, CONTENT, USER_ID, CREATED_AT, UPDATED_AT, IMAGE, TAG, GROUP_ID)
-			  VALUES (?,? ,? ,datetime('now'), datetime('now'), ? ,? ,?)`
+	query := `INSERT INTO POSTS(ID, CONTENT, USER_ID, CREATED_AT, UPDATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY)
+			  VALUES (?,? ,? ,datetime('now'), datetime('now'), ? ,? ,?, ?)`
 
-	_, err := db.Exec(query, id, content, userId, imageNull, tagNull, groudIdNull)
+	_, err := db.Exec(query, id, content, userId, imageNull, tagNull, groudIdNull, 1)
 	if err != nil {
 		return err
 	}

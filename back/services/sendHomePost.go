@@ -18,7 +18,7 @@ func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error
 	var postProfile []PostProfile
 
 	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY 
-	          FROM POSTS ORDER BY CREATED_AT DESC LIMIT 20 OFFSET ?`
+	          FROM POSTS ORDER BY CREATED_AT DESC LIMIT 100 OFFSET ?`
 
 	rows, err := db.Query(query, offset)
 	if err != nil {
