@@ -52,7 +52,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	// create a post
 	mux.HandleFunc("POST /api/posts", func(w http.ResponseWriter, r *http.Request) {
 		handlers.CreatePostHandler(w, r, db)
-	})
+	}) // --> manque ajout de la liste privée.
 	// like/dislike a post
 	mux.HandleFunc("POST /api/eventpost/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleEventPost(w, r, db)
@@ -123,7 +123,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	//USER
-	//  get personal infos
+	// get personal infos
 	mux.HandleFunc("GET /api/user/info", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleUserPersonal(w, r, db)
 	})
@@ -180,6 +180,8 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/group/message", func(w http.ResponseWriter, r *http.Request) {
 
 	})
+	// accept to join
+	// decline to join
 
 	//CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {

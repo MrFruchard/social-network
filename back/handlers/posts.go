@@ -16,6 +16,14 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
+
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Failed to parse form data")
+		return
+	}
+
+	users := r.Form["users"]
 	content := r.FormValue("content")
 	tag := r.FormValue("tags")
 	privacy := r.FormValue("privacy")
@@ -45,7 +53,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	groupId := r.FormValue("groupId")
 
-	err = services.CreatePost(content, userID, uuidAvatar, tag, groupId, privacy, db)
+	err = services.CreatePost(content, userID, uuidAvatar, tag, groupId, privacy, users, db)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
