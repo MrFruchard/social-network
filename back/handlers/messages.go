@@ -96,6 +96,7 @@ func HandleGetConversation(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 }
 
+// Send all Messages
 func HandleGetMessages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	userID := utils.GetUserIdByCookie(r, db)
 	if userID == "" {

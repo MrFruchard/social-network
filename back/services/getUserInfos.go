@@ -5,18 +5,19 @@ import (
 )
 
 type UserInfoResponse struct {
-	Id          string `json:"id"`
-	LastName    string `json:"last_name"`
-	FirstName   string `json:"first_name"`
-	Email       string `json:"email"`
-	About       string `json:"about"`
-	Username    string `json:"username"`
-	ImageUrl    string `json:"image_url"`
-	Public      bool   `json:"public"`
-	DateOfBirth string `json:"date_of_birth"`
-	Followers   int    `json:"followers"`
-	Following   int    `json:"following"`
-	CreatedAt   string `json:"created_at"`
+	Id            string `json:"id"`
+	LastName      string `json:"last_name"`
+	FirstName     string `json:"first_name"`
+	Email         string `json:"email"`
+	About         string `json:"about"`
+	Username      string `json:"username"`
+	ImageUrl      string `json:"image_url"`
+	Public        bool   `json:"public"`
+	DateOfBirth   string `json:"date_of_birth"`
+	Followers     int    `json:"followers"`
+	Following     int    `json:"following"`
+	CreatedAt     string `json:"created_at"`
+	UnreadMessage int    `json:"unread_message"`
 }
 
 func GetUserInfos(db *sql.DB, userId string) (UserInfoResponse, error) {
@@ -25,27 +26,29 @@ func GetUserInfos(db *sql.DB, userId string) (UserInfoResponse, error) {
 	var image, username, about sql.NullString
 	var public int
 
+	// Nombre de followers
 	query1 := `SELECT COUNT(*) FROM FOLLOWERS WHERE USER_ID = ?`
-	err1 := db.QueryRow(query1, userId).Scan(&userInfo.Followers)
-	if err1 != nil {
-		return userInfo, err1
-	}
-	query2 := `SELECT COUNT(*) FROM FOLLOWERS WHERE FOLLOWERS = ?`
-	err2 := db.QueryRow(query2, userId).Scan(&userInfo.Following)
-	if err2 != nil {
-		return userInfo, err2
-	}
-
-	query := "SELECT ID,EMAIL,FIRSTNAME,LASTNAME,ABOUT_ME,USERNAME,IMAGE,PUBLIC,DATE_OF_BIRTH, CREATED_AT FROM USER WHERE ID = ? LIMIT 1"
-	row := db.QueryRow(query, userId)
-
-	err := row.Scan(&userInfo.Id, &userInfo.Email, &userInfo.FirstName, &userInfo.LastName, &about, &username, &image, &userInfo.Public, &userInfo.DateOfBirth, &userInfo.CreatedAt)
+	err := db.QueryRow(query1, userId).Scan(&userInfo.Followers)
 	if err != nil {
 		return userInfo, err
 	}
 
-	// Affecter les valeurs dans la struct, en gérant les NULL
-	userInfo.Id = userId
+	// Nombre de following
+	query2 := `SELECT COUNT(*) FROM FOLLOWERS WHERE FOLLOWERS = ?`
+	err = db.QueryRow(query2, userId).Scan(&userInfo.Following)
+	if err != nil {
+		return userInfo, err
+	}
+
+	// Infos utilisateur
+	query3 := `SELECT ID, EMAIL, FIRSTNAME, LASTNAME, ABOUT_ME, USERNAME, IMAGE, PUBLIC, DATE_OF_BIRTH, CREATED_AT FROM USER WHERE ID = ? LIMIT 1`
+	row := db.QueryRow(query3, userId)
+	err = row.Scan(&userInfo.Id, &userInfo.Email, &userInfo.FirstName, &userInfo.LastName, &about, &username, &image, &public, &userInfo.DateOfBirth, &userInfo.CreatedAt)
+	if err != nil {
+		return userInfo, err
+	}
+
+	// Nullables
 	if username.Valid {
 		userInfo.Username = username.String
 	}
@@ -55,12 +58,33 @@ func GetUserInfos(db *sql.DB, userId string) (UserInfoResponse, error) {
 	if about.Valid {
 		userInfo.About = about.String
 	}
+	userInfo.Public = public != 0
 
-	if public == 0 {
-		userInfo.Public = false
-	} else {
-		userInfo.Public = true
+	// Comptage des messages non lus
+	query4 := `SELECT CONVERSATION_ID FROM CONVERSATION_MEMBERS WHERE USER_ID = ?`
+	rows, err := db.Query(query4, userId)
+	if err != nil {
+		return userInfo, err
 	}
+	defer rows.Close()
+
+	totalUnread := 0
+	for rows.Next() {
+		var convId string
+		err := rows.Scan(&convId)
+		if err != nil {
+			return userInfo, err
+		}
+
+		var unread int
+		err = db.QueryRow(`SELECT COUNT(*) FROM MESSAGES WHERE CONVERSATION_ID = ? AND SENDER_ID != ? AND SEEN = 0`, convId, userId).Scan(&unread)
+		if err != nil {
+			return userInfo, err
+		}
+		totalUnread += unread
+	}
+
+	userInfo.UnreadMessage = totalUnread
 
 	return userInfo, nil
 }

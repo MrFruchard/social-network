@@ -73,7 +73,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	// COMMENT
 	// get comment donne déja dans /api/post?=
 	mux.HandleFunc("GET /api/comment/", func(w http.ResponseWriter, r *http.Request) {
-
+		//
 	})
 	// create comment
 	mux.HandleFunc("POST /api/comment/", func(w http.ResponseWriter, r *http.Request) {
@@ -187,6 +187,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	mux.HandleFunc("GET /api/check/email", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCheckEmail(w, r, db)
+	})
+
+	// NOTIFICATIONS
+	mux.HandleFunc("GET /api/notification", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetNotifications(w, r, db)
 	})
 
 	// WS
