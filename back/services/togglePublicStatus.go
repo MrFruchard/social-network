@@ -25,5 +25,21 @@ func TogglePublicStatus(db *sql.DB, userID string) error {
 		return fmt.Errorf("erreur lors de la mise à jour du statut : %v", err)
 	}
 
+	if newStatus == 1 {
+		privacy := 2
+		query := `UPDATE POSTS SET PRIVACY = ? WHERE USER_ID = ? AND PRIVACY != 0`
+		_, err = db.Exec(query, privacy, userID)
+		if err != nil {
+			return err
+		}
+	} else if newStatus == 0 {
+		privacy := 1
+		query := `UPDATE POSTS SET PRIVACY = ? WHERE USER_ID = ? AND PRIVACY != 0`
+		_, err = db.Exec(query, privacy, userID)
+		if err != nil {
+			return err
+		}
+	}
+
 	return nil
 }
