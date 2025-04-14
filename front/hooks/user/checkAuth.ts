@@ -26,7 +26,7 @@ export function useAuth(options: UseAuthOptions = {}) {
         // Vérification de l'authentification
         const checkAuth = async () => {
             try {
-                const res = await fetch('http://localhost:80/api/checkAuth', {
+                const res = await fetch('http://localhost:80/api/user/info', {
                     credentials: 'include',
                 });
 

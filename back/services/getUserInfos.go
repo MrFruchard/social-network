@@ -39,7 +39,7 @@ func GetUserInfos(db *sql.DB, userId string) (UserInfoResponse, error) {
 	query := "SELECT ID,EMAIL,FIRSTNAME,LASTNAME,ABOUT_ME,USERNAME,IMAGE,PUBLIC,DATE_OF_BIRTH, CREATED_AT FROM USER WHERE ID = ? LIMIT 1"
 	row := db.QueryRow(query, userId)
 
-	err := row.Scan(&userInfo.Id, &userInfo.Email, &userInfo.FirstName, &userInfo.LastName, &about, &username, &image, &userInfo.Public, &userInfo.DateOfBirth, &userInfo.CreatedAt)
+	err := row.Scan(&userInfo.Id, &userInfo.Email, &userInfo.FirstName, &userInfo.LastName, &about, &username, &image, &public, &userInfo.DateOfBirth, &userInfo.CreatedAt)
 	if err != nil {
 		return userInfo, err
 	}

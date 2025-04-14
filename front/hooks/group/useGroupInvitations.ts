@@ -29,16 +29,26 @@ export function useGroupInvitations(groupId: string) {
   const fetchInvitations = async () => {
     try {
       setLoading(true);
-      // Notez: Cette API n'existe pas encore dans le backend
-      // const data = await fetchGroupInvitations(groupId);
-      // setInvitations(data.invitations);
-      // setPendingRequests(data.pendingRequests);
-
-      // Placeholder en attendant l'API
-      setInvitations([]);
-      setPendingRequests([]);
+      
+      // Récupérer les invitations et demandes
+      const response = await fetch(`http://localhost:80/api/group/${groupId}/invitations`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch group invitations');
+      }
+      
+      const data = await response.json();
+      setInvitations(data.invitations || []);
+      setPendingRequests(data.pendingRequests || []);
     } catch (err) {
+      console.error('Error fetching group invitations:', err);
       setError(err instanceof Error ? err : new Error('Une erreur est survenue'));
+      
+      // En cas d'erreur, garder les anciennes valeurs
+      setInvitations(prev => prev);
+      setPendingRequests(prev => prev);
     } finally {
       setLoading(false);
     }
@@ -54,11 +64,24 @@ export function useGroupInvitations(groupId: string) {
   const acceptRequest = async (userId: string) => {
     try {
       setLoading(true);
-      // Notez: Cette API n'existe pas encore dans le backend
-      // await acceptGroupRequest(groupId, userId);
+      
+      const response = await fetch(`http://localhost:80/api/group/${groupId}/accept`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to accept group request');
+      }
+      
       setPendingRequests(prev => prev.filter(request => request.userId !== userId));
       return true;
     } catch (err) {
+      console.error('Error accepting group request:', err);
       setError(err instanceof Error ? err : new Error('Erreur lors de l\'acceptation de la demande'));
       throw err;
     } finally {
@@ -70,11 +93,24 @@ export function useGroupInvitations(groupId: string) {
   const rejectRequest = async (userId: string) => {
     try {
       setLoading(true);
-      // Notez: Cette API n'existe pas encore dans le backend
-      // await rejectGroupRequest(groupId, userId);
+      
+      const response = await fetch(`http://localhost:80/api/group/${groupId}/reject`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to reject group request');
+      }
+      
       setPendingRequests(prev => prev.filter(request => request.userId !== userId));
       return true;
     } catch (err) {
+      console.error('Error rejecting group request:', err);
       setError(err instanceof Error ? err : new Error('Erreur lors du refus de la demande'));
       throw err;
     } finally {
@@ -86,11 +122,25 @@ export function useGroupInvitations(groupId: string) {
   const inviteUser = async (userId: string) => {
     try {
       setLoading(true);
-      // Notez: Cette API n'existe pas encore dans le backend
-      // await inviteToGroup(groupId, userId);
-      setInvitations(prev => [...prev, { userId, status: 'pending' }]);
+      
+      const response = await fetch(`http://localhost:80/api/group/${groupId}/invite`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userId }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to invite user to group');
+      }
+      
+      const newInvitation = await response.json();
+      setInvitations(prev => [...prev, newInvitation]);
       return true;
     } catch (err) {
+      console.error('Error inviting user to group:', err);
       setError(err instanceof Error ? err : new Error('Erreur lors de l\'invitation'));
       throw err;
     } finally {

@@ -9,6 +9,8 @@ import {
 } from "lucide-react";
 import { reactToPost } from "@/api/post/postApi";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import UserLink from "@/components/UserLink";
+import { useRouter } from "next/navigation";
 
 interface Post {
   id: string;
@@ -22,6 +24,7 @@ interface Post {
 export function UserPostsList({ userId }: { userId: string }) {
   const { posts, loading, error } = useUserPosts(userId);
   const [localPosts, setLocalPosts] = useState<Post[]>([]);
+  const router = useRouter();
 
   // When posts load, update local state
   useEffect(() => {
@@ -149,11 +152,11 @@ export function UserPostsList({ userId }: { userId: string }) {
       {localPosts.map((post) => (
         <div
           key={post.id}
-          className="p-4 hover:bg-gray-50 transition cursor-pointer"
+          className="p-4 hover:bg-gray-50 transition"
         >
           <div className="flex">
             {/* Avatar */}
-            <div className="mr-3">
+            <div className="mr-3 cursor-pointer" onClick={() => router.push(`/profile?id=${post.user_id || post.userId}`)}>
               {post.image_profile_url ? (
                 <img
                   src={post.image_profile_url}
@@ -175,9 +178,12 @@ export function UserPostsList({ userId }: { userId: string }) {
               {/* Header */}
               <div className="flex items-start justify-between">
                 <div>
-                  <span className="font-bold hover:underline">
-                    {post.first_name} {post.last_name}
-                  </span>
+                  <UserLink 
+                    userId={post.user_id || post.userId} 
+                    username={`${post.first_name} ${post.last_name}`}
+                    isPrivate={post.is_private}
+                    className="font-bold hover:underline"
+                  />
                   <span className="text-gray-500 ml-1">
                     @{post.username} · {timeAgo(post.created_at)}
                   </span>
@@ -186,7 +192,10 @@ export function UserPostsList({ userId }: { userId: string }) {
 
               {/* Group */}
               {post.group_id && post.group_id.id && (
-                <div className="flex items-center text-gray-500 mb-1 text-sm">
+                <div 
+                  className="flex items-center text-gray-500 mb-1 text-sm cursor-pointer hover:underline"
+                  onClick={() => router.push(`/group/${post.group_id.id}`)}
+                >
                   <Users size={14} className="mr-1" />
                   <span>{post.group_id.name}</span>
                 </div>

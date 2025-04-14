@@ -25,17 +25,27 @@ export function useGroupMembers(groupId: string) {
   const fetchMembers = async () => {
     try {
       setLoading(true);
-      // Notez: Cette API n'existe pas encore dans le backend
-      // const data = await fetchGroupMembers(groupId);
-      // setMembers(data.members);
-      // setPendingRequests(data.pendingRequests);
-      // setUserStatus(data.userStatus);
-
-      // Placeholder en attendant l'API
-      setMembers([]);
-      setPendingRequests([]);
+      
+      // Récupérer les membres
+      const response = await fetch(`http://localhost:80/api/group/${groupId}/members`, {
+        credentials: 'include',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch group members');
+      }
+      
+      const data = await response.json();
+      setMembers(data.members || []);
+      setPendingRequests(data.pendingRequests || []);
+      setUserStatus(data.userStatus || null);
     } catch (err) {
+      console.error('Error fetching group members:', err);
       setError(err instanceof Error ? err : new Error('Une erreur est survenue'));
+      
+      // En cas d'erreur, garder les anciennes valeurs
+      setMembers(prev => prev);
+      setPendingRequests(prev => prev);
     } finally {
       setLoading(false);
     }
@@ -79,11 +89,11 @@ export function useGroupMembers(groupId: string) {
   };
 
   // Quitter le groupe
-  const handleLeaveGroup = async () => {
+  const handleLeaveGroup = async (userId: string) => {
     try {
       setLoading(true);
-      // Notez: Cette API n'existe pas encore dans le backend, on peut utiliser removeGroupMember avec l'ID utilisateur actuel
-      // await leaveGroup(groupId);
+      // Utiliser l'API de suppression de membre existante
+      await removeGroupMember(groupId, userId);
       setUserStatus('none');
       return true;
     } catch (err) {

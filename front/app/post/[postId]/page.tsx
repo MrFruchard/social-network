@@ -71,7 +71,11 @@ export default function PostPage({
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const result = await response.json();
-        setPost(result);
+        // S'assurer que le champ comment existe toujours
+        setPost({
+          ...result,
+          comment: result.comment || []
+        });
         setLoading(false);
       } catch (error) {
         setError(
@@ -102,7 +106,7 @@ export default function PostPage({
         prevPost
           ? {
               ...prevPost,
-              comment: [...prevPost.comment, newCommentWithId],
+              comment: prevPost.comment ? [...prevPost.comment, newCommentWithId] : [newCommentWithId],
               comment_count: prevPost.comment_count + 1,
             }
           : null
@@ -191,7 +195,7 @@ export default function PostPage({
           {/* Comments Section */}
           <div className="bg-white shadow-md rounded-lg p-6">
             <h2 className="text-lg font-bold mb-4">Commentaires</h2>
-            {post.comment.length > 0 ? (
+            {post.comment && post.comment.length > 0 ? (
               post.comment.map((comment) => (
                 <div key={comment.id} className="mb-6 border-b pb-4">
                   <div className="flex items-center mb-2">

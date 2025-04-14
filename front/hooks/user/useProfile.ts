@@ -1,110 +1,168 @@
 import { useState, useEffect } from 'react';
-import { fetchUserProfile, togglePrivacyStatus } from '@/api/user/userInfo';
+import { togglePrivacyStatus } from '@/api/user/userInfo';
 
 interface ProfileData {
   id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  username?: string;
-  dateOfBirth?: string;
-  image?: string;
-  aboutMe?: string;
-  isPublic: boolean;
-  role: string;
-  createdAt: string;
-  followerCount: number;
-  followingCount: number;
+  username: string;
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  avatar?: string;
+  public: boolean;
+  followed: boolean;
+  is_following: boolean;
+  pending_request: boolean;
+  follower_count: number;
+  following_count: number;
+  post_count: number;
+  isCurrentUser: boolean;
 }
 
 export function useProfile(userId?: string) {
-  const [profile, setProfile] = useState<ProfileData | null>(null);
-  const [loading, setLoading] = useState<boolean>(true);
+  const [profileData, setProfileData] = useState<ProfileData | null>(null);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isOwner, setIsOwner] = useState<boolean>(false);
+  const [accessDenied, setAccessDenied] = useState(false);
 
-  // Récupérer l'ID de l'utilisateur connecté une seule fois
-  // Nous n'avons plus besoin de récupérer l'ID utilisateur séparément
-  // puisque fetchUserProfile gère désormais les deux cas (avec ou sans userId)
   useEffect(() => {
-    if (!userId) {
-      setIsOwner(true); // Si aucun userId n'est fourni, c'est le profil de l'utilisateur connecté
+    const fetchProfile = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        setAccessDenied(false);
+
+        // Si userId n'est pas fourni, récupérer le profil de l'utilisateur connecté
+        const url = userId 
+          ? `http://localhost:80/api/user/${userId}` // Modification de la route pour correspondre au backend
+          : 'http://localhost:80/api/user/info';
+        
+        const response = await fetch(url, {
+          credentials: 'include'
+        });
+
+        if (response.status === 403) {
+          setAccessDenied(true);
+          throw new Error('Ce profil est privé. Vous devez suivre cet utilisateur pour voir son contenu.');
+        }
+
+        if (!response.ok) {
+          throw new Error('Impossible de récupérer les informations du profil');
+        }
+
+        const data = await response.json();
+        
+        // Log pour déboguer
+        console.log('Profil reçu du backend:', JSON.stringify(data, null, 2));
+        
+        // Déterminer si c'est le profil de l'utilisateur actuel
+        const isCurrentUser = !userId || data.id === (await getCurrentUserId());
+        
+        setProfileData({
+          ...data,
+          isCurrentUser
+        });
+      } catch (err) {
+        console.error('Error fetching profile:', err);
+        // Log plus détaillé pour le débogage
+        console.error('URL attempted:', userId 
+          ? `http://localhost:80/api/user/${userId}`
+          : 'http://localhost:80/api/user/info');
+        setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, [userId]);
+
+  // Helper pour obtenir l'ID de l'utilisateur connecté
+  const getCurrentUserId = async (): Promise<string> => {
+    try {
+      const response = await fetch('http://localhost:80/api/user/info', {
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Non connecté');
+      }
+      
+      const data = await response.json();
+      return data.id;
+    } catch (error) {
+      return '';
     }
-  }, [userId]);
+  };
 
-  // Récupérer les données du profil quand userId change
-  useEffect(() => {
-    fetchProfileData();
-  }, [userId]);
-
-  const fetchProfileData = async () => {
+  // Fonction pour basculer le statut public/privé (implémentation côté frontend uniquement)
+  const togglePrivacy = async () => {
+    if (!profileData || !profileData.isCurrentUser) return;
+    
     try {
       setLoading(true);
-
-      // On utilise le userId tel quel, la fonction fetchUserProfile gère maintenant les deux cas
-      const data = await fetchUserProfile(userId);
-
-      if (!data || !data.id) {
-        throw new Error("Profile data missing ID");
-      }
-
-      setProfile(data);
       
-      // Si c'est un autre profil que le sien, on vérifie si on en est le propriétaire
-      if (userId) {
-        try {
-          // Récupérer les infos de l'utilisateur connecté pour comparer les IDs
-          const currentUserData = await fetch("http://localhost:80/api/user/info", {
-            credentials: "include",
-          }).then(res => {
-            if (!res.ok) throw new Error("Failed to fetch current user");
-            return res.json();
-          });
-          
-          // Vérifier si l'utilisateur connecté est le propriétaire du profil
-          setIsOwner(currentUserData.id === data.id);
-        } catch (error) {
-          console.error("Failed to determine ownership:", error);
-          setIsOwner(false);
-        }
-      }
-      // Si userId n'est pas fourni, on a déjà défini isOwner=true dans le useEffect
-
+      // Obtenir l'état actuel pour référence
+      const initialValue = profileData.public;
+      console.log("État actuel:", initialValue);
+      
+      // Utiliser notre implémentation client-side qui ignore le backend
+      const result = await togglePrivacyStatus();
+      console.log("Résultat du basculement simulé:", result);
+      
+      // Appliquer le nouvel état à l'interface
+      setProfileData(prev => {
+        if (!prev) return null;
+        const newState = { ...prev, public: result.newState };
+        console.log(`État actualisé: ${prev.public} -> ${newState.public}`);
+        return newState;
+      });
+      
     } catch (err) {
-      let errorMessage = 'Failed to load profile data';
-      if (err instanceof Error) {
-        errorMessage = err.message;
-      }
-      setError(errorMessage);
-      console.error("Profile fetch error:", err);
+      console.error('Error toggling privacy:', err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
   };
 
-  const togglePrivacy = async () => {
-    if (!isOwner) return;
-
+  // Fonction pour demander à suivre
+  const requestFollow = async () => {
+    if (!userId) return;
+    
     try {
       setLoading(true);
-      const data = await togglePrivacyStatus();
-      setProfile(prev => prev ? { ...prev, isPublic: !prev.isPublic } : null);
-      return data;
+      const response = await fetch('http://localhost:80/api/user/follow', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include',
+        body: JSON.stringify({ id: userId })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Impossible d\'envoyer la demande');
+      }
+      
+      // Mettre à jour l'état local
+      setProfileData(prev => prev ? { 
+        ...prev, 
+        pending_request: true 
+      } : null);
     } catch (err) {
-      setError('Failed to toggle privacy');
-      console.error(err);
-      throw err;
+      console.error('Error requesting follow:', err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
     }
   };
 
   return {
-    profile,
+    profileData,
     loading,
     error,
-    isOwner,
-    refresh: fetchProfileData,
-    togglePrivacy
+    accessDenied,
+    togglePrivacy,
+    requestFollow
   };
 }

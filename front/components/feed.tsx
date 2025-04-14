@@ -8,11 +8,14 @@ import {
   Users,
 } from "lucide-react";
 import Link from "next/link";
+import UserLink from "@/components/UserLink";
+import { useRouter } from "next/navigation";
 
 export default function TwitterLikeFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const fetchPosts = async () => {
@@ -22,6 +25,9 @@ export default function TwitterLikeFeed() {
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const result = await response.json();
+        // Log détaillé pour déboguer la structure des données
+        console.log("Posts data structure:", result.data && result.data.length > 0 ? result.data[0] : "No posts");
+        console.log("Full first post:", JSON.stringify(result.data && result.data.length > 0 ? result.data[0] : {}, null, 2));
         setPosts(result.data);
         setLoading(false);
       } catch (error) {
@@ -161,11 +167,11 @@ export default function TwitterLikeFeed() {
         {posts.map((post) => (
           <div
             key={post.id}
-            className="p-4 hover:bg-gray-50 transition cursor-pointer"
+            className="p-4 hover:bg-gray-50 transition"
           >
             <div className="flex">
               {/* Avatar */}
-              <div className="mr-3">
+              <div className="mr-3 cursor-pointer" onClick={() => router.push(`/profile?id=${post.user_id || post.userId}`)}>
                 {post.image_profile_url ? (
                   <img
                     src={post.image_profile_url}
@@ -187,9 +193,12 @@ export default function TwitterLikeFeed() {
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <span className="font-bold hover:underline">
-                      {post.first_name} {post.last_name}
-                    </span>
+                    <UserLink 
+                      userId={post.user_id || post.userId} 
+                      username={`${post.first_name} ${post.last_name}`}
+                      isPrivate={post.is_private}
+                      className="font-bold hover:underline"
+                    />
                     <span className="text-gray-500 ml-1">
                       @{post.username} · {timeAgo(post.created_at)}
                     </span>
@@ -198,7 +207,10 @@ export default function TwitterLikeFeed() {
 
                 {/* Group */}
                 {post.group_id && post.group_id.id && (
-                  <div className="flex items-center text-gray-500 mb-1 text-sm">
+                  <div 
+                    className="flex items-center text-gray-500 mb-1 text-sm cursor-pointer hover:underline"
+                    onClick={() => router.push(`/group/${post.group_id.id}`)}
+                  >
                     <Users size={14} className="mr-1" />
                     <span>{post.group_id.name}</span>
                   </div>
