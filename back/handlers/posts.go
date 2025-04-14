@@ -18,6 +18,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 	content := r.FormValue("content")
 	tag := r.FormValue("tags")
+	privacy := r.FormValue("privacy")
 	if strings.TrimSpace(content) == "" {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Missing content or tag")
 		return
@@ -44,7 +45,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	groupId := r.FormValue("groupId")
 
-	err = services.CreatePost(content, userID, uuidAvatar, tag, groupId, db)
+	err = services.CreatePost(content, userID, uuidAvatar, tag, groupId, privacy, db)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
