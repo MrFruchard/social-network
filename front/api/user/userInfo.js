@@ -54,36 +54,45 @@ export const fetchUserProfile = async (userId) => {
     return response.json();
 };
 
-// L'API originale ne fonctionne pas correctement, essayons une approche différente
 export const togglePrivacyStatus = async () => {
     try {
-        console.log('Implémentation directe du changement de statut...');
-        
+        console.log('Envoi de la requête de changement de statut...');
+
         // Obtenir l'état actuel
         const currentStateResponse = await fetch("http://localhost:80/api/user/info", {
             credentials: "include"
         });
         const currentData = await currentStateResponse.json();
         console.log('État actuel :', currentData.public);
-        
-        // Le nouveau statut est l'inverse de l'actuel
-        const newStatus = !currentData.public;
-        console.log('Changement d\'état à :', newStatus);
-        
-        // Forçons l'état souhaité
+
+        // Envoyer la requête au backend pour changer le statut
+        const response = await fetch("http://localhost:80/api/user/public", {
+            method: "PATCH",
+            credentials: "include",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            // Pas besoin d'envoyer de body car l'API bascule simplement l'état actuel
+        });
+
+        if (!response.ok) {
+            throw new Error('Failed to update privacy status');
+        }
+
+        // Récupérer la réponse du backend
+        const result = await response.json();
+
         return {
             success: true,
             previousState: currentData.public,
-            newState: newStatus,     // Le nouveau statut est l'inverse du statut actuel
-            changed: true,           // Forcer le changement de statut côté UI
-            // On ignore le backend qui ne semble pas changer l'état
+            newState: !currentData.public,    // Inverse de l'état actuel
+            changed: true
         };
     } catch (error) {
         console.error('Error in togglePrivacyStatus:', error);
         throw error;
     }
 };
-
 // Système de suivi
 export const followUser = async (userId) => {
     const response = await fetch("http://localhost:80/api/user/follow", {
