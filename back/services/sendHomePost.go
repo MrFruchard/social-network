@@ -17,7 +17,7 @@ func SendHomePost(db *sql.DB, userId string) ([]PostProfile, error) {
 func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error) {
 	var postProfile []PostProfile
 
-	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY 
+	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE,GROUP_ID, PRIVACY 
 	          FROM POSTS ORDER BY CREATED_AT DESC LIMIT 100 OFFSET ?`
 
 	rows, err := db.Query(query, offset)
@@ -28,11 +28,11 @@ func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error
 
 	for rows.Next() {
 		var p PostProfile
-		var imageContent, tags, groupId sql.NullString
+		var imageContent, groupId sql.NullString
 		var privacy int
 		var accessPrivate, accessGroup bool
 
-		err = rows.Scan(&p.Id, &p.Content, &p.UserId, &p.CreatedAt, &imageContent, &tags, &groupId, &privacy)
+		err = rows.Scan(&p.Id, &p.Content, &p.UserId, &p.CreatedAt, &imageContent, &groupId, &privacy)
 		if err != nil {
 			return postProfile, err
 		}
@@ -65,6 +65,24 @@ func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error
 				continue
 			}
 		}
+
+		query = `SELECT TAG FROM TAGS WHERE POST_ID = ?`
+		rowsTags, err := db.Query(query, p.Id)
+		if err != nil {
+			log.Printf("Erreur récupération des tags pour le post %s : %v", p.Id, err)
+			continue
+		}
+
+		for rowsTags.Next() {
+			var tag string
+			err := rowsTags.Scan(&tag)
+			if err != nil {
+				log.Printf("Erreur lors du scan d'un tag pour le post %s : %v", p.Id, err)
+				continue
+			}
+			p.Tags = append(p.Tags, tag)
+		}
+		rowsTags.Close()
 
 		var eventResult sql.NullString
 
@@ -105,9 +123,6 @@ func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error
 		}
 		p.OwnerUserId = userId == p.UserId
 
-		if tags.Valid {
-			p.Tags = tags.String
-		}
 		if imageContent.Valid {
 			p.ImageContent = imageContent.String
 		}

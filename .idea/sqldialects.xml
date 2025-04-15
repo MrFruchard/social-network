@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00003_create_post.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00010_create_group.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00011_create_group_member.down.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00014_notifcation.down.sql" dialect="SQLite" />

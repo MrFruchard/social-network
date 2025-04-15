@@ -34,10 +34,7 @@ func UpdatePost(db *sql.DB, userId, postId, content, tags, image string) error {
 		fields = append(fields, "CONTENT")
 		values = append(values, content)
 	}
-	if strings.TrimSpace(tags) != "" {
-		fields = append(fields, "TAG")
-		values = append(values, tags)
-	}
+
 	if strings.TrimSpace(image) != "" {
 		fields = append(fields, "IMAGE")
 		values = append(values, image)

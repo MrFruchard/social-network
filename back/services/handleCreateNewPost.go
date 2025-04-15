@@ -2,8 +2,10 @@ package services
 
 import (
 	"database/sql"
+	"fmt"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"strings"
 )
 
 // Constantes pour la confidentialité
@@ -23,7 +25,6 @@ func CreatePost(content, userId, image, tag, groupId, privacy string, users []st
 	id := uuid.New().String()
 
 	imageNull := toNullString(image)
-	tagNull := toNullString(tag)
 	groupIdNull := toNullString(groupId)
 
 	privacyPost := PrivacyFriends
@@ -47,12 +48,25 @@ func CreatePost(content, userId, image, tag, groupId, privacy string, users []st
 
 	// On insère d'abord dans POSTS
 	postQuery := `
-		INSERT INTO POSTS(ID, CONTENT, USER_ID, CREATED_AT, UPDATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY)
-		VALUES (?, ?, ?, datetime('now'), datetime('now'), ?, ?, ?, ?)
+		INSERT INTO POSTS(ID, CONTENT, USER_ID, CREATED_AT, UPDATED_AT, IMAGE, GROUP_ID, PRIVACY)
+		VALUES (?, ?, ?, datetime('now'), datetime('now'), ?, ?, ?)
 	`
-	_, err := db.Exec(postQuery, id, content, userId, imageNull, tagNull, groupIdNull, privacyPost)
+	_, err := db.Exec(postQuery, id, content, userId, imageNull, groupIdNull, privacyPost)
 	if err != nil {
 		return err
+	}
+
+	if strings.TrimSpace(tag) != "" {
+		tabTag := strings.Fields(tag)
+		fmt.Println(tabTag)
+		for _, t := range tabTag {
+			tagId := uuid.New().String()
+			query := `INSERT INTO TAGS(ID, POST_ID, TAG) VALUES (?,?,?)`
+			_, err = db.Exec(query, tagId, id, t)
+			if err != nil {
+				return err
+			}
+		}
 	}
 
 	// Ensuite, si c'est un post privé, on insère les utilisateurs autorisés

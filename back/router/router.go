@@ -52,7 +52,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	// create a post
 	mux.HandleFunc("POST /api/posts", func(w http.ResponseWriter, r *http.Request) {
 		handlers.CreatePostHandler(w, r, db)
-	}) // --> manque ajout de la liste privée.
+	})
 	// like/dislike a post
 	mux.HandleFunc("POST /api/eventpost/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleEventPost(w, r, db)
@@ -206,6 +206,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	// NOTIFICATIONS
 	mux.HandleFunc("GET /api/notification", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetNotifications(w, r, db)
+	})
+
+	// Tags
+	mux.HandleFunc("GET /api/tag", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSendPostWithTags(w, r, db)
 	})
 
 	// WS
