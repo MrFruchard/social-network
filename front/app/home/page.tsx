@@ -5,6 +5,7 @@ import { useUserData } from "@/hooks/user/useUserData";
 import { createPost } from "@/api/post/postApi";
 import TwitterLikeFeed from "@/components/feed";
 import { ProfileMenuItem } from "@/components/ProfileMenuItem";
+import { useState } from "react";
 
 export default function HomePage() {
   const { userData, loading: userDataLoading } = useUserData();
@@ -12,6 +13,15 @@ export default function HomePage() {
     required: true,
     redirectTo: "/",
   });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openPostForm = () => {
+    setIsModalOpen(true);
+  };
+
+  const closePostForm = () => {
+    setIsModalOpen(false);
+  };
 
   if (authLoading || userDataLoading) {
     return <div>Loading...</div>;
@@ -23,122 +33,82 @@ export default function HomePage() {
   }
 
   return (
-      <>
-        {isAuthenticated && (
-            <div className="grid grid-cols-5 grid-rows-5 gap-4 h-screen">
-              <div className="row-span-5 border p-2 flex flex-col justify-between">
-                <div className="flex flex-col gap-4">
-                  <ul className="space-y-2">
-                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Home</li>
-                    <ProfileMenuItem />
-                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Notifications</li>
-                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Messages</li>
-                    <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">Groupes</li>
-                  </ul>
-                </div>
-                <div className="flex justify-center mb-4">
-                  <LogoutButton />
-                </div>
-              </div>
-              <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
-              <div className="row-span-5 col-start-5 border p-2">3</div>
-              <div
-                  className="col-span-3 row-span-4 col-start-2 row-start-2 border overflow-scroll"
-                  id="main_container"
-              >
-                <TwitterLikeFeed />
-              </div>
-              <button
-                  className="absolute bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow"
-                  onClick={openPostForm}
-              >
-                New Post
-              </button>
-              <div
-                  className="fixed inset-0 flex items-center justify-center bg-black/60 px-4 py-2 rounded shadow transition hidden"
-                  id="modal"
-                  onClick={(e) => {
-                    if (e.target === e.currentTarget) {
-                      const modal = document.getElementById("modal");
-                      if (modal) {
-                        modal.classList.add("hidden");
-                      }
-                    }
-                  }}
-              >
-                <div className="bg-white p-4 rounded shadow-md">
-                  <h2 className="text-xl font-bold mb-4">Create a New Post</h2>
-                  <form id="post-form" className="flex flex-col gap-4">
-                <textarea
+    <>
+      {isAuthenticated && (
+        <div className="grid grid-cols-5 grid-rows-5 gap-4 h-screen">
+          <div className="row-span-5 border p-2 flex flex-col justify-between">
+            <div className="flex flex-col gap-4">
+              <ul className="space-y-2">
+                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
+                  Home
+                </li>
+                <ProfileMenuItem />
+                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
+                  Notifications
+                </li>
+                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
+                  Messages
+                </li>
+                <li className="px-2 py-1 hover:bg-gray-100 rounded cursor-pointer">
+                  Groupes
+                </li>
+              </ul>
+            </div>
+            <div className="flex justify-center mb-4">
+              <LogoutButton />
+            </div>
+          </div>
+          <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
+          <div className="row-span-5 col-start-5 border p-2">3</div>
+          <div
+            className={`col-span-3 row-span-4 col-start-2 row-start-2 border overflow-scroll transition ${
+              isModalOpen ? "opacity-50 pointer-events-none" : ""
+            }`}
+            id="main_container"
+          >
+            <TwitterLikeFeed />
+          </div>
+          <button
+            className="absolute bottom-4 right-4 bg-blue-500 text-white px-4 py-2 rounded shadow"
+            onClick={openPostForm}
+          >
+            New Post
+          </button>
+          {isModalOpen && (
+            <div
+              className="fixed inset-0 flex items-center justify-center bg-black/60 px-4 py-2 rounded shadow transition"
+              id="modal"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  closePostForm();
+                }
+              }}
+            >
+              <div className="bg-white p-4 rounded shadow-md">
+                <h2 className="text-xl font-bold mb-4">Create a New Post</h2>
+                <form id="post-form" className="flex flex-col gap-4">
+                  <textarea
                     placeholder="Content"
                     className="border p-2 rounded"
                     required
-                ></textarea>
-                    <input
-                        type="file"
-                        accept="image/gif, image/jpeg, image/png"
-                        className="border p-2 rounded"
-                    />
-                    <button
-                        type="submit"
-                        className="bg-blue-500 text-white px-4 py-2 rounded shadow"
-                    >
-                      Submit
-                    </button>
-                  </form>
-                </div>
+                  ></textarea>
+                  <input
+                    type="file"
+                    accept="image/gif, image/jpeg, image/png"
+                    className="border p-2 rounded"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-blue-500 text-white px-4 py-2 rounded shadow"
+                  >
+                    Submit
+                  </button>
+                </form>
               </div>
             </div>
-        )}
-      </>
+          )}
+        </div>
+      )}
+    </>
   );
-}
-
-function openPostForm() {
-  const modal = document.getElementById("modal");
-  if (modal) {
-    modal.classList.remove("hidden");
-  }
-
-  const form = document.getElementById("post-form") as HTMLFormElement;
-  if (form) {
-    form.onsubmit = async (event) => {
-      event.preventDefault();
-
-      const fileInput = form.querySelector(
-          'input[type="file"]'
-      ) as HTMLInputElement;
-      const contentTextarea = form.querySelector(
-          "textarea"
-      ) as HTMLTextAreaElement;
-
-      if (!contentTextarea) {
-        console.error("Form elements are missing");
-        return;
-      }
-
-      const myHeaders = new Headers();
-      myHeaders.append("Cookie", "session_id=");
-
-      let tags = contentTextarea.value.split(" ");
-      const hashtags = tags.filter((tag) => tag.startsWith("#"));
-
-      createPost({
-        tags: hashtags,
-        content: contentTextarea.value,
-        image: fileInput?.files?.[0],
-      })
-          .then((response) => {
-            console.log("Post created successfully:", response);
-          })
-          .catch((error) => {
-            console.error("Error creating post:", error);
-          });
-
-      // Close the modal after successful submission
-      if (modal) {
-        modal.classList.add("hidden");
-      }
-    };
-  }
 }

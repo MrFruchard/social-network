@@ -25,10 +25,50 @@ export default function TwitterLikeFeed() {
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const result = await response.json();
-        // Log détaillé pour déboguer la structure des données
-        console.log("Posts data structure:", result.data && result.data.length > 0 ? result.data[0] : "No posts");
-        console.log("Full first post:", JSON.stringify(result.data && result.data.length > 0 ? result.data[0] : {}, null, 2));
-        setPosts(result.data);
+        console.log(
+          "Posts data structure:",
+          result.data && result.data.length > 0 ? result.data[0] : "No posts"
+        );
+        console.log(
+          "Full first post:",
+          JSON.stringify(
+            result.data && result.data.length > 0 ? result.data[0] : {},
+            null,
+            2
+          )
+        );
+
+        // Fetch images for each post
+        const postsWithImages = await Promise.all(
+          result.data.map(async (post: any) => {
+            if (post.image_content_url) {
+              console.log(post.image_content_url);
+              try {
+                const requestOptions = {
+                  method: "GET",
+                };
+
+                const imageResponse = await fetch(
+                  `/api/postImages/${post.image_content_url}`,
+                  requestOptions
+                );
+                if (imageResponse.ok) {
+                  const imageBlob = await imageResponse.blob();
+                  const imageUrl = URL.createObjectURL(imageBlob);
+                  return { ...post, image_content_url: imageUrl };
+                }
+              } catch (imageError) {
+                console.error(
+                  `Failed to fetch image for post ${post.id}:`,
+                  imageError
+                );
+              }
+            }
+            return post;
+          })
+        );
+
+        setPosts(postsWithImages);
         setLoading(false);
       } catch (error) {
         setError(
@@ -165,13 +205,15 @@ export default function TwitterLikeFeed() {
 
       <div className="divide-y">
         {posts.map((post) => (
-          <div
-            key={post.id}
-            className="p-4 hover:bg-gray-50 transition"
-          >
+          <div key={post.id} className="p-4 hover:bg-gray-50 transition">
             <div className="flex">
               {/* Avatar */}
-              <div className="mr-3 cursor-pointer" onClick={() => router.push(`/profile?id=${post.user_id || post.userId}`)}>
+              <div
+                className="mr-3 cursor-pointer"
+                onClick={() =>
+                  router.push(`/profile?id=${post.user_id || post.userId}`)
+                }
+              >
                 {post.image_profile_url ? (
                   <img
                     src={post.image_profile_url}
@@ -193,8 +235,8 @@ export default function TwitterLikeFeed() {
                 {/* Header */}
                 <div className="flex items-start justify-between">
                   <div>
-                    <UserLink 
-                      userId={post.user_id || post.userId} 
+                    <UserLink
+                      userId={post.user_id || post.userId}
                       username={`${post.first_name} ${post.last_name}`}
                       isPrivate={post.is_private}
                       className="font-bold hover:underline"
@@ -207,7 +249,7 @@ export default function TwitterLikeFeed() {
 
                 {/* Group */}
                 {post.group_id && post.group_id.id && (
-                  <div 
+                  <div
                     className="flex items-center text-gray-500 mb-1 text-sm cursor-pointer hover:underline"
                     onClick={() => router.push(`/group/${post.group_id.id}`)}
                   >
