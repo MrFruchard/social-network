@@ -27,30 +27,30 @@ export function ProfileMenuItem() {
   };
 
   return (
-      <li className="cursor-pointer" onClick={navigateToProfile}>
-        <div className="flex items-center gap-3 px-2 py-1 hover:bg-gray-100 rounded">
-          {loading ? (
-              <>
-                <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse"></div>
-                <span>Profil</span>
-              </>
-          ) : (
-              <>
-                {userData && userData["image"] ? (
-                    <Avatar className="h-6 w-6">
-                      <AvatarImage
-                          src={`http://localhost:80/api/avatars/${userData["image"]}`}
-                          alt="Profile"
-                      />
-                      <AvatarFallback>{getInitials()}</AvatarFallback>
-                    </Avatar>
-                ) : (
-                    <UserIcon className="h-5 w-5" />
-                )}
-                <span>Profil</span>
-              </>
-          )}
-        </div>
-      </li>
+    <li className="cursor-pointer" onClick={navigateToProfile}>
+      <div className="flex items-center gap-3 px-2 py-1 hover:bg-gray-100 rounded">
+        {loading ? (
+          <>
+            <div className="w-6 h-6 rounded-full bg-gray-200 animate-pulse"></div>
+            <span>Profil</span>
+          </>
+        ) : (
+          <>
+            {userData && userData["image"] ? (
+              <Avatar className="h-6 w-6">
+                <AvatarImage
+                  src={`http://localhost:80/api/avatars/${userData["image"]}`}
+                  alt="Profile"
+                />
+                <AvatarFallback>{getInitials()}</AvatarFallback>
+              </Avatar>
+            ) : (
+              <UserIcon className="h-5 w-5" />
+            )}
+            <span>Profil</span>
+          </>
+        )}
+      </div>
+    </li>
   );
 }

@@ -3,7 +3,13 @@
 import { useAuth } from "@/hooks/user/checkAuth";
 import { useSearchParams } from "next/navigation";
 import { useProfile } from "@/hooks/user/useProfile";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -11,8 +17,29 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
 import { Switch } from "@/components/ui/switch";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { CalendarIcon, UserIcon, MailIcon, ClockIcon, LockIcon, LockOpenIcon } from "lucide-react";
+import {
+  CalendarIcon,
+  UserIcon,
+  MailIcon,
+  ClockIcon,
+  LockIcon,
+  LockOpenIcon,
+} from "lucide-react";
 import { UserPostsList } from "@/components/UserPostsList";
+
+export interface ProfileData {
+  id: string;
+  username: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  avatar?: string;
+  public: boolean;
+  isCurrentUser: boolean;
+  follower_count: number;
+  following_count: number;
+  created_at: string; // Ensure created_at is a required property
+}
 
 function formatDate(dateString: string) {
   if (!dateString) return "";
@@ -21,17 +48,17 @@ function formatDate(dateString: string) {
 }
 
 export function ProfileContent({ userId }: { userId?: string }) {
-  const { 
-    profileData: profile, 
-    loading, 
-    error, 
+  const {
+    profileData: profile,
+    loading,
+    error,
     accessDenied,
     togglePrivacy,
-    requestFollow
+    requestFollow,
   } = useProfile(userId);
-  
+
   const isOwner = profile?.isCurrentUser || false;
-  
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -46,7 +73,8 @@ export function ProfileContent({ userId }: { userId?: string }) {
         <Alert>
           <div className="flex flex-col gap-4">
             <AlertDescription>
-              Ce profil est privé. Vous devez suivre cet utilisateur pour voir son contenu.
+              Ce profil est privé. Vous devez suivre cet utilisateur pour voir
+              son contenu.
             </AlertDescription>
             <Button onClick={() => requestFollow()}>Demander à suivre</Button>
           </div>
@@ -100,38 +128,54 @@ export function ProfileContent({ userId }: { userId?: string }) {
           <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
             <div className="flex flex-col items-center gap-4">
               <Avatar className="w-24 h-24 border-2 border-primary">
-                <AvatarImage src={profile.avatar ? `http://localhost:80/api/avatars/${profile.avatar}` : undefined} alt={profile.username || "profile"} />
-                <AvatarFallback className="text-xl">{getInitials()}</AvatarFallback>
+                <AvatarImage
+                  src={
+                    profile.avatar
+                      ? `http://localhost:80/api/avatars/${profile.avatar}`
+                      : undefined
+                  }
+                  alt={profile.username || "profile"}
+                />
+                <AvatarFallback className="text-xl">
+                  {getInitials()}
+                </AvatarFallback>
               </Avatar>
-              
+
               {isOwner && (
                 <div className="flex flex-col gap-2 items-center">
                   <div className="flex items-center gap-2">
-                    <Switch 
-                      checked={profile.public} 
+                    <Switch
+                      checked={profile.public}
                       onCheckedChange={() => {
                         // Toggle local UI state immediately for better UX
                         const newState = !profile.public;
-                        console.log("Interface: Basculement immédiat vers", newState ? "public" : "privé");
-                        
+                        console.log(
+                          "Interface: Basculement immédiat vers",
+                          newState ? "public" : "privé"
+                        );
+
                         // Then call backend
                         handleTogglePrivacy();
-                      }} 
+                      }}
                     />
                     <span className="text-sm font-medium">
                       {profile.public ? "Profil Public" : "Profil Privé"}
                     </span>
                   </div>
                   <Badge variant={profile.public ? "outline" : "secondary"}>
-                    {profile.public ? <LockOpenIcon className="h-3 w-3 mr-1" /> : <LockIcon className="h-3 w-3 mr-1" />}
+                    {profile.public ? (
+                      <LockOpenIcon className="h-3 w-3 mr-1" />
+                    ) : (
+                      <LockIcon className="h-3 w-3 mr-1" />
+                    )}
                     {profile.public ? "Public" : "Privé"}
                   </Badge>
-                  
+
                   {/* Debug info */}
                   <div className="mt-2 p-2 bg-gray-100 rounded text-xs">
                     <div>État actuel: {String(profile.public)}</div>
-                    <button 
-                      onClick={() => console.log('Profile data:', profile)} 
+                    <button
+                      onClick={() => console.log("Profile data:", profile)}
                       className="underline text-blue-500"
                     >
                       Log données
@@ -140,28 +184,30 @@ export function ProfileContent({ userId }: { userId?: string }) {
                 </div>
               )}
             </div>
-            
+
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-2xl font-bold mb-2">
                 {profile.first_name} {profile.last_name}
               </h1>
-              
+
               {profile.username && (
-                <h2 className="text-lg text-muted-foreground mb-4">@{profile.username}</h2>
+                <h2 className="text-lg text-muted-foreground mb-4">
+                  @{profile.username}
+                </h2>
               )}
-              
+
               <div className="flex flex-col gap-2 mb-4">
                 {/* Afficher les données du rôle si disponible */}
                 {/*<div className="flex items-center gap-2">
                   <UserIcon className="text-muted-foreground h-4 w-4" />
                   <span>{profile.role}</span>
                 </div>*/}
-                
+
                 <div className="flex items-center gap-2">
                   <MailIcon className="text-muted-foreground h-4 w-4" />
                   <span>{profile.email}</span>
                 </div>
-                
+
                 {/* Afficher la date de naissance si disponible */}
                 {/*profile.date_of_birth && (
                   <div className="flex items-center gap-2">
@@ -169,7 +215,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
                     <span>Né(e) le {formatDate(profile.date_of_birth)}</span>
                   </div>
                 )*/}
-                
+
                 {profile.created_at && (
                   <div className="flex items-center gap-2">
                     <ClockIcon className="text-muted-foreground h-4 w-4" />
@@ -177,23 +223,29 @@ export function ProfileContent({ userId }: { userId?: string }) {
                   </div>
                 )}
               </div>
-              
+
               <div className="flex gap-4 justify-center md:justify-start">
                 <div>
-                  <div className="text-2xl font-bold">{profile.follower_count}</div>
+                  <div className="text-2xl font-bold">
+                    {profile.follower_count}
+                  </div>
                   <div className="text-sm text-muted-foreground">Abonnés</div>
                 </div>
-                
+
                 <div>
-                  <div className="text-2xl font-bold">{profile.following_count}</div>
-                  <div className="text-sm text-muted-foreground">Abonnements</div>
+                  <div className="text-2xl font-bold">
+                    {profile.following_count}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Abonnements
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </CardContent>
       </Card>
-      
+
       {/* Afficher la section À propos si disponible */}
       {/*profile.about_me && (
         <Card className="mb-8">
@@ -205,20 +257,21 @@ export function ProfileContent({ userId }: { userId?: string }) {
           </CardContent>
         </Card>
       )*/}
-      
+
       <Tabs defaultValue="posts">
         <TabsList className="mb-4">
           <TabsTrigger value="posts">Publications</TabsTrigger>
           <TabsTrigger value="followers">Abonnés</TabsTrigger>
           <TabsTrigger value="following">Abonnements</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="posts">
           <Card>
             <CardHeader>
               <CardTitle>Publications</CardTitle>
               <CardDescription>
-                Toutes les publications de {profile.first_name} {profile.last_name}
+                Toutes les publications de {profile.first_name}{" "}
+                {profile.last_name}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -226,7 +279,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="followers">
           <Card>
             <CardHeader>
@@ -240,7 +293,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="following">
           <Card>
             <CardHeader>
@@ -250,7 +303,9 @@ export function ProfileContent({ userId }: { userId?: string }) {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Ne suit personne pour l'instant.</p>
+              <p className="text-muted-foreground">
+                Ne suit personne pour l'instant.
+              </p>
             </CardContent>
           </Card>
         </TabsContent>

@@ -2,8 +2,8 @@
 import { useAuth } from "@/hooks/user/checkAuth";
 import { LogoutButton } from "@/components/logout-button";
 import { useUserData } from "@/hooks/user/useUserData";
-import { createPost } from "@/api/post/postApi";
 import TwitterLikeFeed from "@/components/feed";
+import Suggestions from "@/components/sugestions";
 import { ProfileMenuItem } from "@/components/ProfileMenuItem";
 import { useState } from "react";
 
@@ -21,6 +21,48 @@ export default function HomePage() {
 
   const closePostForm = () => {
     setIsModalOpen(false);
+  };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+
+    const content = formData.get("content") as string;
+    const tags = content.match(/#[\w]+/g);
+
+    // Ajout des données au FormData
+    const fileInput = form.querySelector(
+      'input[type="file"]'
+    ) as HTMLInputElement;
+    if (fileInput?.files?.[0]) {
+      formData.append("image", fileInput.files[0], fileInput.files[0].name);
+    }
+
+    formData.append("content", formData.get("content") as string);
+    formData.append("tags", tags ? tags.join(" ") : ""); // Exemple de tags
+    formData.append("privacy", formData.get("privacy") ? "public" : "private");
+    formData.append("users", ""); // Ajout d'utilisateurs si nécessaire
+
+    const requestOptions = {
+      method: "POST",
+      body: formData,
+      redirect: "follow" as RequestRedirect,
+    };
+
+    try {
+      const response = await fetch(
+        "http://localhost:80/api/posts",
+        requestOptions
+      );
+      if (!response.ok) {
+        throw new Error("Failed to create post");
+      }
+      const result = await response.text();
+      console.log("Post created successfully:", result);
+      closePostForm(); // Ferme le modal après la soumission
+    } catch (error) {
+      console.error("Error creating post:", error);
+    }
   };
 
   if (authLoading || userDataLoading) {
@@ -59,7 +101,9 @@ export default function HomePage() {
             </div>
           </div>
           <div className="col-span-3 border p-4">{`Bienvenue, ${userData["username"]} !`}</div>
-          <div className="row-span-5 col-start-5 border p-2">3</div>
+          <div className="row-span-5 col-span-1">
+            <Suggestions />
+          </div>
           <div
             className={`col-span-3 row-span-4 col-start-2 row-start-2 border overflow-scroll transition ${
               isModalOpen ? "opacity-50 pointer-events-none" : ""
@@ -86,17 +130,32 @@ export default function HomePage() {
             >
               <div className="bg-white p-4 rounded shadow-md">
                 <h2 className="text-xl font-bold mb-4">Create a New Post</h2>
-                <form id="post-form" className="flex flex-col gap-4">
+                <form
+                  id="post-form"
+                  className="flex flex-col gap-4"
+                  onSubmit={handleSubmit}
+                >
                   <textarea
+                    name="content"
                     placeholder="Content"
                     className="border p-2 rounded"
                     required
                   ></textarea>
                   <input
+                    name="file"
                     type="file"
                     accept="image/gif, image/jpeg, image/png"
                     className="border p-2 rounded"
                   />
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      id="privacy"
+                      name="privacy"
+                      defaultChecked
+                    />
+                    <p>Public</p>
+                  </div>
                   <button
                     type="submit"
                     className="bg-blue-500 text-white px-4 py-2 rounded shadow"
