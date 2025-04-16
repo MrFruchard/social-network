@@ -29,7 +29,9 @@ export default function ProfilePage() {
     return (
       <div className="container mx-auto py-8">
         <Alert>
-          <AlertDescription>Impossible de charger les données utilisateur</AlertDescription>
+          <AlertDescription>
+            Impossible de charger les données utilisateur
+          </AlertDescription>
         </Alert>
       </div>
     );
@@ -42,10 +44,6 @@ export default function ProfilePage() {
   return (
     <MainLayout>
       <div className="p-4">
-        <div className="border-b border-border pb-4 mb-4">
-          <h2 className="text-xl font-bold mb-2">Profile</h2>
-        </div>
-        
         <ProfileContent userId={userId || undefined} />
       </div>
     </MainLayout>
