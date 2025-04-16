@@ -11,7 +11,7 @@ export default function HomePage() {
   const { userData, loading: userDataLoading } = useUserData();
   const { isLoading: authLoading, isAuthenticated } = useAuth({
     required: true,
-    redirectTo: "/",
+    redirectTo: "/login", // Rediriger vers /login au lieu de / pour éviter les boucles
   });
   const [isModalOpen, setIsModalOpen] = useState(false);
 

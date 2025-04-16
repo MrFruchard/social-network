@@ -1,7 +1,7 @@
 "use client"
 
 export const fetchUserInfo = async () => {
-    const response = await fetch("/api/user/info", {
+    const response = await fetch("http://localhost:80/api/user/info", {
         credentials: "include",
     });
     return response.json();
@@ -56,40 +56,22 @@ export const fetchUserProfile = async (userId) => {
 
 export const togglePrivacyStatus = async () => {
     try {
-        console.log('Envoi de la requête de changement de statut...');
-
-        // Obtenir l'état actuel
-        const currentStateResponse = await fetch("http://localhost:80/api/user/info", {
-            credentials: "include"
-        });
-        const currentData = await currentStateResponse.json();
-        console.log('État actuel :', currentData.public);
-
         // Envoyer la requête au backend pour changer le statut
         const response = await fetch("http://localhost:80/api/user/public", {
             method: "PATCH",
-            credentials: "include",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            // Pas besoin d'envoyer de body car l'API bascule simplement l'état actuel
+            credentials: "include"
         });
 
         if (!response.ok) {
-            throw new Error('Failed to update privacy status');
+            throw new Error(`Failed to update privacy status: ${response.status}`);
         }
 
-        // Récupérer la réponse du backend
-        const result = await response.json();
-
-        return {
-            success: true,
-            previousState: currentData.public,
-            newState: !currentData.public,    // Inverse de l'état actuel
-            changed: true
-        };
+        // Attendre un court délai pour permettre à la base de données de se mettre à jour
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        return { success: true };
     } catch (error) {
-        console.error('Error in togglePrivacyStatus:', error);
+        console.error("Error in togglePrivacyStatus:", error);
         throw error;
     }
 };
