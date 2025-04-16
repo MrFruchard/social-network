@@ -6,24 +6,24 @@ import (
 )
 
 type PostProfile struct {
-	Id           string  `json:"id"`                // x
-	UserId       string  `json:"userId"`            // x
-	FirstName    string  `json:"first_name"`        // x
-	LastName     string  `json:"last_name"`         // x
-	Username     string  `json:"username"`          // null x
-	ImageProfile string  `json:"image_profile_url"` // null x
-	Content      string  `json:"content"`           // x
-	Tags         string  `json:"tags"`              // null x
-	ImageContent string  `json:"image_content_url"` // null x
-	CreatedAt    string  `json:"created_at"`        // x
-	Liked        bool    `json:"liked"`             // x
-	Disliked     bool    `json:"disliked"`
-	LikeCount    int     `json:"like_count"`    // x
-	DislikeCount int     `json:"dislike_count"` // x
-	CommentCount int     `json:"comment_count"`
-	Followed     bool    `json:"followed"` // x
-	GroupId      GroupId `json:"group_id"` // null x
-	OwnerUserId  bool    `json:"owner_user_id"`
+	Id           string   `json:"id"`                // x
+	UserId       string   `json:"userId"`            // x
+	FirstName    string   `json:"first_name"`        // x
+	LastName     string   `json:"last_name"`         // x
+	Username     string   `json:"username"`          // null x
+	ImageProfile string   `json:"image_profile_url"` // null x
+	Content      string   `json:"content"`           // x
+	Tags         []string `json:"tags"`              // null x
+	ImageContent string   `json:"image_content_url"` // null x
+	CreatedAt    string   `json:"created_at"`        // x
+	Liked        bool     `json:"liked"`             // x
+	Disliked     bool     `json:"disliked"`
+	LikeCount    int      `json:"like_count"`    // x
+	DislikeCount int      `json:"dislike_count"` // x
+	CommentCount int      `json:"comment_count"`
+	Followed     bool     `json:"followed"` // x
+	GroupId      GroupId  `json:"group_id"` // null x
+	OwnerUserId  bool     `json:"owner_user_id"`
 }
 type GroupId struct {
 	Id          string `json:"id"`            // x
@@ -44,7 +44,7 @@ func SendPostProfile(db *sql.DB, userId, targetId string) ([]PostProfile, error)
 func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile, error) {
 	var postProfile []PostProfile
 
-	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY FROM POSTS WHERE USER_ID = ? LIMIT 20 OFFSET ?;`
+	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE,GROUP_ID, PRIVACY FROM POSTS WHERE USER_ID = ? ORDER BY CREATED_AT DESC LIMIT 20 OFFSET ? `
 	rows, err := db.Query(query, targetId, offset)
 	if err != nil {
 		return postProfile, err
@@ -62,7 +62,7 @@ func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile,
 	for rows.Next() {
 		var p PostProfile
 
-		var imageContent, tags, groupId sql.NullString
+		var imageContent, groupId sql.NullString
 		var privacy int
 		var accessPrivate, accessGroup bool
 
@@ -72,7 +72,6 @@ func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile,
 			&p.UserId,
 			&p.CreatedAt,
 			&imageContent,
-			&tags,
 			&groupId,
 			&privacy,
 		)
@@ -124,6 +123,24 @@ func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile,
 			}
 		}
 
+		query = `SELECT TAG FROM TAGS WHERE POST_ID = ?`
+		rowsTags, err := db.Query(query, p.Id)
+		if err != nil {
+			log.Printf("Erreur récupération des tags pour le post %s : %v", p.Id, err)
+			continue
+		}
+
+		for rowsTags.Next() {
+			var tag string
+			err := rowsTags.Scan(&tag)
+			if err != nil {
+				log.Printf("Erreur lors du scan d'un tag pour le post %s : %v", p.Id, err)
+				continue
+			}
+			p.Tags = append(p.Tags, tag)
+		}
+		rowsTags.Close()
+
 		var eventResult sql.NullString
 
 		query = `SELECT LIKED FROM POST_EVENT WHERE POST_ID = ? AND USER_ID = ?`
@@ -168,15 +185,7 @@ func structData(db *sql.DB, userId, targetId string, offset int) ([]PostProfile,
 			p.Username = username.String
 		}
 
-		if userId == targetId {
-			p.OwnerUserId = true
-		} else {
-			p.OwnerUserId = false
-		}
-
-		if tags.Valid {
-			p.Tags = tags.String
-		}
+		p.OwnerUserId = userId == p.UserId
 
 		if imageContent.Valid {
 			p.ImageContent = imageContent.String

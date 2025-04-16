@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { togglePrivacyStatus } from '@/api/user/userInfo';
+import { togglePrivacyStatus, fetchUserProfile } from '@/api/user/userInfo';
 
 interface ProfileData {
   id: string;
@@ -94,31 +94,37 @@ export function useProfile(userId?: string) {
     }
   };
 
-  // Fonction pour basculer le statut public/privé (implémentation côté frontend uniquement)
+  // Fonction pour basculer le statut public/privé et le persister
   const togglePrivacy = async () => {
     if (!profileData || !profileData.isCurrentUser) return;
     
     try {
       setLoading(true);
       
-      // Obtenir l'état actuel pour référence
-      const initialValue = profileData.public;
-      console.log("État actuel:", initialValue);
-      
-      // Utiliser notre implémentation client-side qui ignore le backend
-      const result = await togglePrivacyStatus();
-      console.log("Résultat du basculement simulé:", result);
-      
-      // Appliquer le nouvel état à l'interface
+      // Mettre à jour l'interface immédiatement pour une meilleure réactivité
+      const newPublicStatus = !profileData.public;
       setProfileData(prev => {
         if (!prev) return null;
-        const newState = { ...prev, public: result.newState };
-        console.log(`État actualisé: ${prev.public} -> ${newState.public}`);
-        return newState;
+        return { ...prev, public: newPublicStatus };
       });
       
+      // Appeler l'API pour persister le changement
+      await togglePrivacyStatus();
+      
+      // Rafraîchir les données depuis le serveur pour confirmer le changement
+      const updatedProfile = await fetchUserProfile();
+      
+      // Vérifier si le changement a bien été appliqué
+      if (updatedProfile.public !== newPublicStatus) {
+        console.warn("Le changement de statut n'a pas été correctement appliqué, forçage de l'état local");
+        setProfileData(prev => {
+          if (!prev) return null;
+          return { ...prev, public: updatedProfile.public, isCurrentUser: true };
+        });
+      }
+      
     } catch (err) {
-      console.error('Error toggling privacy:', err);
+      console.error('Erreur lors du changement de statut :', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);

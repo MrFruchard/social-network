@@ -69,11 +69,19 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("PATCH /api/post/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleUpdatePost(w, r, db)
 	})
+	// get private member post
+	mux.HandleFunc("GET /api/privateMember", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetPrivateMember(w, r, db)
+	})
+	// delete private member post
+	mux.HandleFunc("DELETE /api/privateMember", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleDeletePrivateMember(w, r, db)
+	})
 
 	// COMMENT
 	// get comment donne déja dans /api/post?=
 	mux.HandleFunc("GET /api/comment/", func(w http.ResponseWriter, r *http.Request) {
-
+		//
 	})
 	// create comment
 	mux.HandleFunc("POST /api/comment/", func(w http.ResponseWriter, r *http.Request) {
@@ -123,7 +131,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	//USER
-	//  get personal infos
+	// get personal infos
 	mux.HandleFunc("GET /api/user/info", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleUserPersonal(w, r, db)
 	})
@@ -176,10 +184,16 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/group/ask", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleAskToJoinGroup(w, r, db)
 	})
-	// message conv
+	// send message group
 	mux.HandleFunc("POST /api/group/message", func(w http.ResponseWriter, r *http.Request) {
-
+		handlers.HandleMessageGroups(w, r, db)
 	})
+	// get message group
+	mux.HandleFunc("GET /api/group/message", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetMessageGroups(w, r, db)
+	})
+	// accept to join
+	// decline to join
 
 	//CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
@@ -187,6 +201,16 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	mux.HandleFunc("GET /api/check/email", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCheckEmail(w, r, db)
+	})
+
+	// NOTIFICATIONS
+	mux.HandleFunc("GET /api/notification", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetNotifications(w, r, db)
+	})
+
+	// Tags
+	mux.HandleFunc("GET /api/tag", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSendPostWithTags(w, r, db)
 	})
 
 	// WS

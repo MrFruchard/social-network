@@ -14,7 +14,7 @@ type OnePostInfo struct {
 	Username     string        `json:"username"`          // null x
 	ImageProfile string        `json:"image_profile_url"` // null x
 	Content      string        `json:"content"`           // x
-	Tags         string        `json:"tags"`              // null x
+	Tags         []string      `json:"tags"`              // null x
 	ImageContent string        `json:"image_content_url"` // null x
 	CreatedAt    string        `json:"created_at"`        // x
 	Liked        bool          `json:"liked"`             //x
@@ -58,11 +58,11 @@ func GetOnePostInfo(db *sql.DB, userID, postId string) (OnePostInfo, error) {
 	var p OnePostInfo
 
 	var private int
-	var image, tags, username, groupID sql.NullString
+	var image, username, groupID sql.NullString
 	var accessGroup bool
 
-	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE, TAG, GROUP_ID, PRIVACY FROM POSTS WHERE ID = ? LIMIT 1`
-	err := db.QueryRow(query, postId).Scan(&p.Id, &p.Content, &p.UserId, &p.CreatedAt, &image, &tags, &groupID, &private)
+	query := `SELECT ID, CONTENT, USER_ID, CREATED_AT, IMAGE, GROUP_ID, PRIVACY FROM POSTS WHERE ID = ? LIMIT 1`
+	err := db.QueryRow(query, postId).Scan(&p.Id, &p.Content, &p.UserId, &p.CreatedAt, &image, &groupID, &private)
 	if err != nil {
 		return p, err
 	}
@@ -173,10 +173,6 @@ func GetOnePostInfo(db *sql.DB, userID, postId string) (OnePostInfo, error) {
 		p.Username = username.String
 	}
 
-	if tags.Valid {
-		p.Tags = tags.String
-	}
-
 	if image.Valid {
 		p.ImageProfile = image.String
 	}
@@ -185,6 +181,21 @@ func GetOnePostInfo(db *sql.DB, userID, postId string) (OnePostInfo, error) {
 	rows, err := db.Query(query, p.Id)
 	if err != nil {
 		return p, err
+	}
+
+	query = `SELECT TAG FROM TAGS WHERE POST_ID = ?`
+	rowsTags, err := db.Query(query, p.Id)
+	if err != nil {
+		return p, err
+	}
+	for rowsTags.Next() {
+		var tag string
+		err := rowsTags.Scan(&tag)
+		if err != nil {
+			log.Println("Erreur récupération tag :", err)
+			continue
+		}
+		p.Tags = append(p.Tags, tag)
 	}
 
 	var comments []CommentInfo
