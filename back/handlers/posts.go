@@ -16,8 +16,17 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
 		return
 	}
+
+	err := r.ParseMultipartForm(10 << 20)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Failed to parse form data")
+		return
+	}
+
+	users := r.Form["users"]
 	content := r.FormValue("content")
 	tag := r.FormValue("tags")
+	privacy := r.FormValue("privacy")
 	if strings.TrimSpace(content) == "" {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Missing content or tag")
 		return
@@ -44,7 +53,7 @@ func CreatePostHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	groupId := r.FormValue("groupId")
 
-	err = services.CreatePost(content, userID, uuidAvatar, tag, groupId, db)
+	err = services.CreatePost(content, userID, uuidAvatar, tag, groupId, privacy, users, db)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
@@ -182,4 +191,55 @@ func HandleGetPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	if err = json.NewEncoder(w).Encode(postInfo); err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
 	}
+}
+
+func HandleGetPrivateMember(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	postID := r.URL.Query().Get("postId")
+	if postID == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing postId")
+		return
+	}
+
+	getPostMember, err := services.SendPrivateMemberPosts(db, userID, postID)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Post not found")
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err = json.NewEncoder(w).Encode(getPostMember); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+	}
+}
+
+func HandleDeletePrivateMember(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+	postID := r.URL.Query().Get("postId")
+	if postID == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing postId")
+		return
+	}
+	user := r.URL.Query().Get("user")
+	if strings.TrimSpace(user) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing user")
+		return
+	}
+
+	err := services.DeletePrivateMemberPost(db, userID, user, postID)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Post not found")
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "user deleted")
+
 }
