@@ -1,15 +1,9 @@
-import { useState, useEffect } from "react";
-import { reactToPost } from "@/api/post/postApi";
-import {
-  Heart,
-  MessageCircle,
-  ThumbsUp,
-  ThumbsDown,
-  Users,
-} from "lucide-react";
-import Link from "next/link";
-import UserLink from "@/components/UserLink";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from 'react';
+import { reactToPost } from '@/api/post/postApi';
+import { Heart, MessageCircle, ThumbsUp, ThumbsDown, Users } from 'lucide-react';
+import Link from 'next/link';
+import UserLink from '@/components/UserLink';
+import { useRouter } from 'next/navigation';
 
 export default function TwitterLikeFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
@@ -20,23 +14,13 @@ export default function TwitterLikeFeed() {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch("http://localhost:80/api/home/post");
+        const response = await fetch('http://localhost:80/api/home/post');
         if (!response.ok) {
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const result = await response.json();
-        console.log(
-          "Posts data structure:",
-          result.data && result.data.length > 0 ? result.data[0] : "No posts"
-        );
-        console.log(
-          "Full first post:",
-          JSON.stringify(
-            result.data && result.data.length > 0 ? result.data[0] : {},
-            null,
-            2
-          )
-        );
+        console.log('Posts data structure:', result.data && result.data.length > 0 ? result.data[0] : 'No posts');
+        console.log('Full first post:', JSON.stringify(result.data && result.data.length > 0 ? result.data[0] : {}, null, 2));
 
         // Fetch images for each post
         const postsWithImages = await Promise.all(
@@ -45,23 +29,17 @@ export default function TwitterLikeFeed() {
               console.log(post.image_content_url);
               try {
                 const requestOptions = {
-                  method: "GET",
+                  method: 'GET',
                 };
 
-                const imageResponse = await fetch(
-                  `/api/postImages/${post.image_content_url}`,
-                  requestOptions
-                );
+                const imageResponse = await fetch(`/api/postImages/${post.image_content_url}`, requestOptions);
                 if (imageResponse.ok) {
                   const imageBlob = await imageResponse.blob();
                   const imageUrl = URL.createObjectURL(imageBlob);
                   return { ...post, image_content_url: imageUrl };
                 }
               } catch (imageError) {
-                console.error(
-                  `Failed to fetch image for post ${post.id}:`,
-                  imageError
-                );
+                console.error(`Failed to fetch image for post ${post.id}:`, imageError);
               }
             }
             return post;
@@ -71,9 +49,7 @@ export default function TwitterLikeFeed() {
         setPosts(postsWithImages);
         setLoading(false);
       } catch (error) {
-        setError(
-          error instanceof Error ? error.message : "An unknown error occurred"
-        );
+        setError(error instanceof Error ? error.message : 'An unknown error occurred');
         setLoading(false);
       }
     };
@@ -92,20 +68,15 @@ export default function TwitterLikeFeed() {
 
   const handleLike = async (postId: number): Promise<void> => {
     try {
-      await reactToPost(postId, "liked");
+      await reactToPost(postId, 'liked');
       setPosts(
         posts.map((post: Post) => {
           if (post.id === postId) {
             const newLiked = !post.liked;
-            const likeCount = newLiked
-              ? post.like_count + 1
-              : post.like_count - 1;
+            const likeCount = newLiked ? post.like_count + 1 : post.like_count - 1;
 
             const newDisliked = newLiked ? false : post.disliked;
-            const dislikeCount =
-              post.disliked && newLiked
-                ? post.dislike_count - 1
-                : post.dislike_count;
+            const dislikeCount = post.disliked && newLiked ? post.dislike_count - 1 : post.dislike_count;
 
             return {
               ...post,
@@ -119,24 +90,21 @@ export default function TwitterLikeFeed() {
         })
       );
     } catch (error) {
-      console.error("Failed to like post:", error);
+      console.error('Failed to like post:', error);
     }
   };
 
   const handleDislike = async (postId: number): Promise<void> => {
     try {
-      await reactToPost(postId, "disliked");
+      await reactToPost(postId, 'disliked');
       setPosts(
         posts.map((post: Post) => {
           if (post.id === postId) {
             const newDisliked = !post.disliked;
-            const dislikeCount = newDisliked
-              ? post.dislike_count + 1
-              : post.dislike_count - 1;
+            const dislikeCount = newDisliked ? post.dislike_count + 1 : post.dislike_count - 1;
 
             const newLiked = newDisliked ? false : post.liked;
-            const likeCount =
-              post.liked && newDisliked ? post.like_count - 1 : post.like_count;
+            const likeCount = post.liked && newDisliked ? post.like_count - 1 : post.like_count;
 
             return {
               ...post,
@@ -150,23 +118,23 @@ export default function TwitterLikeFeed() {
         })
       );
     } catch (error) {
-      console.error("Failed to dislike post:", error);
+      console.error('Failed to dislike post:', error);
     }
   };
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      <div className='flex justify-center items-center h-64'>
+        <div className='animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500'></div>
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative">
-        <strong className="font-bold">Erreur! </strong>
-        <span className="block sm:inline">{error}</span>
+      <div className='bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative'>
+        <strong className='font-bold'>Erreur! </strong>
+        <span className='block sm:inline'>{error}</span>
       </div>
     );
   }
@@ -190,39 +158,30 @@ export default function TwitterLikeFeed() {
     } else if (diffDay < 30) {
       return `${diffDay}j`;
     } else {
-      return past.toLocaleDateString("fr-FR", {
-        day: "numeric",
-        month: "short",
+      return past.toLocaleDateString('fr-FR', {
+        day: 'numeric',
+        month: 'short',
       });
     }
   };
 
   return (
-    <div className="w-full mx-auto bg-white">
-      <div className="sticky top-0 z-10 bg-white p-4 border-b">
-        <h1 className="text-xl font-bold">Accueil</h1>
+    <div className='w-full mx-auto'>
+      <div className='sticky top-0 z-10 p-4 border-b'>
+        <h1 className='text-xl font-bold'>Accueil</h1>
       </div>
 
-      <div className="divide-y">
+      <div className='divide-y'>
         {posts.map((post) => (
-          <div key={post.id} className="p-4 hover:bg-gray-50 transition">
-            <div className="flex">
+          <div key={post.id} className='p-4 hover:bg-gray-50 transition'>
+            <div className='flex'>
               {/* Avatar */}
-              <div
-                className="mr-3 cursor-pointer"
-                onClick={() =>
-                  router.push(`/profile?id=${post.user_id || post.userId}`)
-                }
-              >
+              <div className='mr-3 cursor-pointer' onClick={() => router.push(`/profile?id=${post.user_id || post.userId}`)}>
                 {post.image_profile_url ? (
-                  <img
-                    src={post.image_profile_url}
-                    alt={`${post.first_name} ${post.last_name}`}
-                    className="w-12 h-12 rounded-full object-cover"
-                  />
+                  <img src={post.image_profile_url} alt={`${post.first_name} ${post.last_name}`} className='w-12 h-12 rounded-full object-cover' />
                 ) : (
-                  <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                    <span className="text-gray-500 text-lg font-semibold">
+                  <div className='w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center'>
+                    <span className='text-gray-500 text-lg font-semibold'>
                       {post.first_name.charAt(0)}
                       {post.last_name.charAt(0)}
                     </span>
@@ -231,17 +190,12 @@ export default function TwitterLikeFeed() {
               </div>
 
               {/* Content */}
-              <div className="flex-1">
+              <div className='flex-1'>
                 {/* Header */}
-                <div className="flex items-start justify-between">
+                <div className='flex items-start justify-between'>
                   <div>
-                    <UserLink
-                      userId={post.user_id || post.userId}
-                      username={`${post.first_name} ${post.last_name}`}
-                      isPrivate={post.is_private}
-                      className="font-bold hover:underline"
-                    />
-                    <span className="text-gray-500 ml-1">
+                    <UserLink userId={post.user_id || post.userId} username={`${post.first_name} ${post.last_name}`} isPrivate={post.is_private} className='font-bold hover:underline' />
+                    <span className='text-gray-500 ml-1'>
                       @{post.username} · {timeAgo(post.created_at)}
                     </span>
                   </div>
@@ -249,106 +203,55 @@ export default function TwitterLikeFeed() {
 
                 {/* Group */}
                 {post.group_id && post.group_id.id && (
-                  <div
-                    className="flex items-center text-gray-500 mb-1 text-sm cursor-pointer hover:underline"
-                    onClick={() => router.push(`/group/${post.group_id.id}`)}
-                  >
-                    <Users size={14} className="mr-1" />
+                  <div className='flex items-center text-gray-500 mb-1 text-sm cursor-pointer hover:underline' onClick={() => router.push(`/group/${post.group_id.id}`)}>
+                    <Users size={14} className='mr-1' />
                     <span>{post.group_id.name}</span>
                   </div>
                 )}
 
                 {/* Post Content */}
-                <div className="mt-1 mb-2">
-                  <p className="whitespace-pre-line">{post.content}</p>
+                <div className='mt-1 mb-2'>
+                  <p className='whitespace-pre-line'>{post.content}</p>
                   {post.tags && (
-                    <div className="mt-1">
-                      <span className="text-blue-500 hover:underline">
-                        #{post.tags}
-                      </span>
+                    <div className='mt-1'>
+                      <span className='text-blue-500 hover:underline'>#{post.tags}</span>
                     </div>
                   )}
                 </div>
 
                 {/* Image */}
                 {post.image_content_url && (
-                  <div className="mt-2 mb-3 rounded-lg overflow-hidden border border-gray-200">
-                    <img
-                      src={post.image_content_url}
-                      alt="Contenu du post"
-                      className="w-full h-auto object-cover"
-                    />
+                  <div className='mt-2 mb-3 rounded-lg overflow-hidden border border-gray-200'>
+                    <img src={post.image_content_url} alt='Contenu du post' className='w-full h-auto object-cover' />
                   </div>
                 )}
 
                 {/* Actions */}
-                <div className="flex justify-between mt-3 text-gray-500">
+                <div className='flex justify-between mt-3 text-gray-500'>
                   {/* Comment */}
                   <Link href={`/post/${post.id}`}>
-                    <button className="flex items-center group">
-                      <div className="p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-500 transition">
+                    <button className='flex items-center group'>
+                      <div className='p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-500 transition'>
                         <MessageCircle size={18} />
                       </div>
-                      <span className="ml-1 text-sm group-hover:text-blue-500">
-                        {post.comment_count}
-                      </span>
+                      <span className='ml-1 text-sm group-hover:text-blue-500'>{post.comment_count}</span>
                     </button>
                   </Link>
 
                   {/* Like */}
-                  <button
-                    className="flex items-center group"
-                    onClick={() => handleLike(post.id)}
-                  >
-                    <div
-                      className={`p-2 rounded-full transition ${
-                        post.liked
-                          ? "bg-green-50 text-green-500"
-                          : "group-hover:bg-green-50 group-hover:text-green-500"
-                      }`}
-                    >
-                      <ThumbsUp
-                        size={18}
-                        className={post.liked ? "fill-green-500" : ""}
-                      />
+                  <button className='flex items-center group' onClick={() => handleLike(post.id)}>
+                    <div className={`p-2 rounded-full transition ${post.liked ? 'bg-green-50 text-green-500' : 'group-hover:bg-green-50 group-hover:text-green-500'}`}>
+                      <ThumbsUp size={18} className={post.liked ? 'fill-green-500' : ''} />
                     </div>
-                    <span
-                      className={`ml-1 text-sm ${
-                        post.liked
-                          ? "text-green-500"
-                          : "group-hover:text-green-500"
-                      }`}
-                    >
-                      {post.like_count}
-                    </span>
+                    <span className={`ml-1 text-sm ${post.liked ? 'text-green-500' : 'group-hover:text-green-500'}`}>{post.like_count}</span>
                   </button>
 
                   {/* Dislike */}
-                  <button
-                    className="flex items-center group"
-                    onClick={() => handleDislike(post.id)}
-                  >
-                    <div
-                      className={`p-2 rounded-full transition ${
-                        post.disliked
-                          ? "bg-red-50 text-red-500"
-                          : "group-hover:bg-red-50 group-hover:text-red-500"
-                      }`}
-                    >
-                      <ThumbsDown
-                        size={18}
-                        className={post.disliked ? "fill-red-500" : ""}
-                      />
+                  <button className='flex items-center group' onClick={() => handleDislike(post.id)}>
+                    <div className={`p-2 rounded-full transition ${post.disliked ? 'bg-red-50 text-red-500' : 'group-hover:bg-red-50 group-hover:text-red-500'}`}>
+                      <ThumbsDown size={18} className={post.disliked ? 'fill-red-500' : ''} />
                     </div>
-                    <span
-                      className={`ml-1 text-sm ${
-                        post.disliked
-                          ? "text-red-500"
-                          : "group-hover:text-red-500"
-                      }`}
-                    >
-                      {post.dislike_count}
-                    </span>
+                    <span className={`ml-1 text-sm ${post.disliked ? 'text-red-500' : 'group-hover:text-red-500'}`}>{post.dislike_count}</span>
                   </button>
                 </div>
               </div>
