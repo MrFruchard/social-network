@@ -166,8 +166,8 @@ export default function TwitterLikeFeed() {
   };
 
   return (
-    <div className='w-full mx-auto'>
-      <div className='sticky top-0 z-10 p-4 border-b'>
+    <div className='w-full mx-auto bg-white'>
+      <div className='top-0 z-10 bg-white p-4 border-b'>
         <h1 className='text-xl font-bold'>Accueil</h1>
       </div>
 

@@ -1,114 +1,89 @@
-// 'use client';
+'use client';
 
-// import * as React from 'react';
-// import * as TabsPrimitive from '@radix-ui/react-tabs';
-// import { cn } from '@/lib/utils';
-// import { X, Users, Search } from 'lucide-react';
-// import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { X, Search } from 'lucide-react';
 
-// interface User {
-//   id: string;
-//   username: string;
-//   email: string;
-// }
+interface User {
+  id: string;
+  username: string;
+  email: string;
+}
 
-// export default function CreateChat({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
-//   const [search, setSearch] = useState('');
-//   const [searchResults, setSearchResults] = useState<User[]>([]);
-//   const [isLoading, setIsLoading] = useState(false);
+// Mock data for testing
+const MOCK_USERS = [
+  { id: '1', username: 'John Doe', email: 'john@example.com' },
+  { id: '2', username: 'Jane Smith', email: 'jane@example.com' },
+  { id: '3', username: 'Alice Johnson', email: 'alice@example.com' },
+];
 
-//   // Fonction de recherche avec debounce
-//   const searchUsers = async (query: string) => {
-//     if (query.length < 2) {
-//       setSearchResults([]);
-//       return;
-//     }
+export default function CreateMessage({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  const [search, setSearch] = useState('');
+  const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
 
-//     setIsLoading(true);
-//     try {
-//       const response = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
-//       const data = await response.json();
-//       setSearchResults(data);
-//     } catch (error) {
-//       console.error('Error searching users:', error);
-//     } finally {
-//       setIsLoading(false);
-//     }
-//   };
+  // Filter users based on search
+  const filteredUsers = MOCK_USERS.filter((user) => user.username.toLowerCase().includes(search.toLowerCase()) || user.email.toLowerCase().includes(search.toLowerCase()));
 
-//   // Effet pour déclencher la recherche
-//   useEffect(() => {
-//     const timer = setTimeout(() => {
-//       searchUsers(search);
-//     }, 300);
+  const toggleUserSelection = (user: User) => {
+    setSelectedUsers((prev) => (prev.find((u) => u.id === user.id) ? prev.filter((u) => u.id !== user.id) : [...prev, user]));
+  };
 
-//     return () => clearTimeout(timer);
-//   }, [search]);
-//   if (!isOpen) return null;
+  if (!isOpen) return null;
 
-//   return (
-//     <div className='fixed inset-0 z-50'>
-//       <div className='fixed inset-0 bg-black/70 backdrop-blur-sm' onClick={onClose} />
-//       <div className='fixed inset-0 flex items-center justify-center p-4'>
-//         <div className='w-full max-w-md rounded-xl bg-black text-white shadow-xl border border-gray-700'>
-//           <div className='flex items-center justify-between px-4 py-3 border-b border-gray-700'>
-//             <h2 className='text-lg font-semibold'>Nouveau message</h2>
-//             <button onClick={onClose}>
-//               <X className='h-5 w-5 text-gray-400 hover:text-white' />
-//             </button>
-//           </div>
+  return (
+    <div className='fixed inset-0 z-50'>
+      <div className='fixed inset-0 bg-black/20' onClick={onClose} />
+      <div className='fixed inset-0 flex items-center justify-center p-4'>
+        <div className='w-full max-w-md rounded-2xl bg-white shadow-xl'>
+          <div className='flex items-center justify-between p-4 border-b'>
+            <h2 className='text-lg font-semibold'>New Message</h2>
+            <button onClick={onClose} className='text-gray-500 hover:text-gray-700'>
+              <X className='h-5 w-5' />
+            </button>
+          </div>
 
-//           <Tabs defaultValue='users' className='w-full'>
-//             <TabsList className='grid w-full grid-cols-2'>
-//               <TabsTrigger value='users'>Utilisateurs</TabsTrigger>
-//               <TabsTrigger value='groups'>Groupes</TabsTrigger>
-//             </TabsList>
-//             <TabsContent value='users'>
-//               <div className='px-4 py-3'>
-//                 <div className='relative'>
-//                   <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
-//                   <input type='text' placeholder='Rechercher des utilisateurs...' value={search} onChange={(e) => setSearch(e.target.value)} className='w-full pl-10 pr-3 py-2 rounded-md bg-neutral-800 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500' />
-//                 </div>
-//                 <div className='mt-4 space-y-2'>
-//                   {/* User list placeholder */}
-//                   <div className='p-3 rounded-lg hover:bg-neutral-800 cursor-pointer'>
-//                     {/* <div className='font-medium'>User 1</div>
-//                     <div className='text-sm text-gray-400'>@username1</div> */}
-//                   </div>
-//                 </div>
-//               </div>
-//             </TabsContent>
-//             <TabsContent value='groups'>
-//               <div className='px-4 py-3'>
-//                 <div className='relative'>
-//                   <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
-//                   <input type='text' placeholder='Rechercher des groupes...' className='w-full pl-10 pr-3 py-2 rounded-md bg-neutral-800 text-white placeholder-gray-400 focus:outline-none focus:ring-1 focus:ring-blue-500' />
-//                 </div>
-//                 <div className='mt-4 space-y-2'>
-//                   {/* Groups list placeholder */}
-//                   <div className='p-3 rounded-lg hover:bg-neutral-800 cursor-pointer'>
-//                     {/* <div className='font-medium'>Group 1</div>
-//                     <div className='text-sm text-gray-400'>10 membres</div> */}
-//                   </div>
-//                 </div>
-//               </div>
-//             </TabsContent>
-//           </Tabs>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// }
+          <div className='p-4'>
+            {/* Selected users */}
+            {selectedUsers.length > 0 && (
+              <div className='flex flex-wrap gap-2 mb-3'>
+                {selectedUsers.map((user) => (
+                  <div key={user.id} className='flex items-center gap-1 bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-sm'>
+                    <span>{user.username}</span>
+                    <button onClick={() => toggleUserSelection(user)} className='hover:text-blue-600'>
+                      <X className='h-4 w-4' />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
 
-// const Tabs = TabsPrimitive.Root;
+            {/* Search input */}
+            <div className='relative'>
+              <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
+              <input type='text' placeholder='Search people...' value={search} onChange={(e) => setSearch(e.target.value)} className='w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500' />
+            </div>
 
-// const TabsList = React.forwardRef<React.ElementRef<typeof TabsPrimitive.List>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.List>>(({ className, ...props }, ref) => <TabsPrimitive.List ref={ref} className={cn('border-b border-gray-700', className)} {...props} />);
-// TabsList.displayName = TabsPrimitive.List.displayName;
+            {/* User list */}
+            <div className='mt-4 max-h-[300px] overflow-y-auto'>
+              {filteredUsers.map((user) => (
+                <button key={user.id} onClick={() => toggleUserSelection(user)} className={`w-full text-left p-3 rounded-lg transition-colors ${selectedUsers.find((u) => u.id === user.id) ? 'bg-blue-50' : 'hover:bg-gray-50'}`}>
+                  <div className='font-medium'>{user.username}</div>
+                  <div className='text-sm text-gray-500'>{user.email}</div>
+                </button>
+              ))}
+            </div>
+          </div>
 
-// const TabsTrigger = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Trigger>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Trigger>>(({ className, ...props }, ref) => <TabsPrimitive.Trigger ref={ref} className={cn('px-4 py-2 text-sm font-medium text-gray-400 hover:text-white transition-colors', 'data-[state=active]:text-white data-[state=active]:border-b-2 data-[state=active]:border-blue-500', className)} {...props} />);
-// TabsTrigger.displayName = TabsPrimitive.Trigger.displayName;
-
-// const TabsContent = React.forwardRef<React.ElementRef<typeof TabsPrimitive.Content>, React.ComponentPropsWithoutRef<typeof TabsPrimitive.Content>>(({ className, ...props }, ref) => <TabsPrimitive.Content ref={ref} className={cn('mt-2', className)} {...props} />);
-// TabsContent.displayName = TabsPrimitive.Content.displayName;
-
-// export { Tabs, TabsList, TabsTrigger, TabsContent };
+          {/* Action buttons */}
+          <div className='flex justify-end gap-2 p-4 border-t'>
+            <button onClick={onClose} className='px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg'>
+              Cancel
+            </button>
+            <button disabled={selectedUsers.length === 0} className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed'>
+              Next
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

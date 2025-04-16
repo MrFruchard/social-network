@@ -1,12 +1,13 @@
 'use client';
 
-import { ReactNode } from 'react';
+import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LogoutButton } from './logout-button';
 import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
-import { HomeIcon, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
+import PostModal from './PostModal';
+import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
   children: ReactNode;
@@ -15,6 +16,15 @@ type MainLayoutProps = {
 export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const { userData } = useUserData();
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const openPostForm = () => {
+    setIsModalOpen(true);
+  };
+
+  const closePostForm = () => {
+    setIsModalOpen(false);
+  };
 
   return (
     <div className='flex w-full min-h-screen bg-background'>
@@ -30,9 +40,12 @@ export function MainLayout({ children }: MainLayoutProps) {
           <NavItem href='/notifications' icon={<BellIcon className='h-5 w-5' />} label='Notifications' active={pathname === '/notifications'} />
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
           <NavItem href='/groups' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/groups'} />
+          <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
         </nav>
 
-        <button className='w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 font-medium mb-4'>New Post</button>
+        <button className='w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 font-medium mb-4' onClick={openPostForm}>
+          New Post
+        </button>
 
         <div className='mt-auto'>
           {userData && (
@@ -61,6 +74,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             {pathname === '/notifications' && 'Notifications'}
             {pathname === '/messages' && 'Messages'}
             {pathname === '/groups' && 'Groups'}
+            {pathname === '/toto-ia' && 'ToToIA'} {/* Add this line */}
           </h2>
           <div className='ml-auto'>
             <NotificationIndicator />
@@ -68,9 +82,9 @@ export function MainLayout({ children }: MainLayoutProps) {
         </header>
 
         {/* Content Container with Feed and Right Sidebar */}
-        <div className='flex justify-center w-full'>
+        <div className='flex w-full'>
           {/* Center Feed */}
-          <main className='flex-1 max-w-[600px] border-x border-border min-h-[calc(100vh-3.5rem)]'>{children}</main>
+          <main className='flex-1 border-x border-border min-h-[calc(100vh-3.5rem)]'>{children}</main>
 
           {/* Right Sidebar */}
           <aside className='w-80 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto p-4 bg-background'>
@@ -235,6 +249,8 @@ export function MainLayout({ children }: MainLayoutProps) {
       <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20'>
         <PlusIcon className='h-6 w-6' />
       </button>
+
+      {isModalOpen && <PostModal onClose={closePostForm} />}
     </div>
   );
 }
