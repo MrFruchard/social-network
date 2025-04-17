@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
+	"strings"
 )
 
 func HandleAskFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -108,6 +109,9 @@ func HandleListFollowers(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 	user := r.URL.Query().Get("user")
+	if strings.TrimSpace(user) == "" {
+		user = userID
+	}
 
 	var followers []services.ListOfFollowers
 
@@ -143,6 +147,9 @@ func HandleFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	user := r.URL.Query().Get("user")
+	if strings.TrimSpace(user) == "" {
+		user = userID
+	}
 
 	var follow []services.ListOfFollow
 	follow, err := services.SendListFollow(db, user, userID)
