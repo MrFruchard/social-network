@@ -195,3 +195,25 @@ func HandleDeleteFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	utils.SuccessResponse(w, http.StatusOK, "Unfollow Agreement")
 }
+
+func HandleAbortFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if strings.TrimSpace(userID) == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	user := r.URL.Query().Get("user")
+	if user == userID {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
+		return
+	}
+
+	err := services.AbortFollow(db, userID, user)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Abort Follow")
+}
