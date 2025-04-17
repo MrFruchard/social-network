@@ -24,6 +24,7 @@ type PostProfile struct {
 	Followed     bool     `json:"followed"` // x
 	GroupId      GroupId  `json:"group_id"` // null x
 	OwnerUserId  bool     `json:"owner_user_id"`
+	Privacy      string   `json:"privacy"`
 }
 type GroupId struct {
 	Id          string `json:"id"`            // x

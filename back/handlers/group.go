@@ -118,6 +118,25 @@ func HandleInviteGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	receiver := r.URL.Query().Get("receiver")
+	if strings.TrimSpace(receiver) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing receiver")
+		return
+	}
+
+	err := services.SendInvitationGroup(db, userId, receiver, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Invitation Send")
 }
 
 func HandleBanMemberGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
