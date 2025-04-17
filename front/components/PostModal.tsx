@@ -1,7 +1,17 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 
 interface PostModalProps {
   onClose: () => void;
+}
+
+interface Follower {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  username: string;
+  image: string;
+  about: string;
+  followed: boolean;
 }
 
 const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -12,15 +22,20 @@ const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
   const file = fileInput?.files?.[0];
 
   const privacyCheckbox = form.querySelector<HTMLInputElement>("#privacy");
-  const privacyValue = privacyCheckbox?.checked ? "private" : "public";
+  const privacyValue = privacyCheckbox?.checked ? "public" : "private";
+
+  const selectedFollowers = Array.from(
+    form.querySelectorAll<HTMLInputElement>("input[name='followers']:checked")
+  ).map((input) => input.value);
 
   if (file) {
     formData.append("image", file);
   }
 
   formData.append("privacy", privacyValue);
-  formData.append("content", form.querySelector("textarea")?.value || "");
+  formData.append("content", content);
   formData.append("tags", content.match(/#[\w]+/g)?.join(" ") || "");
+  formData.append("allowed_followers", JSON.stringify(selectedFollowers));
 
   const requestOptions = {
     method: "POST",
@@ -34,6 +49,23 @@ const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 };
 
 const PostModal: React.FC<PostModalProps> = ({ onClose }) => {
+  const [followers, setFollowers] = useState<Follower[]>([]);
+
+  useEffect(() => {
+    const requestOptions: RequestInit = {
+      method: "GET",
+    };
+
+    fetch("http://localhost:80/api/user/listfollower", requestOptions)
+      .then((response) => response.json())
+      .then((data) => {
+        if (data.status === "success") {
+          setFollowers(data.followers);
+        }
+      })
+      .catch((error) => console.log("error", error));
+  }, []);
+
   return (
     <div
       className="fixed inset-0 flex items-center justify-center bg-black/60 z-50"
@@ -63,6 +95,40 @@ const PostModal: React.FC<PostModalProps> = ({ onClose }) => {
           <div className="flex">
             <input type="checkbox" name="Privacy" id="privacy" defaultChecked />
             <strong> Public</strong>
+          </div>
+          <div>
+            <h3 className="text-lg font-semibold mb-2">Select Followers</h3>
+            <div className="max-h-40 overflow-y-auto border border-border p-2 rounded-lg">
+              {followers.map((follower) => (
+                <div
+                  key={follower.user_id}
+                  className="flex items-center gap-2 mb-2"
+                >
+                  <input
+                    type="checkbox"
+                    name="followers"
+                    value={follower.user_id}
+                    id={`follower-${follower.user_id}`}
+                  />
+                  <label
+                    htmlFor={`follower-${follower.user_id}`}
+                    className="flex items-center gap-2"
+                  >
+                    {follower.image && (
+                      <img
+                        src={follower.image}
+                        alt={follower.username}
+                        className="w-8 h-8 rounded-full"
+                      />
+                    )}
+                    <span>
+                      {follower.first_name} {follower.last_name} (@
+                      {follower.username})
+                    </span>
+                  </label>
+                </div>
+              ))}
+            </div>
           </div>
           <div className="flex justify-end gap-2">
             <button
