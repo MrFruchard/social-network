@@ -180,20 +180,24 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("DELETE /api/group/member", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleBanMemberGroup(w, r, db)
 	})
-	// ask to join
+	// ask to join X
 	mux.HandleFunc("POST /api/group/ask", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleAskToJoinGroup(w, r, db)
 	})
-	// send message group
+	// send message group -- à vérifier
 	mux.HandleFunc("POST /api/group/message", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleMessageGroups(w, r, db)
 	})
-	// get message group
+	// get message group -- à vérifier
 	mux.HandleFunc("GET /api/group/message", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetMessageGroups(w, r, db)
 	})
 	// accept to join
 	// decline to join
+	// send invitation -- à vérifier
+	mux.HandleFunc("POST /api/group/invite", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleInviteGroup(w, r, db)
+	})
 
 	//CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
