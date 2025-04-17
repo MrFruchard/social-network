@@ -10,6 +10,9 @@ RUN apk add --no-cache libc6-compat
 # Copier uniquement les fichiers de dépendances pour optimiser le cache
 COPY package.json package-lock.json ./
 
+# Supprimer le cache et forcer l'installation des dépendances
+RUN rm -rf node_modules package-lock.json && npm cache clean --force
+
 # Installer les dépendances en mode développement
 RUN npm install --legacy-peer-deps
 
