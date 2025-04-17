@@ -194,7 +194,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	// accept to join
 	// decline to join
-	// send invitation
+	// send invitation -- à vérifier
 	mux.HandleFunc("POST /api/group/invite", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleInviteGroup(w, r, db)
 	})

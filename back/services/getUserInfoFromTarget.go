@@ -3,19 +3,20 @@ package services
 import "database/sql"
 
 type UserInfoResponseFromTarget struct {
-	Id        string `json:"id"`
-	LastName  string `json:"last_name"`
-	FirstName string `json:"first_name"`
-	About     string `json:"about"`
-	Username  string `json:"username"`
-	ImageUrl  string `json:"image_url"`
-	Public    bool   `json:"public"`
-	Followers int    `json:"followers"`
-	Following int    `json:"following"`
-	CreatedAt string `json:"created_at"`
+	Id          string `json:"id"`
+	LastName    string `json:"last_name"`
+	FirstName   string `json:"first_name"`
+	About       string `json:"about"`
+	Username    string `json:"username"`
+	ImageUrl    string `json:"image_url"`
+	Public      bool   `json:"public"`
+	Followers   int    `json:"followers"`
+	Following   int    `json:"following"`
+	CreatedAt   string `json:"created_at"`
+	IsFollowing int    `json:"is_following"`
 }
 
-func GetUserInfoFromTarget(db *sql.DB, targetId string) (UserInfoResponseFromTarget, error) {
+func GetUserInfoFromTarget(db *sql.DB, targetId, userID string) (UserInfoResponseFromTarget, error) {
 	var userInfo UserInfoResponseFromTarget
 
 	var image, username, about sql.NullString
@@ -51,12 +52,34 @@ func GetUserInfoFromTarget(db *sql.DB, targetId string) (UserInfoResponseFromTar
 		userInfo.About = about.String
 	}
 
-	if public == 0 {
-		userInfo.Public = false
-	} else {
-		userInfo.Public = true
+	userInfo.Public = !(public == 0)
+
+	var isFollowing bool
+	query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
+	err = db.QueryRow(query, targetId, userID).Scan(&isFollowing)
+	if err != nil {
+		return userInfo, err
 	}
 
-	return userInfo, nil
+	if isFollowing {
+		userInfo.IsFollowing = 1
+		return userInfo, nil
 
+	}
+
+	var isOnWaiting bool
+	query = `SELECT EXISTS(SELECT 1 FROM REQUEST_FOLLOW WHERE ASKER_ID = ? AND RECEIVER_ID = ? )`
+	err = db.QueryRow(query, userID, targetId).Scan(&isOnWaiting)
+	if err != nil {
+		return userInfo, err
+	}
+
+	if isOnWaiting {
+		userInfo.IsFollowing = 2
+		return userInfo, nil
+	}
+
+	userInfo.IsFollowing = 0
+
+	return userInfo, nil
 }

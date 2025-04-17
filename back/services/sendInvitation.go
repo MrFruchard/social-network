@@ -17,6 +17,17 @@ func SendInvitationGroup(db *sql.DB, userID, receiverId, groupId string) error {
 		return errors.New("user is not a member of the group")
 	}
 
+	var receiverIsMember bool
+	query = `SELECT EXISTS(SELECT 1 FROM GROUPS_MEMBERS WHERE USER_ID= ? AND GROUP_ID = ?)`
+	err = db.QueryRow(query, receiverId, groupId).Scan(&receiverIsMember)
+	if err != nil {
+		return err
+	}
+
+	if receiverIsMember {
+		return errors.New("receiver is a member of the group")
+	}
+
 	var isFollower bool
 	query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
 	err = db.QueryRow(query, userID, receiverId).Scan(&isFollower)
@@ -25,6 +36,16 @@ func SendInvitationGroup(db *sql.DB, userID, receiverId, groupId string) error {
 	}
 	if !isFollower {
 		return errors.New("user is not follower")
+	}
+
+	var isAlreadyInvite bool
+	query = `SELECT EXISTS(SELECT 1 FROM ASK_GROUP WHERE ASKER = ? AND  RECEIVER = ?)`
+	err = db.QueryRow(query, receiverId, groupId).Scan(&isAlreadyInvite)
+	if err != nil {
+		return err
+	}
+	if isAlreadyInvite {
+		return errors.New("invitation group already exists")
 	}
 
 	// si une écriture échoue reviens en arrière
