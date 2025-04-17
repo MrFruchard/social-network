@@ -26,6 +26,12 @@ func AskToJoinGroup(db *sql.DB, groupID, userID string) error {
 		return err
 	}
 
+	tx, err := db.Begin()
+	if err != nil {
+		return errors.Wrap(err, "transaction begin failed")
+	}
+	defer tx.Rollback()
+
 	askId := uuid.New().String()
 	notifId := uuid.New().String()
 	query = `INSERT INTO ASK_GROUP(ID, ASKER, RECEIVER, GROUP_ID, ACCEPTED, CREATED_AT) VALUES (?, ?, ?, ?, 0 , datetime('now'))`
