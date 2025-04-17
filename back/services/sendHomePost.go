@@ -127,6 +127,14 @@ func structHomePost(db *sql.DB, userId string, offset int) ([]PostProfile, error
 			p.ImageContent = imageContent.String
 		}
 
+		if privacy == 1 {
+			p.Privacy = "private"
+		} else if privacy == 2 {
+			p.Privacy = "public"
+		} else if privacy == 0 {
+			p.Privacy = "ListPrivate"
+		}
+
 		postProfile = append(postProfile, p)
 	}
 
