@@ -19,11 +19,6 @@ func HandleAskFollow(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	user := r.URL.Query().Get("user")
 
-	if user == userID {
-		utils.ErrorResponse(w, http.StatusBadRequest, "Bad Request")
-		return
-	}
-
 	err := services.AddRequestFollowHandler(db, userID, user)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
