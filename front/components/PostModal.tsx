@@ -7,11 +7,20 @@ interface PostModalProps {
 const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
   const form = event.currentTarget;
   const formData = new FormData(form);
+  const content = form.querySelector("textarea")?.value || "";
+  const fileInput = form.querySelector<HTMLInputElement>("input[type='file']");
+  const file = fileInput?.files?.[0];
 
   const privacyCheckbox = form.querySelector<HTMLInputElement>("#privacy");
   const privacyValue = privacyCheckbox?.checked ? "private" : "public";
 
+  if (file) {
+    formData.append("image", file);
+  }
+
   formData.append("privacy", privacyValue);
+  formData.append("content", form.querySelector("textarea")?.value || "");
+  formData.append("tags", content.match(/#[\w]+/g)?.join(" ") || "");
 
   const requestOptions = {
     method: "POST",
@@ -52,8 +61,8 @@ const PostModal: React.FC<PostModalProps> = ({ onClose }) => {
             className="border border-border p-2 rounded-lg"
           />
           <div className="flex">
-            <input type="checkbox" name="Privacy" id="privacy" />
-            <strong> privacy</strong>
+            <input type="checkbox" name="Privacy" id="privacy" defaultChecked />
+            <strong> Public</strong>
           </div>
           <div className="flex justify-end gap-2">
             <button

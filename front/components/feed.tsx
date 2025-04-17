@@ -261,13 +261,20 @@ export default function TwitterLikeFeed() {
                 {/* Post Content */}
                 <div className="mt-1 mb-2">
                   <p className="whitespace-pre-line">{post.content}</p>
-                  {post.tags && (
+                  {
                     <div className="mt-1">
-                      <span className="text-blue-500 hover:underline">
-                        #{post.tags}
+                      <span className="text-blue-500">
+                        {Array.isArray(post.tags) &&
+                          post.tags.map((tag: string, index: number) => (
+                            <Link key={index} href="#">
+                              <span className="text-blue-500 hover:underline mr-2">
+                                {tag}
+                              </span>
+                            </Link>
+                          ))}
                       </span>
                     </div>
-                  )}
+                  }
                 </div>
 
                 {/* Image */}
