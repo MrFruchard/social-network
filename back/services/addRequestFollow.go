@@ -21,9 +21,12 @@ func AddRequestFollowHandler(db *sql.DB, userID, receiver string) error {
 	query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ? )`
 	err = db.QueryRow(query, receiver, userID).Scan(&isFollowing)
 	if err != nil {
-		return errors.New("follow already exists")
+		return err
 	}
 
+	if isFollowing {
+		return errors.New("user already follow")
+	}
 	// Vérifie si le receiver existe
 	var receiverID string
 	var public int
