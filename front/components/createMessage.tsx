@@ -35,7 +35,7 @@ export default function CreateMessage({ isOpen, onClose }: { isOpen: boolean; on
       <div className='fixed inset-0 flex items-center justify-center p-4'>
         <div className='w-full max-w-md rounded-2xl bg-white shadow-xl'>
           <div className='flex items-center justify-between p-4 border-b'>
-            <h2 className='text-lg font-semibold'>New Message</h2>
+            <h2 className='text-lg font-semibold'>Nouveau message </h2>
             <button onClick={onClose} className='text-gray-500 hover:text-gray-700'>
               <X className='h-5 w-5' />
             </button>
@@ -59,7 +59,7 @@ export default function CreateMessage({ isOpen, onClose }: { isOpen: boolean; on
             {/* Search input */}
             <div className='relative'>
               <Search className='absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400' />
-              <input type='text' placeholder='Search people...' value={search} onChange={(e) => setSearch(e.target.value)} className='w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500' />
+              <input type='text' placeholder='Recherher des personnes' value={search} onChange={(e) => setSearch(e.target.value)} className='w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500' />
             </div>
 
             {/* User list */}
@@ -76,10 +76,10 @@ export default function CreateMessage({ isOpen, onClose }: { isOpen: boolean; on
           {/* Action buttons */}
           <div className='flex justify-end gap-2 p-4 border-t'>
             <button onClick={onClose} className='px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg'>
-              Cancel
+              Fermer
             </button>
             <button disabled={selectedUsers.length === 0} className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed'>
-              Next
+              Suivant
             </button>
           </div>
         </div>

@@ -102,7 +102,19 @@ export function ChatLayout() {
             </div>
           </>
         ) : (
-          <div className='flex items-center justify-center h-full text-gray-500'>Select a conversation to start messaging</div>
+          <div className='flex flex-col items-center justify-center h-full px-8 space-y-6'>
+            <h2 className='text-3xl font-bold text-gray-900'>Sélectionnez un message</h2>
+            <p className='text-base text-gray-500 text-center max-w-md'>Faites un choix dans vos conversations existantes, commencez-en une nouvelle ou ne changez rien.</p>
+            <button
+              onClick={() => {
+                setIsCreateMessageOpen(true);
+              }}
+              className='flex items-center justify-center gap-2 py-4 px-6 bg-blue-500 text-white rounded-2xl hover:bg-blue-600 transition-colors duration-200 font-medium shadow-md hover:shadow-lg w-64'
+            >
+              <MailPlus className='w-6 h-6' />
+              <span>Nouveau message</span>
+            </button>
+          </div>
         )}
       </div>
     </div>

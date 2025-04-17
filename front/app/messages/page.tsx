@@ -2,6 +2,7 @@
 
 import { useAuth } from '@/hooks/user/checkAuth';
 import { ChatLayout } from '@/components/Message-Form';
+import { MainLayout } from '@/components/MainLayout';
 
 export default function MessagesPage() {
   const { isLoading: authLoading, isAuthenticated } = useAuth({
@@ -22,8 +23,10 @@ export default function MessagesPage() {
   }
 
   return (
-    <div className='h-full'>
-      <ChatLayout />
-    </div>
+    <MainLayout>
+      <div className='h-full'>
+        <ChatLayout />
+      </div>
+    </MainLayout>
   );
 }
