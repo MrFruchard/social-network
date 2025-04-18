@@ -29,7 +29,7 @@ func HandleSendPostWithTags(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 		return
 	}
 
-	if len(post) == 0 {
+	if len(post.Data) == 0 {
 		log.Println("Aucun post trouvé avec ce tag") // Log ajouté ici
 		w.Header().Set("Content-Type", "application/json")
 		err := json.NewEncoder(w).Encode("[]")
