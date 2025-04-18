@@ -15,14 +15,14 @@ func HandleGetNotifications(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 		return
 	}
 
-	notifs, err := services.SendNotifications(db, userID)
+	notifications, err := services.SendNotifications(db, userID)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	w.Header().Set("Content-Type", "application/json")
-	err = json.NewEncoder(w).Encode(notifs)
+	err = json.NewEncoder(w).Encode(notifications)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
