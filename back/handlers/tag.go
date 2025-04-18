@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
@@ -22,11 +23,15 @@ func HandleSendPostWithTags(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 		return
 	}
 
+	log.Println("c'est passé")
+
 	post, err := services.SendPostWithTags(db, userID, tag)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	log.Println("juste après la func")
 
 	w.Header().Set("Content-Type", "application/json")
 	if err = json.NewEncoder(w).Encode(post); err != nil {
