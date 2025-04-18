@@ -176,7 +176,12 @@ export default function TwitterLikeFeed() {
           <div key={post.id} className='p-4 hover:bg-gray-50 transition'>
             <div className='flex'>
               {/* Avatar */}
-              <div className='mr-3 cursor-pointer' onClick={() => router.push(`/profile?id=${post.user_id || post.userId}`)}>
+              <div
+                className='mr-3 cursor-pointer'
+                onClick={() => {
+                  router.push(`/profile?id=${post.user_id || post.userId}`);
+                }}
+              >
                 {post.image_profile_url ? (
                   <img src={post.image_profile_url} alt={`${post.first_name} ${post.last_name}`} className='w-12 h-12 rounded-full object-cover' />
                 ) : (
@@ -212,11 +217,18 @@ export default function TwitterLikeFeed() {
                 {/* Post Content */}
                 <div className='mt-1 mb-2'>
                   <p className='whitespace-pre-line'>{post.content}</p>
-                  {post.tags && (
+                  {
                     <div className='mt-1'>
-                      <span className='text-blue-500 hover:underline'>#{post.tags}</span>
+                      <span className='text-blue-500'>
+                        {Array.isArray(post.tags) &&
+                          post.tags.map((tag: string, index: number) => (
+                            <Link key={index} href='#'>
+                              <span className='text-blue-500 hover:underline mr-2'>{tag}</span>
+                            </Link>
+                          ))}
+                      </span>
                     </div>
-                  )}
+                  }
                 </div>
 
                 {/* Image */}
