@@ -1,10 +1,16 @@
-"use client"
+"use client";
 
-import { useRouter } from 'next/navigation';
-import { useState } from 'react';
-import { Button } from './ui/button';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from './ui/tooltip';
-import { Lock } from 'lucide-react';
+import { useRouter } from "next/navigation";
+import { use, useState } from "react";
+import { Button } from "./ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "./ui/tooltip";
+import { Lock } from "lucide-react";
+import { useUserData } from "@/hooks/user/useUserData";
 
 interface UserLinkProps {
   userId: string;
@@ -14,24 +20,39 @@ interface UserLinkProps {
   showPrivateIcon?: boolean;
 }
 
-export default function UserLink({ 
-  userId, 
-  username, 
-  isPrivate = false, 
+export default function UserLink({
+  userId,
+  username,
+  isPrivate = false,
   className = "",
-  showPrivateIcon = true
+  showPrivateIcon = true,
 }: UserLinkProps) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
+
+  const {
+    userData,
+    loading,
+    error: userError,
+  } = useUserData() as {
+    userData: { id: string } | null;
+    loading: boolean;
+    error: string | null;
+  };
 
   const handleClick = async () => {
     try {
       // Log pour déboguer l'ID utilisateur
       console.log("UserLink clicked with userId:", userId);
-      
-      // Si un utilisateur clique sur son propre nom, rediriger sans vérification
-      // Si c'est un autre utilisateur, naviguer vers son profil
-      router.push(`/profile?id=${userId}`);
+      console.log(
+        "Current userId:",
+        userData ? userData.id : "No user data available"
+      );
+      if (userId !== userData?.id) {
+        router.push(`/profile?id=${userId}`);
+      } else {
+        router.push("/profile");
+      }
     } catch (err) {
       setError("Impossible d'accéder à ce profil");
       setTimeout(() => setError(null), 3000);
@@ -61,9 +82,9 @@ export default function UserLink({
 
   return (
     <>
-      <Button 
-        variant="link" 
-        className={`p-0 h-auto ${className}`} 
+      <Button
+        variant="link"
+        className={`p-0 h-auto ${className}`}
         onClick={handleClick}
       >
         {username}

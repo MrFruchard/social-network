@@ -210,9 +210,9 @@ export default function TwitterLikeFeed() {
               {/* Avatar */}
               <div
                 className="mr-3 cursor-pointer"
-                onClick={() =>
-                  router.push(`/profile?id=${post.user_id || post.userId}`)
-                }
+                onClick={() => {
+                  router.push(`/profile?id=${post.user_id || post.userId}`);
+                }}
               >
                 {post.image_profile_url ? (
                   <img
