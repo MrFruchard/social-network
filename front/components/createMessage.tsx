@@ -24,7 +24,8 @@ export default function CreateMessage({
   const [search, setSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const { follows, loading, error, fetchFollows } = useListFollow();
-  const { addConversation } = useConversations();
+  const { conversations, addConversation } = useConversations();
+  const [shake, setShake] = useState(false);
   const [isCreatingConversation, setIsCreatingConversation] = useState(false);
   const [showMessageForm, setShowMessageForm] = useState(false);
 
@@ -51,6 +52,23 @@ export default function CreateMessage({
     try {
       setIsCreatingConversation(true);
 
+      // Vérifie si une conversation existe déjà avec les mêmes participants
+      const selectedIds = selectedUsers.map((u) => u.id).sort();
+      const existingConv = Array.isArray(conversations)
+        ? conversations.find((conv) => {
+            const convIds = conv.participants.map((p) => p.id).sort();
+            return convIds.length === selectedIds.length && convIds.every((id, idx) => id === selectedIds[idx]);
+          })
+        : null;
+
+      if (existingConv) {
+        setShake(true);
+        setTimeout(() => setShake(false), 500);
+        setIsCreatingConversation(false);
+        // NE PAS fermer la modale ici !
+        return;
+      }
+
       const newConversation = {
         id: `temp-${Date.now()}`,
         participants: selectedUsers.map((user) => ({
@@ -63,17 +81,17 @@ export default function CreateMessage({
 
       addConversation(newConversation);
 
-      // Ajoute cette ligne pour sélectionner la conversation dans la colonne chat
       if (onSelectConversation) {
         onSelectConversation(newConversation);
       }
 
       setShowMessageForm(true);
+      onClose(); // Ferme la modale seulement après création
     } catch (error) {
       console.error('Error creating conversation:', error);
     } finally {
       setIsCreatingConversation(false);
-      onClose();
+      // onClose(); // <-- Retire cette ligne du finally
     }
   };
 
@@ -83,7 +101,7 @@ export default function CreateMessage({
     <div className='fixed inset-0 z-50'>
       <div className='fixed inset-0 bg-black/20' onClick={onClose} />
       <div className='fixed inset-0 flex items-center justify-center p-4'>
-        <div className='w-full max-w-md rounded-2xl bg-white shadow-xl'>
+        <div className={`w-full max-w-md bg-white shadow-xl rounded-2xl ${shake ? 'animate-shake' : ''}`} onAnimationEnd={() => setShake(false)}>
           <div className='p-4'>
             {selectedUsers.length > 0 && (
               <div className='flex flex-wrap gap-2 mb-3'>
