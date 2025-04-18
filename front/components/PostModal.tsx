@@ -61,6 +61,7 @@ const PostModal: React.FC<PostModalProps> = ({ onClose }) => {
       .then((data) => {
         if (data.status === "success") {
           setFollowers(data.followers);
+          console.log(data.followers);
         }
       })
       .catch((error) => console.log("error", error));
@@ -99,7 +100,7 @@ const PostModal: React.FC<PostModalProps> = ({ onClose }) => {
           <div>
             <h3 className="text-lg font-semibold mb-2">Select Followers</h3>
             <div className="max-h-40 overflow-y-auto border border-border p-2 rounded-lg">
-              {followers.map((follower) => (
+              {followers?.map((follower) => (
                 <div
                   key={follower.user_id}
                   className="flex items-center gap-2 mb-2"
