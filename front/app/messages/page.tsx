@@ -3,6 +3,7 @@
 import { useAuth } from '@/hooks/user/checkAuth';
 import { ChatLayout } from '@/components/Message-Form';
 import { MainLayout } from '@/components/MainLayout';
+import { ConversationsProvider } from '@/hooks/message/ConversationsContext'; // <-- Ajoute cet import
 
 export default function MessagesPage() {
   const { isLoading: authLoading, isAuthenticated } = useAuth({
@@ -24,9 +25,13 @@ export default function MessagesPage() {
 
   return (
     <MainLayout>
-      <div className='h-full'>
-        <ChatLayout />
-      </div>
+      <ConversationsProvider>
+        {' '}
+        {/* <-- Ajoute le provider ici */}
+        <div className='h-full'>
+          <ChatLayout />
+        </div>
+      </ConversationsProvider>
     </MainLayout>
   );
 }

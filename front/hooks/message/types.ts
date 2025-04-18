@@ -1,17 +1,8 @@
-export interface Message {
-  id: string;
-  content: string;
-  sender: string;
-  receiver: string;
-  created_at: string;
-  image?: string;
-}
-
-export interface Conversation {
-  id: string;
-  participants: string[];
-  lastMessage?: Message;
-  created_at: string;
+export interface ConversationState {
+  conversations: Conversation[];
+  currentConversation: Conversation | null;
+  loading: boolean;
+  error: string | null;
 }
 
 export interface MessageState {
@@ -20,9 +11,22 @@ export interface MessageState {
   error: string | null;
 }
 
-export interface ConversationState {
-  conversations: Conversation[];
-  currentConversation: Conversation | null;
-  loading: boolean;
-  error: string | null;
+export interface Conversation {
+  id: string;
+  participants: {
+    id: string;
+    username: string;
+    avatar?: string | null;
+  }[];
+  lastMessage?: {
+    content: string;
+    createdAt: string;
+  } | null;
+}
+
+export interface Message {
+  id: string;
+  content: string;
+  sender: string;
+  createdAt: string;
 }

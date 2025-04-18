@@ -1,22 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { useConversations } from '../hooks/message/useConversations';
+import { useConversations } from '../hooks/message/ConversationsContext';
 import { useMessages } from '../hooks/message/useMessages';
 import { MailPlus } from 'lucide-react';
 import CreateMessage from './createMessage';
+import { useAuth } from '../hooks/user/checkAuth';
+import { ChatCard, Message as ChatCardMessage } from '@/components/chat-card'; // Ajoute cette ligne
 
-interface Conversation {
-  id: string;
-  participants: string[];
-  lastMessage?: {
-    content: string;
-  };
-}
-
-export function ChatLayout() {
+export function ChatLayout({ recipients, onClose }: { recipients: { id: string; username: string; avatar: string | null }[]; onClose: () => void }) {
+  const { user } = useAuth();
   const { conversations = [], loading: conversationsLoading, fetchConversations } = useConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const { messages = [], loading: messagesLoading, fetchMessages } = useMessages(selectedConversationId || undefined);
   const [isCreateMessageOpen, setIsCreateMessageOpen] = useState(false);
+
+  // Ajoute cette ligne juste après la déclaration des hooks :
+  const safeMessages = Array.isArray(messages) ? messages : Array.isArray(messages?.messages) ? messages.messages : [];
 
   useEffect(() => {
     fetchConversations();
@@ -28,7 +26,33 @@ export function ChatLayout() {
     }
   }, [selectedConversationId, fetchMessages]);
 
-  console.log('Conversations:', conversations);
+  const chatCardMessages: ChatCardMessage[] = safeMessages.map((message) => {
+    const isCurrentUser = message.sender === user?.id || message.sender === 'currentUser';
+    const sender = isCurrentUser
+      ? {
+          name: user?.username || 'You',
+          avatar: user?.avatar || '/default-avatar.png',
+          isOnline: true,
+          isCurrentUser: true,
+        }
+      : {
+          name: recipients?.find((u) => u.id === message.sender)?.username || 'Unknown',
+          avatar: recipients?.find((u) => u.id === message.sender)?.avatar || '/default-avatar.png',
+          isOnline: true,
+        };
+    return {
+      id: message.id,
+      content: message.content,
+      sender,
+      timestamp: new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'delivered', // ou "read" si tu as l'info
+      reactions: [], // Ajoute les réactions si tu veux
+    };
+  });
+
+  // console.log('messages:', messages);
+  console.log('conversations:', conversations);
+
   return (
     <div className='flex h-screen bg-white'>
       <div className='w-1/3 flex flex-col border-r border-gray-200'>
@@ -43,18 +67,30 @@ export function ChatLayout() {
             <MailPlus className='w-6 h-6' />
           </button>
         </div>
-
         {/* Liste des conversations */}
         <div className='flex-1 overflow-y-auto'>
           {conversationsLoading ? (
-            <div className='p-4 text-gray-600'>Loading conversations...</div>
+            <div className='p-4 text-gray-600'>Chargement des conversations...</div>
           ) : Array.isArray(conversations) && conversations.length > 0 ? (
-            conversations.map((conversation: Conversation) => (
-              <div key={conversation.id} className={`p-4 cursor-pointer hover:bg-gray-50 transition-colors ${selectedConversationId === conversation.id ? 'bg-blue-50' : ''}`} onClick={() => setSelectedConversationId(conversation.id)}>
-                <div className='font-medium text-gray-900'>{conversation.participants?.join(', ') || 'No participants'}</div>
-                {conversation.lastMessage && <div className='text-sm text-gray-500 truncate'>{conversation.lastMessage.content}</div>}
-              </div>
-            ))
+            conversations.map((conversation) => {
+              const currentUserId = user?.id;
+              const other = conversation.participants.find((p) => p.id !== currentUserId) || conversation.participants[0];
+              const isSelected = selectedConversationId === conversation.id;
+
+              return (
+                <div key={conversation.id} className={`relative flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`} onClick={() => setSelectedConversationId(conversation.id)}>
+                  {/* Trait bleu vertical à gauche si sélectionné */}
+                  {isSelected && <div className='absolute left-0 top-0 h-full w-1 bg-blue-500 rounded-r-lg' />}
+                  <div className='flex items-center ml-2'>
+                    <img src={other.avatar || '/default-avatar.png'} alt={other.username} className='w-10 h-10 rounded-full object-cover border' />
+                  </div>
+                  <div className='flex-1 min-w-0'>
+                    <div className='font-semibold text-gray-900 truncate'>{other.username}</div>
+                    <div className='text-sm text-gray-500 truncate'>{conversation.lastMessage ? conversation.lastMessage.content : <span className='italic text-gray-400'>Aucun message</span>}</div>
+                  </div>
+                </div>
+              );
+            })
           ) : (
             <div className='p-8 text-left'>
               <h2 className='font-bold text-xl mb-3 text-gray-900'>Bienvenue dans votre boîte de réception !</h2>
@@ -71,36 +107,40 @@ export function ChatLayout() {
             </div>
           )}
         </div>
-        {isCreateMessageOpen && <CreateMessage isOpen={isCreateMessageOpen} onClose={() => setIsCreateMessageOpen(false)} />}
+        {isCreateMessageOpen && (
+          <CreateMessage
+            isOpen={isCreateMessageOpen}
+            onClose={() => setIsCreateMessageOpen(false)}
+            onSelectConversation={(conversation) => {
+              setSelectedConversationId(conversation.id); // Ouvre le chat de la nouvelle conversation
+              setIsCreateMessageOpen(false); // Ferme la modal
+            }}
+          />
+        )}{' '}
       </div>
 
       {/* Colonne des messages */}
       <div className='w-2/3 flex flex-col bg-white'>
         {selectedConversationId ? (
-          <>
-            <div className='flex-1 overflow-y-auto p-4'>
-              {messagesLoading ? (
-                <div className='text-gray-600'>Loading messages...</div>
-              ) : (
-                messages.map((message) => (
-                  <div key={message.id} className={`mb-4 ${message.sender === 'currentUser' ? 'text-right' : 'text-left'}`}>
-                    <div className={`inline-block p-2 rounded-lg ${message.sender === 'currentUser' ? 'bg-blue-500 text-white' : 'bg-gray-100 text-gray-900'}`}>{message.content}</div>
-                    <div className='text-xs text-gray-500 mt-1'>{new Date(message.created_at).toLocaleString()}</div>
-                  </div>
-                ))
-              )}
-            </div>
-
-            {/* Input pour envoyer un message */}
-            <div className='p-4 border-t border-gray-200'>
-              <form className='flex gap-2'>
-                <input type='text' className='flex-1 px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent' placeholder='Type a message...' />
-                <button type='submit' className='px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors'>
-                  Send
-                </button>
-              </form>
-            </div>
-          </>
+          <div className='flex-1 flex flex-col min-h-0'>
+            {' '}
+            {/* Ajoute min-h-0 ici */}
+            <ChatCard
+              chatName={Array.isArray(recipients) && recipients.length === 1 ? recipients[0].username : 'Conversation'}
+              membersCount={Array.isArray(recipients) ? recipients.length + 1 : 1}
+              onlineCount={Array.isArray(recipients) ? recipients.length + 1 : 1}
+              initialMessages={chatCardMessages}
+              currentUser={{
+                name: user?.username || 'You',
+                avatar: user?.avatar || '/default-avatar.png',
+              }}
+              theme='light'
+              className='border border-zinc-200 flex-1' // Ajoute flex-1 ici aussi si besoin
+              onSendMessage={(msg) => console.log('Sent:', msg)}
+              onReaction={(messageId, emoji) => console.log('Reaction:', messageId, emoji)}
+              onMoreClick={() => console.log('More clicked')}
+            />
+          </div>
         ) : (
           <div className='flex flex-col items-center justify-center h-full px-8 space-y-6'>
             <h2 className='text-3xl font-bold text-gray-900'>Sélectionnez un message</h2>
