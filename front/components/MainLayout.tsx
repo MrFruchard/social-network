@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState } from "react";
+import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./logout-button";
@@ -28,6 +28,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const { userData } = useUserData();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
   const openPostForm = () => {
     setIsModalOpen(true);
@@ -36,6 +37,19 @@ export function MainLayout({ children }: MainLayoutProps) {
   const closePostForm = () => {
     setIsModalOpen(false);
   };
+
+  const handleHomeClick = () => {
+    console.log("Home link clicked");
+    setSelectedTag(null);
+  };
+
+  useEffect(() => {
+    console.log("Pathname changed to:", pathname);
+    if (pathname === "/home") {
+      console.log("Resetting selectedTag to null");
+      setSelectedTag(null);
+    }
+  }, [pathname]);
 
   return (
     <div className="flex w-full min-h-screen bg-background">
@@ -51,6 +65,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             icon={<HomeIcon className="h-5 w-5" />}
             label="Home"
             active={pathname === "/home"}
+            onClick={handleHomeClick}
           />
           <NavItem
             href="/profile"
@@ -377,15 +392,17 @@ type NavItemProps = {
   icon: ReactNode;
   label: string;
   active?: boolean;
+  onClick?: () => void;
 };
 
-function NavItem({ href, icon, label, active }: NavItemProps) {
+function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
   return (
     <Link
       href={href}
       className={`flex items-center px-4 py-3 rounded-full text-lg hover:bg-muted transition-colors ${
         active ? "font-semibold" : ""
       }`}
+      onClick={onClick}
     >
       <span
         className={`mr-4 ${active ? "text-primary" : "text-muted-foreground"}`}

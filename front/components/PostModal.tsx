@@ -34,7 +34,13 @@ const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 
   formData.append("privacy", privacyValue);
   formData.append("content", content);
-  formData.append("tags", content.match(/#[\w]+/g)?.join(" ") || "");
+  formData.append(
+    "tags",
+    content
+      .match(/#[\w]+/g)
+      ?.map((tag) => tag.slice(1))
+      .join(" ") || ""
+  );
   formData.append("allowed_followers", JSON.stringify(selectedFollowers));
 
   const requestOptions = {
