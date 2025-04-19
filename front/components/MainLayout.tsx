@@ -42,7 +42,7 @@ export function MainLayout({ children }: MainLayoutProps) {
       {/* Left Sidebar - fixed */}
       <aside className="fixed left-0 top-0 bottom-0 w-64 border-r border-border hidden md:flex flex-col p-4 overflow-y-auto bg-background z-20">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold">Social Network</h1>
+          <h1 className="text-2xl font-bold">Social Иetwork</h1>
         </div>
 
         <nav className="space-y-2 flex-1">
