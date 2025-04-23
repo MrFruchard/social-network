@@ -21,6 +21,7 @@ func HandleGetNotifications(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 		return
 	}
 
+	// Toujours envoyer un tableau JSON, même s'il est vide
 	w.Header().Set("Content-Type", "application/json")
 	err = json.NewEncoder(w).Encode(notifications)
 	if err != nil {
