@@ -48,7 +48,11 @@ export function useAuth(options: UseAuthOptions = {}) {
 
                 // Rediriger si l'authentification est requise
                 if (required && redirectTo) {
-                    router.push(redirectTo);
+                    // Assurez-vous que c'est une redirection unique pour éviter les boucles
+                    console.log("Redirection due to auth failure:", redirectTo);
+                    if (window.location.pathname !== redirectTo) {
+                        router.push(redirectTo);
+                    }
                 }
             } finally {
                 setIsLoading(false);

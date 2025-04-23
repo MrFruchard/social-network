@@ -15,34 +15,26 @@ export default function TwitterLikeFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
+    console.log("Fetching posts with tag:", selectedTag);
     const fetchPosts = async () => {
       try {
-        const response = await fetch("http://localhost:80/api/home/post");
+        const url = selectedTag
+          ? `http://localhost:80/api/tag?tag=${encodeURIComponent(selectedTag)}`
+          : "http://localhost:80/api/home/post";
+
+        const response = await fetch(url);
         if (!response.ok) {
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const result = await response.json();
-        console.log(
-          "Posts data structure:",
-          result.data && result.data.length > 0 ? result.data[0] : "No posts"
-        );
-        console.log(
-          "Full first post:",
-          JSON.stringify(
-            result.data && result.data.length > 0 ? result.data[0] : {},
-            null,
-            2
-          )
-        );
 
-        // Fetch images for each post
         const postsWithImages = await Promise.all(
           result.data.map(async (post: any) => {
             if (post.image_content_url) {
-              console.log(post.image_content_url);
               try {
                 const requestOptions = {
                   method: "GET",
@@ -79,7 +71,7 @@ export default function TwitterLikeFeed() {
     };
 
     fetchPosts();
-  }, []);
+  }, [selectedTag]);
 
   interface Post {
     id: number;
@@ -171,7 +163,6 @@ export default function TwitterLikeFeed() {
     );
   }
 
-  // Calcul du temps écoulé
   const timeAgo = (dateString: string): string => {
     const now: Date = new Date();
     const past: Date = new Date(dateString);
@@ -199,7 +190,7 @@ export default function TwitterLikeFeed() {
 
   return (
     <div className="w-full mx-auto bg-white">
-      <div className="sticky top-0 z-10 bg-white p-4 border-b">
+      <div className="top-0 z-10 bg-white p-4 border-b">
         <h1 className="text-xl font-bold">Accueil</h1>
       </div>
 
@@ -207,12 +198,11 @@ export default function TwitterLikeFeed() {
         {posts.map((post) => (
           <div key={post.id} className="p-4 hover:bg-gray-50 transition">
             <div className="flex">
-              {/* Avatar */}
               <div
                 className="mr-3 cursor-pointer"
-                onClick={() =>
-                  router.push(`/profile?id=${post.user_id || post.userId}`)
-                }
+                onClick={() => {
+                  router.push(`/profile?id=${post.user_id || post.userId}`);
+                }}
               >
                 {post.image_profile_url ? (
                   <img
@@ -230,9 +220,7 @@ export default function TwitterLikeFeed() {
                 )}
               </div>
 
-              {/* Content */}
               <div className="flex-1">
-                {/* Header */}
                 <div className="flex items-start justify-between">
                   <div>
                     <UserLink
@@ -247,7 +235,6 @@ export default function TwitterLikeFeed() {
                   </div>
                 </div>
 
-                {/* Group */}
                 {post.group_id && post.group_id.id && (
                   <div
                     className="flex items-center text-gray-500 mb-1 text-sm cursor-pointer hover:underline"
@@ -258,19 +245,29 @@ export default function TwitterLikeFeed() {
                   </div>
                 )}
 
-                {/* Post Content */}
                 <div className="mt-1 mb-2">
                   <p className="whitespace-pre-line">{post.content}</p>
-                  {post.tags && (
+                  {
                     <div className="mt-1">
-                      <span className="text-blue-500 hover:underline">
-                        #{post.tags}
+                      <span className="text-blue-500">
+                        {Array.isArray(post.tags) &&
+                          post.tags.map((tag: string, index: number) => (
+                            <span
+                              key={index}
+                              onClick={() => {
+                                console.log("Tag clicked:", tag);
+                                setSelectedTag(tag);
+                              }}
+                              className="text-blue-500 hover:underline mr-2 cursor-pointer"
+                            >
+                              {tag}
+                            </span>
+                          ))}
                       </span>
                     </div>
-                  )}
+                  }
                 </div>
 
-                {/* Image */}
                 {post.image_content_url && (
                   <div className="mt-2 mb-3 rounded-lg overflow-hidden border border-gray-200">
                     <img
@@ -281,9 +278,7 @@ export default function TwitterLikeFeed() {
                   </div>
                 )}
 
-                {/* Actions */}
                 <div className="flex justify-between mt-3 text-gray-500">
-                  {/* Comment */}
                   <Link href={`/post/${post.id}`}>
                     <button className="flex items-center group">
                       <div className="p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-500 transition">
@@ -295,7 +290,6 @@ export default function TwitterLikeFeed() {
                     </button>
                   </Link>
 
-                  {/* Like */}
                   <button
                     className="flex items-center group"
                     onClick={() => handleLike(post.id)}
@@ -323,7 +317,6 @@ export default function TwitterLikeFeed() {
                     </span>
                   </button>
 
-                  {/* Dislike */}
                   <button
                     className="flex items-center group"
                     onClick={() => handleDislike(post.id)}

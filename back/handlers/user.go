@@ -46,7 +46,7 @@ func HandleUserInfos(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	var userInfos services.UserInfoResponseFromTarget
 
-	userInfos, err = services.GetUserInfoFromTarget(db, target)
+	userInfos, err = services.GetUserInfoFromTarget(db, target, userID)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, err.Error())
 		return
