@@ -153,7 +153,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           </main>
 
           {/* Right Sidebar */}
-          <aside className="w-80 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto p-4 bg-background">
+          <aside className="w-80 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto p-4 bg-background ">
             {/* Search Bar */}
             <div className="relative mb-4">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -262,45 +262,6 @@ export function MainLayout({ children }: MainLayoutProps) {
 
                 <Link
                   href="/explore/trends"
-                  className="text-primary text-sm hover:underline block text-center mt-2"
-                >
-                  Show more
-                </Link>
-              </div>
-            </div>
-
-            {/* What's happening section */}
-            <div className="bg-muted/50 rounded-lg p-4">
-              <h3 className="font-bold mb-2">What's happening</h3>
-              <div className="space-y-4">
-                {/* News item 1 */}
-                <div className="flex group cursor-pointer">
-                  <div className="flex-1 pr-2">
-                    <p className="text-xs text-muted-foreground">
-                      Technology · 2h
-                    </p>
-                    <p className="font-medium group-hover:text-primary">
-                      New features released for React 19
-                    </p>
-                  </div>
-                  <div className="w-16 h-16 bg-muted rounded"></div>
-                </div>
-
-                {/* News item 2 */}
-                <div className="flex group cursor-pointer">
-                  <div className="flex-1 pr-2">
-                    <p className="text-xs text-muted-foreground">
-                      Web Development · 5h
-                    </p>
-                    <p className="font-medium group-hover:text-primary">
-                      Next.js announces new router improvements
-                    </p>
-                  </div>
-                  <div className="w-16 h-16 bg-muted rounded"></div>
-                </div>
-
-                <Link
-                  href="/explore/news"
                   className="text-primary text-sm hover:underline block text-center mt-2"
                 >
                   Show more

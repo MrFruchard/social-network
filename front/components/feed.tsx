@@ -31,6 +31,7 @@ export default function TwitterLikeFeed() {
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const result = await response.json();
+        console.log("Fetched posts:", result.data[0]);
 
         const postsWithImages = await Promise.all(
           result.data.map(async (post: any) => {
