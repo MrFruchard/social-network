@@ -35,20 +35,45 @@ export default function TwitterLikeFeed() {
 
         const postsWithImages = await Promise.all(
           result.data.map(async (post: any) => {
-            if (post.image_content_url) {
+            let imageProfileUrl = post.image_profile_url;
+            if (imageProfileUrl) {
+              try {
+                const profileImageResponse = await fetch(
+                  `/api/avatars/${imageProfileUrl}`,
+                  { method: "GET" }
+                );
+                console.log(profileImageResponse);
+                // ...on garde l'image seulement si elle existe...
+                if (profileImageResponse.ok) {
+                  const profileImageBlob = await profileImageResponse.blob();
+                  imageProfileUrl = URL.createObjectURL(profileImageBlob);
+                } else {
+                  // Si l'image n'existe pas, on garde imageProfileUrl inchangé (fallback)
+                  imageProfileUrl = null;
+                }
+              } catch (profileImageError) {
+                console.error(
+                  `Failed to fetch profile image for post ${post.id}:`,
+                  profileImageError
+                );
+                imageProfileUrl = null;
+              }
+            }
+
+            let imageContentUrl = post.image_content_url;
+            if (imageContentUrl) {
               try {
                 const requestOptions = {
                   method: "GET",
                 };
 
                 const imageResponse = await fetch(
-                  `/api/postImages/${post.image_content_url}`,
+                  `/api/postImages/${imageContentUrl}`,
                   requestOptions
                 );
                 if (imageResponse.ok) {
                   const imageBlob = await imageResponse.blob();
-                  const imageUrl = URL.createObjectURL(imageBlob);
-                  return { ...post, image_content_url: imageUrl };
+                  imageContentUrl = URL.createObjectURL(imageBlob);
                 }
               } catch (imageError) {
                 console.error(
@@ -57,7 +82,11 @@ export default function TwitterLikeFeed() {
                 );
               }
             }
-            return post;
+            return {
+              ...post,
+              image_profile_url: imageProfileUrl,
+              image_content_url: imageContentUrl,
+            };
           })
         );
 

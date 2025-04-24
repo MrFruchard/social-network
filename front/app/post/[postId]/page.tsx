@@ -64,6 +64,11 @@ export default function PostPage({
   const [picture, setPicture] = useState<string | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
 
+  // Ajoute un state pour stocker les URLs blob des images de profil des commentaires
+  const [commentProfileImages, setCommentProfileImages] = useState<{
+    [id: string]: string | null;
+  }>({});
+
   useEffect(() => {
     const resolveParams = async () => {
       const resolvedParams = await params;
@@ -103,6 +108,34 @@ export default function PostPage({
           comment: comments,
         });
         setLoading(false);
+
+        // Prépare le chargement des images de profil des commentaires
+        const fetchCommentProfileImages = async () => {
+          const images: { [id: string]: string | null } = {};
+          await Promise.all(
+            comments.map(async (comment: any) => {
+              if (comment.image_profile) {
+                try {
+                  const res = await fetch(
+                    `/api/avatars/${comment.image_profile}`
+                  );
+                  if (res.ok) {
+                    const blob = await res.blob();
+                    images[comment.id] = URL.createObjectURL(blob);
+                  } else {
+                    images[comment.id] = null;
+                  }
+                } catch {
+                  images[comment.id] = null;
+                }
+              } else {
+                images[comment.id] = null;
+              }
+            })
+          );
+          setCommentProfileImages(images);
+        };
+        fetchCommentProfileImages();
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "An unknown error occurred"
@@ -252,11 +285,20 @@ export default function PostPage({
               post.comment.map((comment) => (
                 <div key={comment.id} className="mb-6 border-b pb-4">
                   <div className="flex items-center mb-2">
-                    <img
-                      src={comment.image_profile}
-                      alt={`${comment.first_name} ${comment.last_name}`}
-                      className="w-10 h-10 rounded-full object-cover mr-3"
-                    />
+                    {commentProfileImages[comment.id] ? (
+                      <img
+                        src={commentProfileImages[comment.id] as string}
+                        alt={`${comment.first_name} ${comment.last_name}`}
+                        className="w-10 h-10 rounded-full object-cover mr-3"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                        <span className="text-gray-500 text-base font-semibold">
+                          {comment.first_name?.charAt(0)}
+                          {comment.last_name?.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                     <div>
                       <p className="font-bold">
                         {comment.first_name} {comment.last_name}
