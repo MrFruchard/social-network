@@ -26,6 +26,7 @@ export function SignupForm({
   const [last_name, setLastname] = useState("");
   const [username, setUsername] = useState("");
   const [date_of_birth, setDateOfBirth] = useState("");
+  const [avatar, setAvatar] = useState<File | null>(null);
   const router = useRouter();
 
   const handleSubmit = async (e: { preventDefault: () => void }) => {
@@ -91,7 +92,9 @@ export function SignupForm({
     formdata.append("first_name", first_name);
     formdata.append("last_name", last_name);
     formdata.append("date_of_birth", date_of_birth);
-    // formdata.append("avatar", fileInput.files[0], "{{$image.avatar}}");
+    if (avatar) {
+      formdata.append("avatar", avatar);
+    }
     formdata.append("username", username);
     formdata.append("about_me", "{{$lorem.lines}}");
 
@@ -221,6 +224,21 @@ export function SignupForm({
                   required
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
+                />
+              </div>
+              <div className="grid gap-2">
+                <Label htmlFor="avatar">Profile Image (optional)</Label>
+                <Input
+                  id="avatar"
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setAvatar(e.target.files[0]);
+                    } else {
+                      setAvatar(null);
+                    }
+                  }}
                 />
               </div>
               <Button type="submit" className="w-full">
