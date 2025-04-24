@@ -94,7 +94,6 @@ func HandleEventPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	utils.SuccessResponse(w, http.StatusOK, "Post event successfully")
-
 }
 
 func HandleDeletePost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
