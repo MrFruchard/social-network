@@ -23,6 +23,13 @@ func CreateComment(userId, postId, content, img string, db *sql.DB) error {
 		return errors.New("post non trouvé")
 	}
 
+	var ownerId string
+	ownerQuery := `SELECT USER_ID FROM POSTS WHERE ID = ?`
+	err = db.QueryRow(ownerQuery, postId).Scan(&ownerId)
+	if err != nil {
+		return err
+	}
+
 	// Prépare l'image comme une valeur nullable
 	postImg := sql.NullString{
 		String: img,
@@ -37,6 +44,15 @@ func CreateComment(userId, postId, content, img string, db *sql.DB) error {
 	_, err = db.Exec(query, id, postId, userId, content, postImg)
 	if err != nil {
 		return err
+	}
+
+	if ownerId != userId {
+		idNotif := uuid.New().String()
+		notifQuery := `INSERT INTO NOTIFICATIONS(ID, TYPE, USER_ID, ID_TYPE, READ, CREATED_AT) VALUES (?,?,?,?,0, datetime('now'))`
+		_, err = db.Exec(notifQuery, idNotif, ownerId, "COMMENT", id)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil

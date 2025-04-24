@@ -221,6 +221,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleSendPostWithTags(w, r, db)
 	})
 
+	// SearchBar
+	mux.HandleFunc("GET /api/search", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSearchBar(w, r, db)
+	})
+
 	// WS
 	mux.Handle("/api/ws", http.HandlerFunc(hub.WsHandler))
 
