@@ -1,6 +1,5 @@
 'use client';
 
-<<<<<<< HEAD
 import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
@@ -9,27 +8,6 @@ import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
 import PostModal from './PostModal';
 import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
-=======
-import { ReactNode, useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LogoutButton } from "./logout-button";
-import { NotificationIndicator } from "./notificationsInd";
-import { useUserData } from "@/hooks/user/useUserData";
-import PostModal from "./PostModal";
-import {
-  HomeIcon,
-  UserIcon,
-  BellIcon,
-  MailIcon,
-  UsersIcon,
-  PlusIcon,
-  SearchIcon,
-  HashIcon,
-  SettingsIcon,
-  TrendingUpIcon,
-} from "lucide-react";
->>>>>>> origin/hook
 
 type MainLayoutProps = {
   children: ReactNode;
@@ -50,14 +28,14 @@ export function MainLayout({ children }: MainLayoutProps) {
   };
 
   const handleHomeClick = () => {
-    console.log("Home link clicked");
+    console.log('Home link clicked');
     setSelectedTag(null);
   };
 
   useEffect(() => {
-    console.log("Pathname changed to:", pathname);
-    if (pathname === "/home") {
-      console.log("Resetting selectedTag to null");
+    console.log('Pathname changed to:', pathname);
+    if (pathname === '/home') {
+      console.log('Resetting selectedTag to null');
       setSelectedTag(null);
     }
   }, [pathname]);
@@ -70,7 +48,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           <h1 className='text-2xl font-bold'>Social Иetwork</h1>
         </div>
 
-<<<<<<< HEAD
         <nav className='space-y-2 flex-1'>
           <NavItem href='/home' icon={<HomeIcon className='h-5 w-5' />} label='Home' active={pathname === '/home'} />
           <NavItem href='/profile' icon={<UserIcon className='h-5 w-5' />} label='Profile' active={pathname.startsWith('/profile')} />
@@ -78,40 +55,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
           <NavItem href='/groups' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/groups'} />
           <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
-=======
-        <nav className="space-y-2 flex-1">
-          <NavItem
-            href="/home"
-            icon={<HomeIcon className="h-5 w-5" />}
-            label="Home"
-            active={pathname === "/home"}
-            onClick={handleHomeClick}
-          />
-          <NavItem
-            href="/profile"
-            icon={<UserIcon className="h-5 w-5" />}
-            label="Profile"
-            active={pathname.startsWith("/profile")}
-          />
-          <NavItem
-            href="/notifications"
-            icon={<BellIcon className="h-5 w-5" />}
-            label="Notifications"
-            active={pathname === "/notifications"}
-          />
-          <NavItem
-            href="/messages"
-            icon={<MailIcon className="h-5 w-5" />}
-            label="Messages"
-            active={pathname === "/messages"}
-          />
-          <NavItem
-            href="/groups"
-            icon={<UsersIcon className="h-5 w-5" />}
-            label="Groups"
-            active={pathname === "/groups"}
-          />
->>>>>>> origin/hook
         </nav>
 
         <button className='w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 font-medium mb-4' onClick={openPostForm}>
@@ -161,7 +104,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           {/* Center Feed */}
           <main className={`flex-1 border-x border-border min-h-[calc(100vh-3.5rem)] ${pathname === '/messages' ? 'border-r-0' : ''}`}>{children}</main>
           {/* Right Sidebar */}
-<<<<<<< HEAD
           {pathname !== '/messages' && pathname !== '/toto-ia' && (
             <aside className='w-80 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto p-4 bg-background'>
               {/* Search Bar */}
@@ -170,13 +112,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                   <SearchIcon className='h-4 w-4 text-muted-foreground' />
                 </div>
                 <input type='text' placeholder='Search' className='bg-muted w-full py-2 pl-10 pr-4 rounded-full text-sm border-none focus:ring-1 focus:ring-primary' />
-=======
-          <aside className="w-80 sticky top-14 h-[calc(100vh-3.5rem)] overflow-y-auto p-4 bg-background ">
-            {/* Search Bar */}
-            <div className="relative mb-4">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <SearchIcon className="h-4 w-4 text-muted-foreground" />
->>>>>>> origin/hook
               </div>
 
               {/* Who to follow section */}
@@ -225,7 +160,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                 </div>
               </div>
 
-<<<<<<< HEAD
               {/* Trending section */}
               <div className='bg-muted/50 rounded-lg p-4 mb-4'>
                 <h3 className='font-bold mb-2'>Trending</h3>
@@ -283,75 +217,6 @@ export function MainLayout({ children }: MainLayoutProps) {
                     Show more
                   </Link>
                 </div>
-=======
-            {/* Trending section */}
-            <div className="bg-muted/50 rounded-lg p-4 mb-4">
-              <h3 className="font-bold mb-2">Trending</h3>
-              <div className="space-y-4">
-                {/* Trending topic 1 */}
-                <div className="group cursor-pointer">
-                  <p className="text-xs text-muted-foreground">
-                    Trending in Technology
-                  </p>
-                  <p className="font-medium group-hover:text-primary">
-                    #ReactJS
-                  </p>
-                  <p className="text-xs text-muted-foreground">892 posts</p>
-                </div>
-
-                {/* Trending topic 2 */}
-                <div className="group cursor-pointer">
-                  <p className="text-xs text-muted-foreground">
-                    Trending Worldwide
-                  </p>
-                  <p className="font-medium group-hover:text-primary">
-                    #WebDevelopment
-                  </p>
-                  <p className="text-xs text-muted-foreground">2,547 posts</p>
-                </div>
-
-                {/* Trending topic 3 */}
-                <div className="group cursor-pointer">
-                  <p className="text-xs text-muted-foreground">
-                    Trending in your area
-                  </p>
-                  <p className="font-medium group-hover:text-primary">
-                    #SocialNetwork
-                  </p>
-                  <p className="text-xs text-muted-foreground">1,234 posts</p>
-                </div>
-
-                <Link
-                  href="/explore/trends"
-                  className="text-primary text-sm hover:underline block text-center mt-2"
-                >
-                  Show more
-                </Link>
-              </div>
-            </div>
-
-            {/* Footer links */}
-            <div className="mt-4 text-xs text-muted-foreground">
-              <div className="flex flex-wrap gap-2">
-                <Link href="/terms" className="hover:underline">
-                  Terms
-                </Link>
-                <Link href="/privacy" className="hover:underline">
-                  Privacy
-                </Link>
-                <Link href="/cookies" className="hover:underline">
-                  Cookies
-                </Link>
-                <Link href="/accessibility" className="hover:underline">
-                  Accessibility
-                </Link>
-                <Link href="/ads" className="hover:underline">
-                  Ads info
-                </Link>
-                <Link href="/about" className="hover:underline">
-                  About
-                </Link>
->>>>>>> origin/hook
               </div>
 
               {/* Footer links */}
@@ -419,27 +284,9 @@ type NavItemProps = {
 
 function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
   return (
-<<<<<<< HEAD
     <Link href={href} className={`flex items-center px-4 py-3 rounded-full text-lg hover:bg-muted transition-colors ${active ? 'font-semibold' : ''}`}>
       <span className={`mr-4 ${active ? 'text-primary' : 'text-muted-foreground'}`}>{icon}</span>
       <span className={active ? 'text-foreground' : 'text-muted-foreground'}>{label}</span>
-=======
-    <Link
-      href={href}
-      className={`flex items-center px-4 py-3 rounded-full text-lg hover:bg-muted transition-colors ${
-        active ? "font-semibold" : ""
-      }`}
-      onClick={onClick}
-    >
-      <span
-        className={`mr-4 ${active ? "text-primary" : "text-muted-foreground"}`}
-      >
-        {icon}
-      </span>
-      <span className={active ? "text-foreground" : "text-muted-foreground"}>
-        {label}
-      </span>
->>>>>>> origin/hook
     </Link>
   );
 }
