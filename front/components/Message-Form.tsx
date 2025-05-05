@@ -24,36 +24,10 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
   }, [fetchConversations]);
 
   useEffect(() => {
-    if (conversationsLoaded) {
-      const savedId = localStorage.getItem('selectedConversationId');
-      if (savedId) {
-        setSelectedConversationId(savedId);
-      }
-    }
-  }, [conversationsLoaded]);
-
-  useEffect(() => {
     if (selectedConversationId) {
       fetchMessages(selectedConversationId);
     }
   }, [selectedConversationId, fetchMessages]);
-
-  useEffect(() => {
-    if (selectedConversationId && Array.isArray(conversations)) {
-      const conv = conversations.find((c) => c.id === selectedConversationId);
-      if (!conv || !conv.participants?.some((p) => p.id === user?.id)) {
-        setSelectedConversationId(null);
-      }
-    }
-  }, [selectedConversationId, conversations, user?.id]);
-
-  useEffect(() => {
-    if (selectedConversationId) {
-      localStorage.setItem('selectedConversationId', selectedConversationId);
-    } else {
-      localStorage.removeItem('selectedConversationId');
-    }
-  }, [selectedConversationId]);
 
   const selectedConversation = Array.isArray(conversations) ? conversations.find((conv) => conv.id === selectedConversationId) : undefined;
 
