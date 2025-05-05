@@ -4,10 +4,12 @@ import { useMessages } from '../hooks/message/useMessages';
 import { MailPlus } from 'lucide-react';
 import CreateMessage from './createMessage';
 import { useAuth } from '../hooks/user/checkAuth';
+import { useSendMessage } from '../hooks/message/useSendMessage';
 import { ChatCard, Message as ChatCardMessage } from '@/components/chat-card';
 
 export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: string; username: string; avatar: string | null }[]; onClose: () => void }) {
   const { user } = useAuth();
+  const { send } = useSendMessage();
   const { conversations = [], loading: conversationsLoading, fetchConversations } = useConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const { messages = [], loading: messagesLoading, fetchMessages } = useMessages(selectedConversationId || undefined);
@@ -15,15 +17,43 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
 
   const safeMessages = Array.isArray(messages) ? messages : Array.isArray(messages?.messages) ? messages.messages : [];
 
+  const [conversationsLoaded, setConversationsLoaded] = useState(false);
+
   useEffect(() => {
-    fetchConversations();
+    fetchConversations().then(() => setConversationsLoaded(true));
   }, [fetchConversations]);
 
   useEffect(() => {
+    if (conversationsLoaded) {
+      const savedId = localStorage.getItem('selectedConversationId');
+      if (savedId) {
+        setSelectedConversationId(savedId);
+      }
+    }
+  }, [conversationsLoaded]);
+
+  useEffect(() => {
     if (selectedConversationId) {
-      fetchMessages();
+      fetchMessages(selectedConversationId);
     }
   }, [selectedConversationId, fetchMessages]);
+
+  useEffect(() => {
+    if (selectedConversationId && Array.isArray(conversations)) {
+      const conv = conversations.find((c) => c.id === selectedConversationId);
+      if (!conv || !conv.participants?.some((p) => p.id === user?.id)) {
+        setSelectedConversationId(null);
+      }
+    }
+  }, [selectedConversationId, conversations, user?.id]);
+
+  useEffect(() => {
+    if (selectedConversationId) {
+      localStorage.setItem('selectedConversationId', selectedConversationId);
+    } else {
+      localStorage.removeItem('selectedConversationId');
+    }
+  }, [selectedConversationId]);
 
   const selectedConversation = Array.isArray(conversations) ? conversations.find((conv) => conv.id === selectedConversationId) : undefined;
 
@@ -50,16 +80,14 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
       timestamp: new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'delivered',
       reactions: [],
+      imageUrl: message.imageUrl || message.image || undefined, // adapte selon ton backend
     };
   });
-
   const others = selectedConversation?.participants ? selectedConversation.participants.filter((p) => p.id !== user?.id) : recipients.filter((p) => p.id !== user?.id);
 
   const chatName = others.length > 1 ? 'Groupe' : others.length === 1 ? others[0].username : 'Conversation';
 
-  console.log('chatName:', chatName, recipients);
-  console.log('user');
-  console.log('others:', others);
+  // console.log('others:', others);
   return (
     <div className='flex h-screen bg-white'>
       <div className='w-1/3 flex flex-col border-r border-gray-200'>
@@ -82,7 +110,8 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
             conversations.map((conversation) => {
               const currentUserId = user?.id;
               // Récupère tous les autres participants sauf l'utilisateur courant
-              const others = conversation.participants.filter((p) => p.id !== currentUserId);
+              console.log('conversation:', conversation);
+              const others = Array.isArray(conversation.participants) ? conversation.participants.filter((p) => p.id !== currentUserId) : [];
               const isSelected = selectedConversationId === conversation.id;
 
               return (
@@ -138,13 +167,24 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
               // onlineCount={0}
               initialMessages={chatCardMessages}
               currentUser={{
-                // name: user?.username || 'You',
                 name: 'Moi',
                 avatar: user?.avatar || '/default-avatar.png',
               }}
               theme='light'
               className='border border-zinc-200 flex-1 min-h-0'
-              onSendMessage={(msg) => console.log('Sent:', msg)}
+              onSendMessage={async (msg, imageFile) => {
+                if (selectedConversationId) {
+                  const receiverId = others.length === 1 ? others[0].id : undefined;
+                  const result = await send({ content: msg, conversationId: selectedConversationId, receiverId, imageFile });
+                  await fetchMessages(selectedConversationId);
+
+                  // Sécurité : si la conversation n'existe plus ou tu n'es plus membre, reset
+                  const conv = conversations.find((c) => c.id === selectedConversationId);
+                  if (!conv || !conv.participants?.some((p) => p.id === user?.id)) {
+                    setSelectedConversationId(null);
+                  }
+                }
+              }}
               onReaction={(messageId, emoji) => console.log('Reaction:', messageId, emoji)}
               onMoreClick={() => console.log('More clicked')}
             />
