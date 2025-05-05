@@ -453,9 +453,32 @@ export function ProfileContent({ userId }: { userId?: string }) {
         );
       case 2: // Demande envoyée, en attente
         return (
-          <Button disabled className="mt-4" variant="outline">
-            Demande envoyée
-          </Button>
+          <div className="flex space-x-2 mt-4">
+            <Button 
+              onClick={async () => {
+                // Annuler la demande d'abonnement
+                try {
+                  const response = await fetch(`http://localhost:80/api/user/abort?user=${userProfile.id}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                  });
+                  
+                  if (response.ok) {
+                    // Rafraîchir les données du profil pour refléter le nouvel état
+                    setUserProfile({
+                      ...userProfile,
+                      is_following: 0,
+                    });
+                  }
+                } catch (error) {
+                  console.error('Error aborting follow request:', error);
+                }
+              }} 
+              variant="outline"
+            >
+              Annuler la demande
+            </Button>
+          </div>
         );
       default:
         return null;

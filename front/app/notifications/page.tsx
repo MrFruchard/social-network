@@ -121,21 +121,43 @@ export default function NotificationsPage() {
               e.preventDefault();
               e.stopPropagation();
               
-              // Accepter la demande de suivi
-              fetch(`http://localhost:80/api/user/agree?user=${(notif.data as any).sender.id}`, {
+              // Accepter la demande de suivi - vérifier que sender.id est bien défini
+              const senderId = (notif.data as any).sender?.id;
+              if (!senderId) {
+                console.error('Erreur: ID de l\'expéditeur manquant dans la notification');
+                return;
+              }
+              console.log('Acceptation de la demande de suivi de:', senderId);
+              fetch(`http://localhost:80/api/user/agree?user=${senderId}`, {
                 method: 'POST',
                 credentials: 'include'
               }).then(response => {
                 if (response.ok) {
                   // Marquer comme traitée immédiatement pour une meilleure UX
                   setProcessedNotifications(prev => [...prev, notif.id]);
-                  markAsRead(notif.id);
                   
-                  // Recharger les notifications en arrière-plan
-                  setTimeout(() => fetchNotifications(), 1000);
-                  console.log('Demande de suivi acceptée');
+                  // Marquer la notification comme lue dans la base de données
+                  fetch(`http://localhost:80/api/notification?id=${notif.id}`, {
+                    method: 'PATCH',
+                    credentials: 'include'
+                  }).then(readResponse => {
+                    if (readResponse.ok) {
+                      // Mettre à jour l'état local
+                      markAsRead(notif.id);
+                      
+                      // Recharger les notifications en arrière-plan
+                      setTimeout(() => fetchNotifications(), 1000);
+                      console.log('Demande de suivi acceptée et notification marquée comme lue');
+                    }
+                  });
                 } else {
-                  console.error('Erreur lors de l\'acceptation de la demande');
+                  console.error(`Erreur lors de l'acceptation de la demande: ${response.status}`);
+                  // Récupérer le message d'erreur du serveur si disponible
+                  response.text().then(errorText => {
+                    console.error('Détail de l\'erreur:', errorText);
+                  }).catch(err => {
+                    console.error('Impossible de lire le détail de l\'erreur');
+                  });
                 }
               }).catch(error => {
                 console.error('Erreur:', error);
@@ -153,21 +175,43 @@ export default function NotificationsPage() {
               e.preventDefault();
               e.stopPropagation();
               
-              // Refuser la demande de suivi
-              fetch(`http://localhost:80/api/user/decline?user=${(notif.data as any).sender.id}`, {
+              // Refuser la demande de suivi - vérifier que sender.id est bien défini
+              const senderId = (notif.data as any).sender?.id;
+              if (!senderId) {
+                console.error('Erreur: ID de l\'expéditeur manquant dans la notification');
+                return;
+              }
+              console.log('Refus de la demande de suivi de:', senderId);
+              fetch(`http://localhost:80/api/user/decline?user=${senderId}`, {
                 method: 'POST',
                 credentials: 'include'
               }).then(response => {
                 if (response.ok) {
                   // Marquer comme traitée immédiatement pour une meilleure UX
                   setProcessedNotifications(prev => [...prev, notif.id]);
-                  markAsRead(notif.id);
                   
-                  // Recharger les notifications en arrière-plan
-                  setTimeout(() => fetchNotifications(), 1000);
-                  console.log('Demande de suivi refusée');
+                  // Marquer la notification comme lue dans la base de données
+                  fetch(`http://localhost:80/api/notification?id=${notif.id}`, {
+                    method: 'PATCH',
+                    credentials: 'include'
+                  }).then(readResponse => {
+                    if (readResponse.ok) {
+                      // Mettre à jour l'état local
+                      markAsRead(notif.id);
+                      
+                      // Recharger les notifications en arrière-plan
+                      setTimeout(() => fetchNotifications(), 1000);
+                      console.log('Demande de suivi refusée et notification marquée comme lue');
+                    }
+                  });
                 } else {
-                  console.error('Erreur lors du refus de la demande');
+                  console.error(`Erreur lors du refus de la demande: ${response.status}`);
+                  // Récupérer le message d'erreur du serveur si disponible
+                  response.text().then(errorText => {
+                    console.error('Détail de l\'erreur:', errorText);
+                  }).catch(err => {
+                    console.error('Impossible de lire le détail de l\'erreur');
+                  });
                 }
               }).catch(error => {
                 console.error('Erreur:', error);

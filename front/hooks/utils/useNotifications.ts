@@ -32,9 +32,10 @@ export interface CommentData {
 }
 
 export interface FollowRequestData {
-  follower_id: string;
+  follower_id?: string;  // Facultatif car certaines réponses peuvent ne pas l'inclure
   created_at: string;
   sender: User;
+  // Si follower_id est absent, on peut utiliser sender.id à la place
 }
 
 export interface GroupInviteData {
@@ -76,15 +77,37 @@ export function useNotifications() {
       }
 
       const data = await response.json();
-      setNotifications(data);
-
-      // Calculer le nombre de notifications non lues
-      const unread = data.filter((notif: Notification) => !notif.read).length;
-      setUnreadCount(unread);
+      
+      // Validation supplémentaire pour s'assurer que les données sont bien formatées
+      if (Array.isArray(data)) {
+        // Vérifier et nettoyer les données si nécessaire
+        const cleanedData = data.map((notif: Notification) => {
+          // S'assurer que les notifications de type ASK_FOLLOW ont les bons champs
+          if (notif.type === 'ASK_FOLLOW' && notif.data) {
+            // Vérifier que sender existe et a un id
+            if (!notif.data.sender || !notif.data.sender.id) {
+              console.warn('Notification ASK_FOLLOW mal formatée:', notif);
+            }
+          }
+          return notif;
+        });
+        
+        setNotifications(cleanedData);
+        
+        // Calculer le nombre de notifications non lues
+        const unread = cleanedData.filter((notif: Notification) => !notif.read).length;
+        setUnreadCount(unread);
+      } else {
+        console.error('Format de données de notification invalide:', data);
+        setNotifications([]);
+        setUnreadCount(0);
+      }
 
     } catch (error) {
       console.error('Erreur lors de la récupération des notifications:', error);
       setError(error instanceof Error ? error.message : 'Une erreur est survenue');
+      setNotifications([]);
+      setUnreadCount(0);
     } finally {
       setLoading(false);
     }
@@ -93,27 +116,50 @@ export function useNotifications() {
   // Marquer une notification comme lue
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      // Pour l'instant, comme l'API backend ne supporte pas cette fonctionnalité,
-      // on effectue uniquement une mise à jour locale
-      setNotifications(prev => prev.map(notif => 
-        notif.id === notificationId ? { ...notif, read: true } : notif
-      ));
+      // Utiliser la nouvelle API pour marquer une notification comme lue
+      const response = await fetch(`http://localhost:80/api/notification?id=${notificationId}`, {
+        method: 'PATCH',
+        credentials: 'include'
+      });
       
-      // Mettre à jour le compteur de non lues
-      setUnreadCount(prev => Math.max(0, prev - 1));
-      
-      console.log(`Notification ${notificationId} marquée comme lue (localement seulement)`);
+      if (response.ok) {
+        // Mettre à jour l'état local après confirmation du serveur
+        setNotifications(prev => prev.map(notif => 
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        ));
+        
+        // Mettre à jour le compteur de non lues
+        setUnreadCount(prev => Math.max(0, prev - 1));
+        
+        console.log(`Notification ${notificationId} marquée comme lue`);
+      } else {
+        console.error(`Erreur lors du marquage de la notification: ${response.status}`);
+      }
     } catch (error) {
       console.error('Erreur lors du marquage de la notification comme lue:', error);
     }
   }, []);
 
   // Marquer toutes les notifications comme lues
-  const markAllAsRead = useCallback(() => {
-    // Mise à jour locale uniquement pour l'instant
-    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-    setUnreadCount(0);
-    console.log('Toutes les notifications marquées comme lues (localement seulement)');
+  const markAllAsRead = useCallback(async () => {
+    try {
+      // Utiliser l'API pour marquer toutes les notifications comme lues
+      const response = await fetch('http://localhost:80/api/notification?all=true', {
+        method: 'PATCH',
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        // Mettre à jour l'état local après confirmation du serveur
+        setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+        setUnreadCount(0);
+        console.log('Toutes les notifications marquées comme lues');
+      } else {
+        console.error(`Erreur lors du marquage de toutes les notifications: ${response.status}`);
+      }
+    } catch (error) {
+      console.error('Erreur lors du marquage de toutes les notifications comme lues:', error);
+    }
   }, []);
 
   // Formatage du texte de notification

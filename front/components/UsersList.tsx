@@ -160,13 +160,9 @@ export default function UsersList({ title, type, initialUsers = [] }: UsersListP
 
   const handleFollowRequest = async (userId: string) => {
     try {
-      const response = await fetch('http://localhost:80/api/user/follow', {
+      const response = await fetch(`http://localhost:80/api/user/follow?user=${userId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        credentials: 'include',
-        body: JSON.stringify({ id: userId })
+        credentials: 'include'
       });
       
       if (!response.ok) {
@@ -181,6 +177,29 @@ export default function UsersList({ title, type, initialUsers = [] }: UsersListP
       ));
     } catch (err) {
       console.error('Error requesting follow:', err);
+      setError(err instanceof Error ? err.message : 'Une erreur est survenue');
+    }
+  };
+  
+  const handleCancelRequest = async (userId: string) => {
+    try {
+      const response = await fetch(`http://localhost:80/api/user/abort?user=${userId}`, {
+        method: 'GET',
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'annulation de la demande');
+      }
+      
+      // Mettre à jour l'état local
+      setUsers(users.map(user => 
+        user.id === userId 
+          ? { ...user, pending_request: false } 
+          : user
+      ));
+    } catch (err) {
+      console.error('Error cancelling follow request:', err);
       setError(err instanceof Error ? err.message : 'Une erreur est survenue');
     }
   };
@@ -256,7 +275,7 @@ export default function UsersList({ title, type, initialUsers = [] }: UsersListP
                 user.is_following ? (
                   <Button variant="outline" disabled>Suivi</Button>
                 ) : user.pending_request ? (
-                  <Button variant="outline" disabled>Demande envoyée</Button>
+                  <Button variant="outline" onClick={() => handleCancelRequest(user.id)}>Annuler la demande</Button>
                 ) : (
                   <Button onClick={() => handleFollowRequest(user.id)}>
                     Suivre
