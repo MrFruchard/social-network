@@ -39,7 +39,7 @@ interface UserProfile {
   followers: number;
   following: number;
   created_at: string;
-  is_following: number; // 0: Not Following, 1: Following, 2: Waiting
+  is_following: number; // 0: Not Following, 1: Following, 2: Waiting, 3: Received Follow Request
 }
 
 interface FollowedUser {
@@ -208,6 +208,14 @@ export function ProfileContent({ userId }: { userId?: string }) {
 
   const renderFollowButton = () => {
     if (!userProfile || isOwnProfile) return null;
+
+    if (userProfile.is_following === 2) {
+      return (
+        <Button onClick={handleAcceptFollow} className="mt-4" variant="success">
+          Accepter la demande
+        </Button>
+      );
+    }
 
     switch (userProfile.is_following) {
       case 0:

@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
-	"strings"
 )
 
 func HandleCreateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
@@ -24,7 +23,27 @@ func HandleCreateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	content := r.FormValue("content")
 
-	err = services.CreateComment(userID, postId, content, db)
+	var uuidAvatar string
+	file, image, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+
+		// Vérification de la taille du fichier
+		const maxFileSize = 4 * 1024 * 1024
+		if image.Size > maxFileSize {
+			utils.ErrorResponse(w, http.StatusBadRequest, "File too large (max 4MB)")
+			return
+		}
+
+		// Sauvegarde du fichier
+		uuidAvatar, err = utils.SaveImage("Images/commentImages/", file, image)
+		if err != nil {
+			utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid ")
+			return
+		}
+	}
+
+	err = services.CreateComment(userID, postId, content, uuidAvatar, db)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Post not found")
 		return
@@ -105,12 +124,28 @@ func HandleUpdateComment(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 	content := r.FormValue("content")
-	if strings.TrimSpace(content) == "" {
-		utils.ErrorResponse(w, http.StatusBadRequest, "Content is required")
-		return
+
+	var uuidAvatar string
+	file, image, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+
+		// Vérification de la taille du fichier
+		const maxFileSize = 4 * 1024 * 1024
+		if image.Size > maxFileSize {
+			utils.ErrorResponse(w, http.StatusBadRequest, "File too large (max 4MB)")
+			return
+		}
+
+		// Sauvegarde du fichier
+		uuidAvatar, err = utils.SaveImage("Images/commentImages/", file, image)
+		if err != nil {
+			utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid ")
+			return
+		}
 	}
 
-	err = services.UpdateComment(db, commentId, content, userID)
+	err = services.UpdateComment(db, commentId, content, userID, uuidAvatar)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Comment not found")
 		return

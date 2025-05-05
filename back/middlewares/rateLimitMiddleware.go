@@ -3,6 +3,7 @@ package middlewares
 import (
 	"database/sql"
 	"golang.org/x/time/rate"
+	"log"
 	"net/http"
 	"social-network/utils"
 	"sync"
@@ -61,6 +62,7 @@ func RateLimitMiddleware(next http.Handler, db *sql.DB) http.Handler {
 		userId, pass := AuthMiddleware(r, db)
 		if !pass {
 			utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+			log.Println("unauthorized")
 			return
 		}
 

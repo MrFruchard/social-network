@@ -129,6 +129,10 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("GET /api/user/listfollow", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleFollow(w, r, db)
 	})
+	// abort follow
+	mux.HandleFunc("GET /api/user/abort", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleAbortFollow(w, r, db)
+	})
 
 	//USER
 	// get personal infos
@@ -215,6 +219,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	// Tags
 	mux.HandleFunc("GET /api/tag", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleSendPostWithTags(w, r, db)
+	})
+
+	// SearchBar
+	mux.HandleFunc("GET /api/search", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleSearchBar(w, r, db)
 	})
 
 	// WS

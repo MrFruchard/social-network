@@ -5,6 +5,7 @@ import { SmilePlus, Check, CheckCheck, MoreHorizontal, Send } from 'lucide-react
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { useState } from 'react';
+import { useSendMessage } from '@/hooks/message/useSendMessage';
 
 export interface Message {
   id: string;
@@ -157,7 +158,6 @@ export function ChatCard({
         {/* Messages */}
         <div className='flex-1 overflow-y-auto p-4 space-y-4 min-h-0'>
           {' '}
-          {/* <-- ajouté min-h-0 */}
           {messages.map((message) => (
             <div key={message.id} className='flex items-start gap-3'>
               <Image src={message.sender.avatar} alt={message.sender.name} width={36} height={36} className='rounded-full' />

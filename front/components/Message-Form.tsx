@@ -4,7 +4,7 @@ import { useMessages } from '../hooks/message/useMessages';
 import { MailPlus } from 'lucide-react';
 import CreateMessage from './createMessage';
 import { useAuth } from '../hooks/user/checkAuth';
-import { ChatCard, Message as ChatCardMessage } from '@/components/chat-card'; // Ajoute cette ligne
+import { ChatCard, Message as ChatCardMessage } from '@/components/chat-card';
 
 export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: string; username: string; avatar: string | null }[]; onClose: () => void }) {
   const { user } = useAuth();
@@ -138,7 +138,8 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
               // onlineCount={0}
               initialMessages={chatCardMessages}
               currentUser={{
-                name: user?.username || 'You',
+                // name: user?.username || 'You',
+                name: 'Moi',
                 avatar: user?.avatar || '/default-avatar.png',
               }}
               theme='light'

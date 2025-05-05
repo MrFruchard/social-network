@@ -34,7 +34,13 @@ const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
 
   formData.append("privacy", privacyValue);
   formData.append("content", content);
-  formData.append("tags", content.match(/#[\w]+/g)?.join(" ") || "");
+  formData.append(
+    "tags",
+    content
+      .match(/#[\w]+/g)
+      ?.map((tag) => tag.slice(1))
+      .join(" ") || ""
+  );
   formData.append("allowed_followers", JSON.stringify(selectedFollowers));
 
   const requestOptions = {
@@ -60,8 +66,12 @@ const PostModal: React.FC<PostModalProps> = ({ onClose }) => {
       .then((response) => response.json())
       .then((data) => {
         if (data.status === "success") {
-          setFollowers(data.followers);
-          console.log(data.followers);
+          if (!data.followers || data.followers.length === 0) {
+            console.log("No followers found.");
+          } else {
+            setFollowers(data.followers);
+            console.log(data.followers);
+          }
         }
       })
       .catch((error) => console.log("error", error));
@@ -100,35 +110,39 @@ const PostModal: React.FC<PostModalProps> = ({ onClose }) => {
           <div>
             <h3 className="text-lg font-semibold mb-2">Select Followers</h3>
             <div className="max-h-40 overflow-y-auto border border-border p-2 rounded-lg">
-              {followers?.map((follower) => (
-                <div
-                  key={follower.user_id}
-                  className="flex items-center gap-2 mb-2"
-                >
-                  <input
-                    type="checkbox"
-                    name="followers"
-                    value={follower.user_id}
-                    id={`follower-${follower.user_id}`}
-                  />
-                  <label
-                    htmlFor={`follower-${follower.user_id}`}
-                    className="flex items-center gap-2"
+              {followers.length === 0 ? (
+                <p>You don't have followers :(</p>
+              ) : (
+                followers.map((follower) => (
+                  <div
+                    key={follower.user_id}
+                    className="flex items-center gap-2 mb-2"
                   >
-                    {follower.image && (
-                      <img
-                        src={follower.image}
-                        alt={follower.username}
-                        className="w-8 h-8 rounded-full"
-                      />
-                    )}
-                    <span>
-                      {follower.first_name} {follower.last_name} (@
-                      {follower.username})
-                    </span>
-                  </label>
-                </div>
-              ))}
+                    <input
+                      type="checkbox"
+                      name="followers"
+                      value={follower.user_id}
+                      id={`follower-${follower.user_id}`}
+                    />
+                    <label
+                      htmlFor={`follower-${follower.user_id}`}
+                      className="flex items-center gap-2"
+                    >
+                      {follower.image && (
+                        <img
+                          src={follower.image}
+                          alt={follower.username}
+                          className="w-8 h-8 rounded-full"
+                        />
+                      )}
+                      <span>
+                        {follower.first_name} {follower.last_name} (@
+                        {follower.username})
+                      </span>
+                    </label>
+                  </div>
+                ))
+              )}
             </div>
           </div>
           <div className="flex justify-end gap-2">

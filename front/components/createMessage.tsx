@@ -15,7 +15,7 @@ interface User {
 export default function CreateMessage({
   isOpen,
   onClose,
-  onSelectConversation, // Ajoute cette prop
+  onSelectConversation,
 }: {
   isOpen: boolean;
   onClose: () => void;

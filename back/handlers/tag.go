@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
@@ -25,6 +26,17 @@ func HandleSendPostWithTags(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 	post, err := services.SendPostWithTags(db, userID, tag)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	if len(post.Data) == 0 {
+		log.Println("Aucun post trouvé avec ce tag") // Log ajouté ici
+		w.Header().Set("Content-Type", "application/json")
+		err := json.NewEncoder(w).Encode("[]")
+		if err != nil {
+			log.Printf("Erreur lors de l'encodage JSON de la liste vide : %v", err) // Log erreur JSON
+			utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		}
 		return
 	}
 

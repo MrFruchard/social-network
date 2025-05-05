@@ -3,6 +3,18 @@
 import { useState, useEffect } from "react";
 import { createComment } from "@/api/post/commentApi";
 
+// Affiche directement l'image à partir de l'URL construite
+function CommentImage({ imageUrl }: { imageUrl: string }) {
+  if (!imageUrl) return null;
+  return (
+    <img
+      src={imageUrl}
+      alt="Comment content"
+      className="mt-2 rounded-lg shadow-sm"
+    />
+  );
+}
+
 interface Comment {
   id: string;
   post_id: string;
@@ -49,6 +61,13 @@ export default function PostPage({
   const [newComment, setNewComment] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [picture, setPicture] = useState<string | null>(null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+
+  // Ajoute un state pour stocker les URLs blob des images de profil des commentaires
+  const [commentProfileImages, setCommentProfileImages] = useState<{
+    [id: string]: string | null;
+  }>({});
 
   useEffect(() => {
     const resolveParams = async () => {
@@ -71,12 +90,52 @@ export default function PostPage({
           throw new Error(`Erreur HTTP: ${response.status}`);
         }
         const result = await response.json();
-        // S'assurer que le champ comment existe toujours
+        let comments = result.comment || [];
+
+        // Pour chaque commentaire avec une image, construit l'URL complète
+        comments = comments.map((comment: any) => {
+          if (comment.image_content_url) {
+            return {
+              ...comment,
+              image_content_url: `http://localhost:80/api/commentImages/${comment.image_content_url}`,
+            };
+          }
+          return comment;
+        });
+
         setPost({
           ...result,
-          comment: result.comment || []
+          comment: comments,
         });
         setLoading(false);
+
+        // Prépare le chargement des images de profil des commentaires
+        const fetchCommentProfileImages = async () => {
+          const images: { [id: string]: string | null } = {};
+          await Promise.all(
+            comments.map(async (comment: any) => {
+              if (comment.image_profile) {
+                try {
+                  const res = await fetch(
+                    `/api/avatars/${comment.image_profile}`
+                  );
+                  if (res.ok) {
+                    const blob = await res.blob();
+                    images[comment.id] = URL.createObjectURL(blob);
+                  } else {
+                    images[comment.id] = null;
+                  }
+                } catch {
+                  images[comment.id] = null;
+                }
+              } else {
+                images[comment.id] = null;
+              }
+            })
+          );
+          setCommentProfileImages(images);
+        };
+        fetchCommentProfileImages();
       } catch (error) {
         setError(
           error instanceof Error ? error.message : "An unknown error occurred"
@@ -89,30 +148,37 @@ export default function PostPage({
   }, [postId]);
 
   const handleCreateComment = async () => {
-    if (!newComment.trim() || !postId) return;
+    // Empêche de poster si ni texte ni image
+    if ((!newComment.trim() && !imageFile) || !postId) return;
 
     try {
-      const createdComment = await createComment(postId, {
-        content: newComment,
-      });
+      const formData = new FormData();
+      formData.append("content", newComment); // Peut être vide, backend doit gérer
+      if (imageFile) {
+        formData.append("image", imageFile);
+      }
+      const createdComment = await createComment(postId, formData);
 
       // Vérifiez que le commentaire a un ID unique
       const newCommentWithId = {
         ...createdComment,
-        id: createdComment.id || `temp-${Date.now()}`, // Génère un ID temporaire si nécessaire
+        id: createdComment.id || `temp-${Date.now()}`,
       };
 
       setPost((prevPost) =>
         prevPost
           ? {
               ...prevPost,
-              comment: prevPost.comment ? [...prevPost.comment, newCommentWithId] : [newCommentWithId],
+              comment: prevPost.comment
+                ? [...prevPost.comment, newCommentWithId]
+                : [newCommentWithId],
               comment_count: prevPost.comment_count + 1,
             }
           : null
       );
       setNewComment("");
-      //reload for display
+      setPicture(null);
+      setImageFile(null);
       window.location.reload();
     } catch (error) {
       console.error("Failed to create comment:", error);
@@ -190,6 +256,26 @@ export default function PostPage({
             >
               Publier
             </button>
+            <input
+              type="file"
+              name="image_comment"
+              id="image_comment"
+              accept="image/png, image/jpeg, image/gif, image/jpg"
+              className="mt-4"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  setImageFile(file);
+                  const reader = new FileReader();
+                  reader.onload = () => {
+                    if (typeof reader.result === "string") {
+                      setPicture(reader.result);
+                    }
+                  };
+                  reader.readAsDataURL(file);
+                }
+              }}
+            />
           </div>
 
           {/* Comments Section */}
@@ -199,11 +285,20 @@ export default function PostPage({
               post.comment.map((comment) => (
                 <div key={comment.id} className="mb-6 border-b pb-4">
                   <div className="flex items-center mb-2">
-                    <img
-                      src={comment.image_profile}
-                      alt={`${comment.first_name} ${comment.last_name}`}
-                      className="w-10 h-10 rounded-full object-cover mr-3"
-                    />
+                    {commentProfileImages[comment.id] ? (
+                      <img
+                        src={commentProfileImages[comment.id] as string}
+                        alt={`${comment.first_name} ${comment.last_name}`}
+                        className="w-10 h-10 rounded-full object-cover mr-3"
+                      />
+                    ) : (
+                      <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center mr-3">
+                        <span className="text-gray-500 text-base font-semibold">
+                          {comment.first_name?.charAt(0)}
+                          {comment.last_name?.charAt(0)}
+                        </span>
+                      </div>
+                    )}
                     <div>
                       <p className="font-bold">
                         {comment.first_name} {comment.last_name}
@@ -212,13 +307,10 @@ export default function PostPage({
                     </div>
                   </div>
                   <p className="text-gray-800">{comment.content}</p>
-                  {comment.image_content_url && (
-                    <img
-                      src={comment.image_content_url}
-                      alt="Comment content"
-                      className="mt-2 rounded-lg shadow-sm"
-                    />
-                  )}
+                  {comment.image_content_url &&
+                    comment.image_content_url !== "" && (
+                      <CommentImage imageUrl={comment.image_content_url} />
+                    )}
                 </div>
               ))
             ) : (

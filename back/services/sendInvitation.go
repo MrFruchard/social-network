@@ -30,7 +30,7 @@ func SendInvitationGroup(db *sql.DB, userID, receiverId, groupId string) error {
 
 	var isFollower bool
 	query = `SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)`
-	err = db.QueryRow(query, userID, receiverId).Scan(&isFollower)
+	err = db.QueryRow(query, receiverId, userID).Scan(&isFollower)
 	if err != nil {
 		return err
 	}
