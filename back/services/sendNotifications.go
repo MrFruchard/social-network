@@ -77,7 +77,7 @@ func SendNotifications(db *sql.DB, userID string) ([]Notification, error) {
 			if err != nil {
 				continue
 			}
-		case "ASK_INVITE":
+		case "INVITE_GROUP":
 			n.Data, err = askGroupAndInviteGroup(db, idType)
 			if err != nil {
 				continue

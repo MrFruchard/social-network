@@ -45,15 +45,18 @@ func AddRequestFollowHandler(db *sql.DB, userID, receiver string) error {
 		if err != nil {
 			return err
 		}
-		return nil
-	}
-
-	// Ajoute la nouvelle demande
-	id := uuid.New().String()
-	query = `INSERT INTO REQUEST_FOLLOW (ID, RECEIVER_ID, ASKER_ID, STATUS, CREATED_AT) VALUES (? ,?, ?, 'pending', datetime('now'))`
-	_, err = db.Exec(query, id, receiver, userID)
-	if err != nil {
-		return err
+	} else {
+		// Ajoute la nouvelle demande
+		id := uuid.New().String()
+		query = `INSERT INTO REQUEST_FOLLOW (ID, RECEIVER_ID, ASKER_ID, STATUS, CREATED_AT) VALUES (? ,?, ?, 'pending', datetime('now'))`
+		_, err = db.Exec(query, id, receiver, userID)
+		if err != nil {
+			return err
+		}
+		err = AddNotification(db, "ASK_FOLLOW", id, receiver)
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
