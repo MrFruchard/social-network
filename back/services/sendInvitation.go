@@ -38,7 +38,7 @@ func SendInvitationGroup(db *sql.DB, userID, receiverId, groupId string) error {
 	}
 
 	var isAlreadyInvite bool
-	query = `SELECT EXISTS(SELECT 1 FROM ASK_GROUP WHERE ASKER = ? AND RECEIVER = ?)`
+	query = `SELECT EXISTS(SELECT 1 FROM ASK_GROUP WHERE RECEIVER = ? AND GROUP_ID = ?)`
 	err = db.QueryRow(query, receiverId, groupId).Scan(&isAlreadyInvite)
 	if err != nil {
 		return err
