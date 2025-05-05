@@ -147,6 +147,10 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("PATCH /api/user/public", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleSwitchPublicStatus(w, r, db)
 	})
+	// update user data --
+	mux.HandleFunc("PATCH /api/user/update", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleUpdateUserInfo(w, r, db)
+	})
 
 	// PROFILE
 	mux.HandleFunc("GET /api/profile/", func(w http.ResponseWriter, r *http.Request) {
@@ -167,7 +171,13 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 		handlers.HandleGetMessages(w, r, db)
 	})
 
-	//GROUPS
+	// GROUPS
+	// get groups info
+
+	// get post groups
+
+	// get event groups
+
 	// create group X
 	mux.HandleFunc("POST /api/group/create", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCreateGroup(w, r, db)
@@ -196,14 +206,20 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("GET /api/group/message", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetMessageGroups(w, r, db)
 	})
-	// accept to join
-	// decline to join
+	// accept to join X
+	mux.HandleFunc("POST /api/group/join", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleJoinGroup(w, r, db)
+	})
+	// decline to join X
+	mux.HandleFunc("POST /api/group/decline", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleDeclineGroup(w, r, db)
+	})
 	// send invitation -- à vérifier
 	mux.HandleFunc("POST /api/group/invite", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleInviteGroup(w, r, db)
 	})
 
-	//CHECK
+	// CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCheckUsername(w, r, db)
 	})
@@ -212,8 +228,15 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// NOTIFICATIONS
+
+	// get Notifications
 	mux.HandleFunc("GET /api/notification", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetNotifications(w, r, db)
+	})
+
+	// read Notification
+	mux.HandleFunc("PATCH /api/notification", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleReadNotifications(w, r, db)
 	})
 
 	// Tags

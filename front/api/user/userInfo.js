@@ -87,21 +87,17 @@ export const followUser = async (userId) => {
 };
 
 export const acceptFollowRequest = async (userId) => {
-    const response = await fetch("http://localhost:80/api/user/agree", {
+    const response = await fetch(`http://localhost:80/api/user/agree?user=${userId}`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid: userId })
+        credentials: "include"
     });
     return response.json();
 };
 
 export const declineFollowRequest = async (userId) => {
-    const response = await fetch("http://localhost:80/api/user/decline", {
+    const response = await fetch(`http://localhost:80/api/user/decline?user=${userId}`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid: userId })
+        credentials: "include"
     });
     return response.json();
 };
@@ -132,6 +128,14 @@ export const getFollowing = async (userId) => {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userid: userId })
+    });
+    return response.json();
+};
+
+export const abortFollowRequest = async (userId) => {
+    const response = await fetch(`http://localhost:80/api/user/abort?user=${userId}`, {
+        method: "GET",
+        credentials: "include"
     });
     return response.json();
 };

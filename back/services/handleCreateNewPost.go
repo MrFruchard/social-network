@@ -28,7 +28,7 @@ func CreatePost(content, userId, image, tag, groupId, privacy string, users []st
 	groupIdNull := toNullString(groupId)
 
 	privacyPost := PrivacyFriends
-	if privacy == "public" {
+	if privacy == "public" && len(users) == 0 { // à verifié si ca fonctionne
 		privacyPost = PrivacyPublic
 	}
 	if len(users) > 0 {

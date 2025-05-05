@@ -75,3 +75,10 @@ func HandleSwitchPublicStatus(w http.ResponseWriter, r *http.Request, db *sql.DB
 	utils.SuccessResponse(w, http.StatusOK, "Status changed")
 
 }
+
+func HandleUpdateUserInfo(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+	}
+}

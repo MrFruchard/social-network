@@ -31,10 +31,12 @@ type CommentData struct {
 type FollowRequestData struct {
 	FollowerID string `json:"follower_id"`
 	CreatedAt  string `json:"created_at"`
+	Status     string `json:"status"`
 	Sender     User   `json:"sender"`
 }
 type GroupInviteData struct {
 	GroupID   string `json:"group_id"`
+	GroupPic  string `json:"group_pic"`
 	GroupName string `json:"group_name"`
 	GroupBio  string `json:"group_bio"`
 	CreatedAt string `json:"created_at"`
@@ -77,7 +79,7 @@ func SendNotifications(db *sql.DB, userID string) ([]Notification, error) {
 			if err != nil {
 				continue
 			}
-		case "ASK_INVITE":
+		case "INVITE_GROUP":
 			n.Data, err = askGroupAndInviteGroup(db, idType)
 			if err != nil {
 				continue
@@ -187,8 +189,8 @@ func askFollow(db *sql.DB, idFollow string) (FollowRequestData, error) {
 	var askerID string
 	f.FollowerID = idFollow
 
-	query := `SELECT ASKER_ID, CREATED_AT FROM REQUEST_FOLLOW WHERE ID = ?`
-	err := db.QueryRow(query, idFollow).Scan(&askerID, &f.CreatedAt)
+	query := `SELECT ASKER_ID, CREATED_AT, STATUS FROM REQUEST_FOLLOW WHERE ID = ?`
+	err := db.QueryRow(query, idFollow).Scan(&askerID, &f.CreatedAt, &f.Status)
 	if err != nil {
 		return f, err
 	}
@@ -212,14 +214,14 @@ func askGroupAndInviteGroup(db *sql.DB, askGroup string) (GroupInviteData, error
 	}
 
 	var imgGroup sql.NullString
-	query = `SELECT  TITLE, DESCRIPTION,CREATED_AT FROM ALL_GROUPS WHERE ID = ?`
-	err = db.QueryRow(query, g.GroupID).Scan(&g.GroupName, &g.GroupBio, &imgGroup)
+	query = `SELECT  TITLE, DESCRIPTION,CREATED_AT, IMAGE FROM ALL_GROUPS WHERE ID = ?`
+	err = db.QueryRow(query, g.GroupID).Scan(&g.GroupName, &g.GroupBio, &g.CreatedAt, &imgGroup)
 	if err != nil {
 		return g, err
 	}
 
 	if imgGroup.Valid {
-		g.GroupName = imgGroup.String
+		g.GroupPic = imgGroup.String
 	}
 
 	g.User, err = getUserByID(db, askerID)

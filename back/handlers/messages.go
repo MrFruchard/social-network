@@ -65,15 +65,16 @@ func HandleSendMessage(w http.ResponseWriter, r *http.Request, db *sql.DB, h *we
 
 	members := append(receivers, userID)
 
-	_, err = services.AddMessage(db, members, userID, conversationID, content, typeMessage)
+	convID, err := services.AddMessage(db, members, userID, conversationID, content, typeMessage)
 	if err != nil {
-		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to create group conversation")
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Broadcast aux membres
 
-	utils.SuccessResponse(w, http.StatusOK, "Message sent to group")
+	w.Header().Set("Content-Type", "application/json")
+	utils.SuccessResponse(w, http.StatusOK, convID)
 }
 
 // Send all Conversation
