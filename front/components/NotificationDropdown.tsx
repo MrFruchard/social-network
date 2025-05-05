@@ -70,7 +70,7 @@ export default function NotificationDropdown() {
       case 'COMMENT_LIKE': return <ThumbsUp className="h-4 w-4 text-blue-500" />;
       case 'COMMENT_DISLIKE': return <ThumbsDown className="h-4 w-4 text-red-500" />;
       case 'ASK_FOLLOW': return <UserPlus className="h-4 w-4 text-purple-500" />;
-      case 'ASK_INVITE': return <Users className="h-4 w-4 text-orange-500" />;
+      case 'INVITE_GROUP': return <Users className="h-4 w-4 text-orange-500" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };
@@ -87,7 +87,7 @@ export default function NotificationDropdown() {
         return `/post/${(notification.data as any).post_id}`;
       case 'ASK_FOLLOW':
         return `/profile?id=${(notification.data as any).sender.id}`;
-      case 'ASK_INVITE':
+      case 'INVITE_GROUP':
         return `/group/${(notification.data as any).group_id}`;
       default:
         return '#';
@@ -114,9 +114,21 @@ export default function NotificationDropdown() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              // Accepter la demande
-              // TODO: Implémenter avec l'API
-              markAsRead(notif.id);
+              
+              // Accepter la demande de suivi
+              fetch(`http://localhost:80/api/user/agree?user=${(notif.data as FollowRequestData).sender.id}`, {
+                method: 'POST',
+                credentials: 'include'
+              }).then(response => {
+                if (response.ok) {
+                  markAsRead(notif.id);
+                  console.log('Demande de suivi acceptée');
+                } else {
+                  console.error('Erreur lors de l\'acceptation de la demande');
+                }
+              }).catch(error => {
+                console.error('Erreur:', error);
+              });
             }}
           >
             <Check className="mr-1 h-3 w-3" />
@@ -129,9 +141,21 @@ export default function NotificationDropdown() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              // Refuser la demande
-              // TODO: Implémenter avec l'API
-              markAsRead(notif.id);
+              
+              // Refuser la demande de suivi
+              fetch(`http://localhost:80/api/user/decline?user=${(notif.data as FollowRequestData).sender.id}`, {
+                method: 'POST',
+                credentials: 'include'
+              }).then(response => {
+                if (response.ok) {
+                  markAsRead(notif.id);
+                  console.log('Demande de suivi refusée');
+                } else {
+                  console.error('Erreur lors du refus de la demande');
+                }
+              }).catch(error => {
+                console.error('Erreur:', error);
+              });
             }}
           >
             <X className="mr-1 h-3 w-3" />
@@ -141,7 +165,8 @@ export default function NotificationDropdown() {
       );
     }
     
-    if (notif.type === 'ASK_INVITE') {
+    if (notif.type === 'INVITE_GROUP') {
+      const groupData = notif.data as GroupInviteData;
       return (
         <div className="flex space-x-2 mt-2">
           <Button 
@@ -151,9 +176,21 @@ export default function NotificationDropdown() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              // Accepter l'invitation
-              // TODO: Implémenter avec l'API
-              markAsRead(notif.id);
+              
+              // Cette API n'existe peut-être pas encore, à adapter
+              fetch(`http://localhost:80/api/group/accept?group=${groupData.group_id}`, {
+                method: 'POST',
+                credentials: 'include'
+              }).then(response => {
+                if (response.ok) {
+                  markAsRead(notif.id);
+                  console.log('Invitation acceptée');
+                } else {
+                  console.error('Erreur lors de l\'acceptation de l\'invitation');
+                }
+              }).catch(error => {
+                console.error('Erreur:', error);
+              });
             }}
           >
             <Check className="mr-1 h-3 w-3" />
@@ -166,9 +203,21 @@ export default function NotificationDropdown() {
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
-              // Refuser l'invitation
-              // TODO: Implémenter avec l'API
-              markAsRead(notif.id);
+              
+              // Cette API n'existe peut-être pas encore, à adapter
+              fetch(`http://localhost:80/api/group/decline?group=${groupData.group_id}`, {
+                method: 'POST',
+                credentials: 'include'
+              }).then(response => {
+                if (response.ok) {
+                  markAsRead(notif.id);
+                  console.log('Invitation refusée');
+                } else {
+                  console.error('Erreur lors du refus de l\'invitation');
+                }
+              }).catch(error => {
+                console.error('Erreur:', error);
+              });
             }}
           >
             <X className="mr-1 h-3 w-3" />

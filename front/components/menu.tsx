@@ -20,6 +20,11 @@ export default function Menu() {
                         Profile
                     </Button>
                 </Link>
+                <Link href="/notifications">
+                    <Button className="p-2 hover:text-indi">
+                        Notifications
+                    </Button>
+                </Link>
             </div>
 
             <div className="flex items-center space-x-4">

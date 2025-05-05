@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '@/contexts/websocket-context';
 
 // Types pour les notifications
-export type NotificationType = 'LIKE' | 'DISLIKE' | 'COMMENT' | 'COMMENT_LIKE' | 'COMMENT_DISLIKE' | 'ASK_FOLLOW' | 'ASK_INVITE';
+export type NotificationType = 'LIKE' | 'DISLIKE' | 'COMMENT' | 'COMMENT_LIKE' | 'COMMENT_DISLIKE' | 'ASK_FOLLOW' | 'INVITE_GROUP';
 
 export interface User {
   id: string;
@@ -62,11 +62,11 @@ export function useNotifications() {
 
   const { isConnected, messages } = useWebSocket();
 
-  // Récupérer les notifications depuis l'API
+  // RÃ©cupÃ©rer les notifications depuis l'API
   const fetchNotifications = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await fetch('http://localhost:80/api/notifications', {
+      const response = await fetch('http://localhost:80/api/notification', {
         method: 'GET',
         credentials: 'include',
       });
@@ -83,7 +83,7 @@ export function useNotifications() {
       setUnreadCount(unread);
 
     } catch (error) {
-      console.error('Erreur lors de la récupération des notifications:', error);
+      console.error('Erreur lors de la rÃ©cupÃ©ration des notifications:', error);
       setError(error instanceof Error ? error.message : 'Une erreur est survenue');
     } finally {
       setLoading(false);
@@ -93,47 +93,27 @@ export function useNotifications() {
   // Marquer une notification comme lue
   const markAsRead = useCallback(async (notificationId: string) => {
     try {
-      const response = await fetch(`http://localhost:80/api/notifications/read/${notificationId}`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      // Mettre à jour l'état localement
+      // Pour l'instant, comme l'API backend ne supporte pas cette fonctionnalitÃ©,
+      // on effectue uniquement une mise Ã  jour locale
       setNotifications(prev => prev.map(notif => 
         notif.id === notificationId ? { ...notif, read: true } : notif
       ));
-
-      // Mettre à jour le compteur de non lues
+      
+      // Mettre Ã  jour le compteur de non lues
       setUnreadCount(prev => Math.max(0, prev - 1));
-
+      
+      console.log(`Notification ${notificationId} marquÃ©e comme lue (localement seulement)`);
     } catch (error) {
       console.error('Erreur lors du marquage de la notification comme lue:', error);
     }
   }, []);
 
   // Marquer toutes les notifications comme lues
-  const markAllAsRead = useCallback(async () => {
-    try {
-      const response = await fetch(`http://localhost:80/api/notifications/read-all`, {
-        method: 'PATCH',
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        throw new Error(`Erreur HTTP: ${response.status}`);
-      }
-
-      // Mettre à jour l'état localement
-      setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
-      setUnreadCount(0);
-
-    } catch (error) {
-      console.error('Erreur lors du marquage de toutes les notifications comme lues:', error);
-    }
+  const markAllAsRead = useCallback(() => {
+    // Mise Ã  jour locale uniquement pour l'instant
+    setNotifications(prev => prev.map(notif => ({ ...notif, read: true })));
+    setUnreadCount(0);
+    console.log('Toutes les notifications marquÃ©es comme lues (localement seulement)');
   }, []);
 
   // Formatage du texte de notification
@@ -141,53 +121,53 @@ export function useNotifications() {
     switch (notification.type) {
       case 'LIKE':
         const likeData = notification.data as LikeData;
-        return `${likeData.user.firstname} ${likeData.user.lastname} a aimé votre publication.`;
+        return `${likeData.user.firstname} ${likeData.user.lastname} a aimÃ© votre publication.`;
       case 'DISLIKE':
         const dislikeData = notification.data as LikeData;
-        return `${dislikeData.user.firstname} ${dislikeData.user.lastname} n'a pas aimé votre publication.`;
+        return `${dislikeData.user.firstname} ${dislikeData.user.lastname} n'a pas aimÃ© votre publication.`;
       case 'COMMENT':
         const commentData = notification.data as CommentData;
-        return `${commentData.user.firstname} ${commentData.user.lastname} a commenté votre publication.`;
+        return `${commentData.user.firstname} ${commentData.user.lastname} a commentÃ© votre publication.`;
       case 'COMMENT_LIKE':
         const commentLikeData = notification.data as CommentData;
-        return `${commentLikeData.user.firstname} ${commentLikeData.user.lastname} a aimé votre commentaire.`;
+        return `${commentLikeData.user.firstname} ${commentLikeData.user.lastname} a aimÃ© votre commentaire.`;
       case 'COMMENT_DISLIKE':
         const commentDislikeData = notification.data as CommentData;
-        return `${commentDislikeData.user.firstname} ${commentDislikeData.user.lastname} n'a pas aimé votre commentaire.`;
+        return `${commentDislikeData.user.firstname} ${commentDislikeData.user.lastname} n'a pas aimÃ© votre commentaire.`;
       case 'ASK_FOLLOW':
         const followData = notification.data as FollowRequestData;
         return `${followData.sender.firstname} ${followData.sender.lastname} souhaite vous suivre.`;
-      case 'ASK_INVITE':
+      case 'INVITE_GROUP':
         const groupData = notification.data as GroupInviteData;
-        return `${groupData.user.firstname} ${groupData.user.lastname} vous invite à rejoindre le groupe ${groupData.group_name}.`;
+        return `${groupData.user.firstname} ${groupData.user.lastname} vous invite Ã  rejoindre le groupe ${groupData.group_name}.`;
       default:
         return 'Nouvelle notification';
     }
   }, []);
 
-  // Écouter les nouvelles notifications via WebSocket
+  // Ã‰couter les nouvelles notifications via WebSocket
   useEffect(() => {
     if (messages.length > 0) {
-      // Nouvelle notification reçue par WebSocket
+      // Nouvelle notification reÃ§ue par WebSocket
       const latestMessage = messages[messages.length - 1];
       
       // Si le message est une notification
       if (latestMessage && latestMessage.type && latestMessage.id) {
-        // Vérifier si cette notification existe déjà
+        // VÃ©rifier si cette notification existe dÃ©jÃ 
         const exists = notifications.some(n => n.id === latestMessage.id);
         
         if (!exists) {
-          // Ajouter la nouvelle notification à la liste
+          // Ajouter la nouvelle notification Ã  la liste
           setNotifications(prev => [latestMessage, ...prev]);
           
-          // Incrémenter le compteur de non lues
+          // IncrÃ©menter le compteur de non lues
           setUnreadCount(prev => prev + 1);
           
-          // Notification du navigateur (si autorisé)
+          // Notification du navigateur (si autorisÃ©)
           if (Notification.permission === "granted") {
             new Notification("Nouvelle notification", {
               body: getNotificationText(latestMessage),
-              icon: "/notification-icon.png" // Assurez-vous d'avoir cette icône dans votre dossier public
+              icon: "/notification-icon.png" // Assurez-vous d'avoir cette icÃ´ne dans votre dossier public
             });
           }
         }

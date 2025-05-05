@@ -291,6 +291,30 @@ export function ProfileContent({ userId }: { userId?: string }) {
     fetchFollowing();
   }, [userProfile?.id]);
 
+  // Rafraîchir les données du profil
+  const refreshProfileData = async () => {
+    if (!userProfile?.id) return;
+    
+    try {
+      // Utiliser l'endpoint approprié selon qu'il s'agit de son propre profil ou non
+      const url = isOwnProfile 
+        ? 'http://localhost:80/api/user/info'
+        : `http://localhost:80/api/user/${userProfile.id}`;
+      
+      const response = await fetch(url, {
+        credentials: 'include'
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        setUserProfile(data);
+        console.log('Profile refreshed:', data);
+      }
+    } catch (error) {
+      console.error('Error refreshing profile:', error);
+    }
+  };
+
   const handleFollowToggle = async () => {
     if (!userProfile || !userProfile.id) return;
 
@@ -374,9 +398,37 @@ export function ProfileContent({ userId }: { userId?: string }) {
     // La personne a envoyé une demande d'abonnement à l'utilisateur actuel
     if (userProfile.is_following === 3) {
       return (
-        <Button onClick={handleAcceptFollow} className="mt-4" variant="outline">
-          Accepter la demande
-        </Button>
+        <div className="flex space-x-2 mt-4">
+          <Button 
+            onClick={async () => {
+              const success = await handleAcceptFollow(userProfile.id);
+              if (success) {
+                // Rafraîchir les données du profil pour refléter le nouvel état
+                refreshProfileData();
+              }
+            }} 
+            variant="default"
+          >
+            Accepter
+          </Button>
+          <Button 
+            onClick={async () => {
+              // Refuser la demande
+              const response = await fetch(`http://localhost:80/api/user/decline?user=${userProfile.id}`, {
+                method: 'POST',
+                credentials: 'include',
+              });
+              
+              if (response.ok) {
+                // Rafraîchir les données du profil pour refléter le nouvel état
+                refreshProfileData();
+              }
+            }} 
+            variant="outline"
+          >
+            Refuser
+          </Button>
+        </div>
       );
     }
 
