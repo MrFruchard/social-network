@@ -214,6 +214,30 @@ func HandleDeclineGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.SuccessResponse(w, http.StatusOK, "Group decline")
 }
 
+func HandleCreateEvent(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	event := r.URL.Query().Get("event")
+	optionA := r.URL.Query().Get("optionA")
+	optionB := r.URL.Query().Get("optionB")
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(event) == "" || strings.TrimSpace(optionA) == "" || strings.TrimSpace(optionB) == "" || strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing values")
+		return
+	}
+
+	err := services.CreateEventGroup(db, userId, groupId, event, optionA, optionB)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Event Created")
+}
+
 func HandleGetGroupInfo(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	userId := utils.GetUserIdByCookie(r, db)
 	if userId == "" {
