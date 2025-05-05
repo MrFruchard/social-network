@@ -29,3 +29,25 @@ func HandleGetNotifications(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 		return
 	}
 }
+
+func HandleReadNotifications(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
+		return
+	}
+
+	notifId := r.URL.Query().Get("id")
+	if notifId == "" {
+		utils.ErrorResponse(w, http.StatusNotFound, "Not Found")
+		return
+	}
+
+	err := services.ReadNotifications(db, userID, notifId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Notifications Read")
+}

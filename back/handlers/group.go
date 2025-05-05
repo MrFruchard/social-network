@@ -179,4 +179,45 @@ func HandleJoinGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
 		return
 	}
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	err := services.AcceptGroupInvite(db, userId, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Group joined")
+}
+
+func HandleDeclineGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+	}
+
+	err := services.DeclineGroupInvite(db, userId, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Group decline")
+}
+
+func HandleGetGroupInfo(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
 }
