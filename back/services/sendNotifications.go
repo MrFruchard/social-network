@@ -31,6 +31,7 @@ type CommentData struct {
 type FollowRequestData struct {
 	FollowerID string `json:"follower_id"`
 	CreatedAt  string `json:"created_at"`
+	Status     string `json:"status"`
 	Sender     User   `json:"sender"`
 }
 type GroupInviteData struct {
@@ -188,8 +189,8 @@ func askFollow(db *sql.DB, idFollow string) (FollowRequestData, error) {
 	var askerID string
 	f.FollowerID = idFollow
 
-	query := `SELECT ASKER_ID, CREATED_AT FROM REQUEST_FOLLOW WHERE ID = ?`
-	err := db.QueryRow(query, idFollow).Scan(&askerID, &f.CreatedAt)
+	query := `SELECT ASKER_ID, CREATED_AT, STATUS FROM REQUEST_FOLLOW WHERE ID = ?`
+	err := db.QueryRow(query, idFollow).Scan(&askerID, &f.CreatedAt, &f.Status)
 	if err != nil {
 		return f, err
 	}
