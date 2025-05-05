@@ -228,8 +228,15 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// NOTIFICATIONS
+
+	// get Notifications
 	mux.HandleFunc("GET /api/notification", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetNotifications(w, r, db)
+	})
+
+	// read Notification
+	mux.HandleFunc("PATCH /api/notification", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleReadNotifications(w, r, db)
 	})
 
 	// Tags
