@@ -222,6 +222,10 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/group/event", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleCreateEvent(w, r, db)
 	})
+	// response event
+	mux.HandleFunc("POST /api/group/response", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleResponseEvent(w, r, db)
+	})
 
 	// CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
