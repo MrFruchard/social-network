@@ -108,10 +108,10 @@ export function MainLayout({ children }: MainLayoutProps) {
           {userData && (
             <div className="flex items-center space-x-2 mb-4">
               <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center overflow-hidden">
-                {userData.avatar ? (
+                {userData["avatar"] ? (
                   <img
-                    src={userData.avatar}
-                    alt={userData.username}
+                    src={userData["avatar"]}
+                    alt={userData["username"]}
                     className="h-full w-full object-cover"
                   />
                 ) : (
@@ -119,9 +119,9 @@ export function MainLayout({ children }: MainLayoutProps) {
                 )}
               </div>
               <div>
-                <p className="font-medium">{userData.username}</p>
+                <p className="font-medium">{userData["username"]}</p>
                 <p className="text-sm text-muted-foreground">
-                  @{userData.username}
+                  @{userData["username"]}
                 </p>
               </div>
             </div>

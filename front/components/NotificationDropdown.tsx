@@ -32,10 +32,20 @@ export default function NotificationDropdown() {
     unreadCount, 
     markAsRead, 
     markAllAsRead,
-    getNotificationText
+    getNotificationText,
+    markNotificationProcessed,
+    addLocalNotification
   } = useNotifications();
   const [isOpen, setIsOpen] = useState(false);
+  const [forceUpdate, setForceUpdate] = useState(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Forcer une mise à jour du composant si les notifications changent
+  useEffect(() => {
+    if (notifications.length > 0) {
+      console.log('Composant NotificationDropdown: mise à jour forcée, notifications:', notifications.length);
+    }
+  }, [notifications.length]);
 
   // Fermer le dropdown en cliquant à l'extérieur
   useEffect(() => {
@@ -70,6 +80,7 @@ export default function NotificationDropdown() {
       case 'COMMENT_LIKE': return <ThumbsUp className="h-4 w-4 text-blue-500" />;
       case 'COMMENT_DISLIKE': return <ThumbsDown className="h-4 w-4 text-red-500" />;
       case 'ASK_FOLLOW': return <UserPlus className="h-4 w-4 text-purple-500" />;
+      case 'NEW_FOLLOWER': return <UserPlus className="h-4 w-4 text-green-600" />;
       case 'INVITE_GROUP': return <Users className="h-4 w-4 text-orange-500" />;
       default: return <Bell className="h-4 w-4" />;
     }
@@ -86,6 +97,7 @@ export default function NotificationDropdown() {
       case 'COMMENT_DISLIKE':
         return `/post/${(notification.data as any).post_id}`;
       case 'ASK_FOLLOW':
+      case 'NEW_FOLLOWER':
         return `/profile?id=${(notification.data as any).sender.id}`;
       case 'INVITE_GROUP':
         return `/group/${(notification.data as any).group_id}`;
@@ -104,13 +116,18 @@ export default function NotificationDropdown() {
 
   // Actions spécifiques pour certaines notifications
   const renderActions = (notif: Notification) => {
+    // Pour les notifications de type NEW_FOLLOWER, pas d'actions à afficher
+    if (notif.type === 'NEW_FOLLOWER') {
+      return null;
+    }
+    
     if (notif.type === 'ASK_FOLLOW') {
       return (
         <div className="flex space-x-2 mt-2">
           <Button 
             size="sm" 
             variant="outline"
-            className="h-8 px-2 text-xs"
+            className="h-8 px-2 text-xs bg-blue-50 text-blue-600 border-blue-200 hover:bg-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/30"
             onClick={(e) => {
               e.preventDefault();
               e.stopPropagation();
@@ -127,26 +144,34 @@ export default function NotificationDropdown() {
                 credentials: 'include'
               }).then(response => {
                 if (response.ok) {
-                  // Marquer la notification comme lue d'abord
-                  fetch(`http://localhost:80/api/notification?id=${notif.id}`, {
-                    method: 'PATCH',
-                    credentials: 'include'
-                  }).then(readResponse => {
-                    if (readResponse.ok) {
-                      console.log('Notification marquée comme lue');
-                      // Mettre à jour l'état local après
-                      markAsRead(notif.id);
-                      console.log('Demande de suivi acceptée');
-                    }
-                  });
+                  // Solution très simple: on change juste le texte et le style de la notification existante
+                  // plutôt que d'essayer d'en créer une nouvelle
+                  
+                  // Marquer la notification comme traitée
+                  markNotificationProcessed(notif.id);
+                  
+                  // Ajouter une nouvelle notification "X vous suit maintenant"
+                  // Approche ultra simple: créer un élément temporaire directement dans le DOM
+                  // qui sera visible jusqu'au prochain rechargement (approche minimaliste)
+                  const notifElement = document.createElement('div');
+                  notifElement.className = 'fixed bottom-4 right-4 bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-100 p-4 rounded-md shadow-md z-50';
+                  notifElement.innerHTML = `
+                    <div class="flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M22 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+                      <span>${(notif.data as FollowRequestData).sender.firstname} ${(notif.data as FollowRequestData).sender.lastname} vous suit maintenant</span>
+                    </div>
+                  `;
+                  document.body.appendChild(notifElement);
+                  
+                  // Supprimer la notification après 3 secondes
+                  setTimeout(() => {
+                    notifElement.remove();
+                  }, 3000);
+                  
+                  // Fermer le dropdown
+                  setIsOpen(false);
                 } else {
                   console.error(`Erreur lors de l'acceptation de la demande: ${response.status}`);
-                  // Récupérer le message d'erreur du serveur si disponible
-                  response.text().then(errorText => {
-                    console.error('Détail de l\'erreur:', errorText);
-                  }).catch(err => {
-                    console.error('Impossible de lire le détail de l\'erreur');
-                  });
                 }
               }).catch(error => {
                 console.error('Erreur:', error);
@@ -176,26 +201,14 @@ export default function NotificationDropdown() {
                 credentials: 'include'
               }).then(response => {
                 if (response.ok) {
-                  // Marquer la notification comme lue d'abord
-                  fetch(`http://localhost:80/api/notification?id=${notif.id}`, {
-                    method: 'PATCH',
-                    credentials: 'include'
-                  }).then(readResponse => {
-                    if (readResponse.ok) {
-                      console.log('Notification marquée comme lue');
-                      // Mettre à jour l'état local après
-                      markAsRead(notif.id);
-                      console.log('Demande de suivi refusée');
-                    }
-                  });
+                  // Marquer la notification comme traitée
+                  markNotificationProcessed(notif.id);
+                  console.log('Demande de suivi refusée');
+                  
+                  // Fermer le dropdown
+                  setIsOpen(false);
                 } else {
                   console.error(`Erreur lors du refus de la demande: ${response.status}`);
-                  // Récupérer le message d'erreur du serveur si disponible
-                  response.text().then(errorText => {
-                    console.error('Détail de l\'erreur:', errorText);
-                  }).catch(err => {
-                    console.error('Impossible de lire le détail de l\'erreur');
-                  });
                 }
               }).catch(error => {
                 console.error('Erreur:', error);
