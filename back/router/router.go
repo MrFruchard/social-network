@@ -173,10 +173,24 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 
 	// GROUPS
 	// get groups info
+	mux.HandleFunc("GET /api/group/info", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetGroupInfo(w, r, db)
+	})
 
 	// get post groups
+	mux.HandleFunc("GET /api/group/post", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetGroupPost(w, r, db)
+	})
 
 	// get event groups
+	mux.HandleFunc("GET /api/group/event", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetEventGroup(w, r, db)
+	})
+
+	// get all members
+	mux.HandleFunc("GET /api/group/members", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetGroupMembers(w, r, db)
+	})
 
 	// create group X
 	mux.HandleFunc("POST /api/group/create", func(w http.ResponseWriter, r *http.Request) {
