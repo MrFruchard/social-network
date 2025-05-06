@@ -79,7 +79,11 @@ export function useNotifications() {
       const data = await response.json();
       
       // Validation supplémentaire pour s'assurer que les données sont bien formatées
-      if (Array.isArray(data)) {
+      if (data === null) {
+        // Si l'API renvoie null, traiter comme un tableau vide
+        setNotifications([]);
+        setUnreadCount(0);
+      } else if (Array.isArray(data)) {
         // Vérifier et nettoyer les données si nécessaire
         const cleanedData = data.map((notif: Notification) => {
           // S'assurer que les notifications de type ASK_FOLLOW ont les bons champs

@@ -4,8 +4,8 @@ import { ReactNode, useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./logout-button";
-import { NotificationIndicator } from "./notificationsInd";
 import { useUserData } from "@/hooks/user/useUserData";
+import { useNotifications } from "@/hooks/utils/useNotifications";
 import PostModal from "./PostModal";
 import {
   HomeIcon,
@@ -27,6 +27,7 @@ type MainLayoutProps = {
 export function MainLayout({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const { userData } = useUserData();
+  const { unreadCount } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
@@ -51,6 +52,8 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   }, [pathname]);
 
+  // @ts-ignore
+  // @ts-ignore
   return (
     <div className="flex w-full min-h-screen bg-background">
       {/* Left Sidebar - fixed */}
@@ -78,6 +81,7 @@ export function MainLayout({ children }: MainLayoutProps) {
             icon={<BellIcon className="h-5 w-5" />}
             label="Notifications"
             active={pathname === "/notifications"}
+            showNotificationDot={unreadCount > 0}
           />
           <NavItem
             href="/messages"
@@ -140,9 +144,6 @@ export function MainLayout({ children }: MainLayoutProps) {
             {pathname === "/messages" && "Messages"}
             {pathname === "/groups" && "Groups"}
           </h2>
-          <div className="ml-auto">
-            <NotificationIndicator />
-          </div>
         </header>
 
         {/* Content Container with Feed and Right Sidebar */}
@@ -317,13 +318,15 @@ export function MainLayout({ children }: MainLayoutProps) {
         </Link>
         <Link
           href="/notifications"
-          className={
-            pathname === "/notifications"
-              ? "text-primary"
-              : "text-muted-foreground"
-          }
+          className={`
+            ${pathname === "/notifications" ? "text-primary" : "text-muted-foreground"}
+            relative
+          `}
         >
           <BellIcon className="h-6 w-6" />
+          {unreadCount > 0 && (
+            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></div>
+          )}
         </Link>
         <Link
           href="/messages"
@@ -354,9 +357,10 @@ type NavItemProps = {
   label: string;
   active?: boolean;
   onClick?: () => void;
+  showNotificationDot?: boolean;
 };
 
-function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
+function NavItem({ href, icon, label, active, onClick, showNotificationDot }: NavItemProps) {
   return (
     <Link
       href={href}
@@ -370,8 +374,11 @@ function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
       >
         {icon}
       </span>
-      <span className={active ? "text-foreground" : "text-muted-foreground"}>
+      <span className={`${active ? "text-foreground" : "text-muted-foreground"} flex items-center`}>
         {label}
+        {showNotificationDot && (
+          <div className="ml-2 w-2 h-2 rounded-full bg-red-500"></div>
+        )}
       </span>
     </Link>
   );

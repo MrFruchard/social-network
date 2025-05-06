@@ -16,10 +16,10 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { 
-  useNotifications, 
-  Notification,
-  NotificationType
+import {
+    useNotifications,
+    Notification,
+    NotificationType, FollowRequestData, GroupInviteData
 } from '@/hooks/utils/useNotifications';
 import Link from 'next/link';
 import { formatDistanceToNow } from 'date-fns';
@@ -213,7 +213,7 @@ export default function NotificationDropdown() {
       const groupData = notif.data as GroupInviteData;
       return (
         <div className="flex space-x-2 mt-2">
-          <Button 
+          <Button
             size="sm" 
             variant="outline"
             className="h-8 px-2 text-xs"
