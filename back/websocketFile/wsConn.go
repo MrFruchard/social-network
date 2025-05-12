@@ -1,9 +1,11 @@
 package websocketFile
 
 import (
+	"database/sql"
 	"github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"social-network/utils"
 )
 
 var upgrader = websocket.Upgrader{
@@ -11,7 +13,7 @@ var upgrader = websocket.Upgrader{
 	WriteBufferSize: 1024,
 }
 
-func (h *Hub) WsHandler(w http.ResponseWriter, r *http.Request) {
+func (h *Hub) WsHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	upgrader.CheckOrigin = func(r *http.Request) bool { return true } // Gérer les origines autorisées
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -20,10 +22,25 @@ func (h *Hub) WsHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer conn.Close()
 
-	h.register <- conn // Enregistre la connexion
+	userID := utils.GetUserIdByCookie(r, db)
+	if userID == "" {
+		log.Println("Erreur WebSocket: User id un cookie")
+		return
+	}
+
+	h.mu.Lock()
+	h.clients[conn] = userID
+	h.mu.Unlock()
+	log.Println("Connexion enregistrée avec userID:", userID)
 
 	defer func() {
-		h.unregister <- conn // Désenregistre la connexion
+		h.mu.Lock()
+		userID := h.clients[conn] // sauvegarde avant suppression
+		h.mu.Unlock()
+
+		log.Println("Déconnexion de userID:", userID)
+
+		h.unregister <- conn
 	}()
 
 	for {

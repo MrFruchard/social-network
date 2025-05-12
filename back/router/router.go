@@ -272,6 +272,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// WS
-	mux.Handle("/api/ws", http.HandlerFunc(hub.WsHandler))
-
+	mux.Handle("/api/ws", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hub.WsHandler(w, r, db)
+	}))
 }
