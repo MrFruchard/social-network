@@ -84,7 +84,7 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
             conversations.map((conversation) => {
               const currentUserId = user?.id;
               // Récupère tous les autres participants sauf l'utilisateur courant
-              console.log('conversation:', conversation);
+              // console.log('conversation:', conversation);
               const others = Array.isArray(conversation.participants) ? conversation.participants.filter((p) => p.id !== currentUserId) : [];
               const isSelected = selectedConversationId === conversation.id;
 
@@ -149,14 +149,8 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
               onSendMessage={async (msg, imageFile) => {
                 if (selectedConversationId) {
                   const receiverId = others.length === 1 ? others[0].id : undefined;
-                  const result = await send({ content: msg, conversationId: selectedConversationId, receiverId, imageFile });
-                  await fetchMessages(selectedConversationId);
-
-                  // Sécurité : si la conversation n'existe plus ou tu n'es plus membre, reset
-                  const conv = conversations.find((c) => c.id === selectedConversationId);
-                  if (!conv || !conv.participants?.some((p) => p.id === user?.id)) {
-                    setSelectedConversationId(null);
-                  }
+                  console.log('receivers:', receiverId);
+                  await send({ content: msg, conversationId: selectedConversationId, receiverId, imageFile });
                 }
               }}
               onReaction={(messageId, emoji) => console.log('Reaction:', messageId, emoji)}
