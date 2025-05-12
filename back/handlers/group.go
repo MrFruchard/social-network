@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	"encoding/json"
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
@@ -214,10 +215,154 @@ func HandleDeclineGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	utils.SuccessResponse(w, http.StatusOK, "Group decline")
 }
 
+func HandleCreateEvent(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	event := r.URL.Query().Get("event")
+	optionA := r.URL.Query().Get("optionA")
+	optionB := r.URL.Query().Get("optionB")
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(event) == "" || strings.TrimSpace(optionA) == "" || strings.TrimSpace(optionB) == "" || strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing values")
+		return
+	}
+
+	err := services.CreateEventGroup(db, userId, groupId, event, optionA, optionB)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Event Created")
+}
+
+func HandleResponseEvent(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	eventId := r.URL.Query().Get("eventId")
+	groupId := r.URL.Query().Get("groupId")
+	response := r.URL.Query().Get("response")
+	if strings.TrimSpace(eventId) == "" || strings.TrimSpace(groupId) == "" || (response != "A" && response != "B") {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing values")
+		return
+	}
+
+	err := services.ResponseEvent(db, userId, groupId, eventId, response)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Event Response")
+}
+
 func HandleGetGroupInfo(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	userId := utils.GetUserIdByCookie(r, db)
 	if userId == "" {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	infos, err := services.SendGroupInfos(db, userId, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(infos); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+		return
+	}
+}
+
+func HandleGetGroupPost(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	info, err := services.GetGroupPosts(db, userId, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(info); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+		return
+	}
+}
+
+func HandleGetGroupMembers(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	info, err := services.GetGroupMember(db, userId, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(info); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+		return
+	}
+
+}
+
+func HandleGetEventGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	info, err := services.SendEventInfos(db, userId, groupId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(info); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
 		return
 	}
 }
