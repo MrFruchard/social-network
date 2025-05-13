@@ -8,6 +8,7 @@ export async function sendMessage(receiverId, content, imageFile, conversationId
   try {
     const formData = new FormData();
     if (Array.isArray(receiverId)) {
+      console.log('receiverId is an array:', receiverId);
       receiverId.forEach((r) => formData.append('receiver', r));
     } else {
       formData.append('receiver', receiverId);

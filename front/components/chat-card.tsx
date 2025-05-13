@@ -4,7 +4,7 @@
 import { SmilePlus, Check, CheckCheck, MoreHorizontal, Send } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useSendMessage } from '@/hooks/message/useSendMessage';
 
 export interface Message {
@@ -56,6 +56,14 @@ export function ChatCard({
   theme = 'dark',
 }: ChatCardProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [hasLocalMessage, setHasLocalMessage] = useState(false);
+
+  useEffect(() => {
+    if (!hasLocalMessage) {
+      setMessages(initialMessages);
+    }
+  }, [initialMessages]);
+
   const [inputValue, setInputValue] = useState('');
   const [imageFile, setImageFile] = useState<File | undefined>(undefined);
   const [fileInputKey, setFileInputKey] = useState(Date.now());
@@ -97,39 +105,6 @@ export function ChatCard({
     }, 2000);
   };
 
-  const handleReaction = (messageId: string, emoji: string) => {
-    setMessages((prev) =>
-      prev.map((message) => {
-        if (message.id === messageId) {
-          const existingReaction = message.reactions?.find((r) => r.emoji === emoji);
-          const newReactions = message.reactions || [];
-
-          if (existingReaction) {
-            return {
-              ...message,
-              reactions: newReactions.map((r) =>
-                r.emoji === emoji
-                  ? {
-                      ...r,
-                      count: r.reacted ? r.count - 1 : r.count + 1,
-                      reacted: !r.reacted,
-                    }
-                  : r
-              ),
-            };
-          } else {
-            return {
-              ...message,
-              reactions: [...newReactions, { emoji, count: 1, reacted: true }],
-            };
-          }
-        }
-        return message;
-      })
-    );
-    onReaction?.(messageId, emoji);
-  };
-
   const isLightTheme = theme === 'light';
 
   return (
@@ -165,7 +140,7 @@ export function ChatCard({
             const isCurrentUser = message.sender.isCurrentUser;
             return (
               <div key={message.id} className={cn('flex items-start gap-3', isCurrentUser ? 'justify-end' : 'justify-start')}>
-                {!isCurrentUser && <Image src={message.sender.avatar} alt={message.sender.name} width={36} height={36} className='rounded-full' />}
+                {/* {!isCurrentUser && <Image src={message.sender.avatar} alt={message.sender.name} width={36} height={36} className='rounded-full' />} */}
                 <div className={cn('flex-1 min-w-0 max-w-xs', isCurrentUser ? 'bg-blue-500 text-white rounded-tl-2xl rounded-bl-2xl rounded-br-md ml-auto' : 'bg-zinc-200 text-zinc-900 rounded-tr-2xl rounded-br-2xl rounded-bl-md mr-auto')} style={{ padding: '12px 16px' }}>
                   <div className='flex items-center gap-2 mb-1'>
                     <span className={cn('font-medium', isCurrentUser ? 'text-white' : 'text-zinc-900')}>{message.sender.name}</span>

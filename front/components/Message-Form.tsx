@@ -14,10 +14,9 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const { messages = [], loading: messagesLoading, fetchMessages } = useMessages(selectedConversationId || undefined);
   const [isCreateMessageOpen, setIsCreateMessageOpen] = useState(false);
-
   const safeMessages = Array.isArray(messages) ? messages : Array.isArray(messages?.messages) ? messages.messages : [];
-
   const [conversationsLoaded, setConversationsLoaded] = useState(false);
+  const [localMessages, setLocalMessages] = useState<ChatCardMessage[]>([]);
 
   useEffect(() => {
     fetchConversations().then(() => setConversationsLoaded(true));
@@ -28,6 +27,10 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
       fetchMessages(selectedConversationId);
     }
   }, [selectedConversationId, fetchMessages]);
+
+  useEffect(() => {
+    setLocalMessages([]);
+  }, [selectedConversationId, messages]);
 
   const selectedConversation = Array.isArray(conversations) ? conversations.find((conv) => conv.id === selectedConversationId) : undefined;
 
@@ -51,7 +54,7 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
       id: message.id,
       content: message.content,
       sender,
-      timestamp: new Date(message.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date(new Date(message.createdAt).getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'delivered',
       reactions: [],
       imageUrl: message.imageUrl || message.image || undefined, // adapte selon ton backend
@@ -60,6 +63,33 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
   const others = selectedConversation?.participants ? selectedConversation.participants.filter((p) => p.id !== user?.id) : recipients.filter((p) => p.id !== user?.id);
 
   const chatName = others.length > 1 ? 'Groupe' : others.length === 1 ? others[0].username : 'Conversation';
+
+  const handleSendMessage = async (msg: string, imageFile?: File) => {
+    if (!selectedConversationId) return;
+    const receiverId = others.length === 1 ? others[0].id : others.length > 1 ? others.map((u) => u.id) : undefined;
+
+    const newMessage: ChatCardMessage = {
+      id: Date.now().toString(),
+      content: msg,
+      sender: {
+        name: user?.username || 'You',
+        avatar: user?.avatar || '/default-avatar.png',
+        isOnline: true,
+        isCurrentUser: true,
+      },
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'sent',
+      reactions: [],
+      imageUrl: imageFile ? URL.createObjectURL(imageFile) : undefined,
+    };
+    setLocalMessages((prev) => [...prev, newMessage]);
+    await send({
+      content: msg,
+      conversationId: selectedConversationId,
+      receiverId,
+      imageFile,
+    });
+  };
 
   // console.log('others:', others);
   return (
@@ -83,10 +113,12 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
           ) : Array.isArray(conversations) && conversations.length > 0 ? (
             conversations.map((conversation) => {
               const currentUserId = user?.id;
-              // Récupère tous les autres participants sauf l'utilisateur courant
-              // console.log('conversation:', conversation);
               const others = Array.isArray(conversation.participants) ? conversation.participants.filter((p) => p.id !== currentUserId) : [];
               const isSelected = selectedConversationId === conversation.id;
+              // console.log('isSelected:', isSelected);
+              //console.log('conversation:', conversation);
+              // console.log('others:', others);
+              // console.log('currentUserId:', currentUserId);
 
               return (
                 <div key={conversation.id} className={`relative flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`} onClick={() => setSelectedConversationId(conversation.id)}>
@@ -138,21 +170,14 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
             <ChatCard
               chatName={chatName}
               membersCount={others.length}
-              // onlineCount={0}
-              initialMessages={chatCardMessages}
+              initialMessages={[...chatCardMessages, ...localMessages]}
               currentUser={{
                 name: 'Moi',
                 avatar: user?.avatar || '/default-avatar.png',
               }}
               theme='light'
               className='border border-zinc-200 flex-1 min-h-0'
-              onSendMessage={async (msg, imageFile) => {
-                if (selectedConversationId) {
-                  const receiverId = others.length === 1 ? others[0].id : undefined;
-                  console.log('receivers:', receiverId);
-                  await send({ content: msg, conversationId: selectedConversationId, receiverId, imageFile });
-                }
-              }}
+              onSendMessage={handleSendMessage}
               onReaction={(messageId, emoji) => console.log('Reaction:', messageId, emoji)}
               onMoreClick={() => console.log('More clicked')}
             />
