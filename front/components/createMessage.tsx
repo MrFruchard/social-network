@@ -124,6 +124,7 @@ export default function CreateMessage({
             <div className='mt-4 max-h-[300px] overflow-y-auto'>
               {loading && <div className='text-center py-4'>Chargement...</div>}
               {error && <div className='text-center py-4 text-red-500'>{error}</div>}
+              {!loading && !error && filteredUsers.length === 0 && <div className='text-center py-4 text-gray-500'>Vous ne suivez personne pour le moment.</div>}
               {!loading &&
                 !error &&
                 filteredUsers.map((user) => (

@@ -165,3 +165,22 @@
 .animate-shake {
   animation: shake 0.4s;
 }
+
+/* Ajoute ceci dans ton fichier CSS global */
+@keyframes pop {
+  0% {
+    transform: scale(0.95);
+    opacity: 0.5;
+  }
+  80% {
+    transform: scale(1.03);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+.animate-pop {
+  animation: pop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}

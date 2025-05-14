@@ -32,6 +32,12 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
     setLocalMessages([]);
   }, [selectedConversationId, messages]);
 
+  useEffect(() => {
+    if (conversationsLoaded && Array.isArray(conversations) && conversations.length > 0 && !selectedConversationId) {
+      setSelectedConversationId(conversations[0].id);
+    }
+  }, [conversationsLoaded, conversations, selectedConversationId]);
+
   const selectedConversation = Array.isArray(conversations) ? conversations.find((conv) => conv.id === selectedConversationId) : undefined;
 
   // Utilise les participants de la conversation sélectionnée si elle existe
@@ -64,6 +70,13 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
 
   const chatName = others.length > 1 ? 'Groupe' : others.length === 1 ? others[0].username : 'Conversation';
 
+  const sortedConversations = Array.isArray(conversations)
+    ? [...conversations].sort((a, b) => {
+        const aDate = a.lastMessage?.created_at ? new Date(a.lastMessage.created_at).getTime() : 0;
+        const bDate = b.lastMessage?.created_at ? new Date(b.lastMessage.created_at).getTime() : 0;
+        return bDate - aDate;
+      })
+    : [];
   const handleSendMessage = async (msg: string, imageFile?: File) => {
     if (!selectedConversationId) return;
     const receiverId = others.length === 1 ? others[0].id : others.length > 1 ? others.map((u) => u.id) : undefined;
@@ -77,7 +90,7 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
         isOnline: true,
         isCurrentUser: true,
       },
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      timestamp: new Date(Date.now() + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       status: 'sent',
       reactions: [],
       imageUrl: imageFile ? URL.createObjectURL(imageFile) : undefined,
@@ -94,7 +107,7 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
   // console.log('others:', others);
   return (
     <div className='flex h-screen bg-white'>
-      <div className='w-1/3 flex flex-col border-r border-gray-200'>
+      <div className='flex flex-col border-r border-gray-200 flex-1 max-w-md'>
         <div className='flex justify-between items-center p-4 border-b border-gray-200'>
           <h1 className='text-xl font-bold text-gray-900'>Messages</h1>
           <button
@@ -111,13 +124,13 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
           {conversationsLoading ? (
             <div className='p-4 text-gray-600'>Chargement des conversations...</div>
           ) : Array.isArray(conversations) && conversations.length > 0 ? (
-            conversations.map((conversation) => {
+            sortedConversations.map((conversation) => {
               const currentUserId = user?.id;
               const others = Array.isArray(conversation.participants) ? conversation.participants.filter((p) => p.id !== currentUserId) : [];
               const isSelected = selectedConversationId === conversation.id;
-              // console.log('isSelected:', isSelected);
+              //console.log('isSelected:', isSelected);
               //console.log('conversation:', conversation);
-              // console.log('others:', others);
+              //console.log('others:', others);
               // console.log('currentUserId:', currentUserId);
 
               return (
@@ -125,13 +138,19 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
                   {/* Trait bleu vertical à gauche si sélectionné */}
                   {isSelected && <div className='absolute left-0 top-0 h-full w-1 bg-blue-500 rounded-r-lg' />}
                   <div className='flex items-center ml-2'>
-                    <img src={others[0]?.avatar || '/default-avatar.png'} alt={others[0]?.username || 'Avatar'} className='w-10 h-10 rounded-full object-cover border' />
+                    {others[0]?.avatar && others[0]?.avatar !== '/default-avatar.png' ? (
+                      <img src={others[0].avatar} alt={others[0]?.username || 'Avatar'} className='w-10 h-10 rounded-full object-cover border' />
+                    ) : (
+                      <div className='w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center border'>
+                        <span className='text-gray-500 text-lg font-bold'>{others[0]?.username ? others[0].username[0].toUpperCase() : '?'}</span>
+                      </div>
+                    )}
                   </div>
                   <div className='flex-1 min-w-0'>
                     {/* Affiche tous les noms séparés par une virgule */}
-                    <div className='font-semibold text-gray-900 truncate'>{others.map((u) => u.username).join(', ')}</div>
-                    <div className='text-sm text-gray-500 truncate'>{conversation.lastMessage ? conversation.lastMessage.content : <span className='italic text-gray-400'>Aucun message</span>}</div>
+                    <div className='font-semibold text-gray-900 truncate'>{others.length > 2 ? `${others[0].username}, ${others[1].username} +${others.length - 2}` : others.map((u) => u.username).join(', ')}</div> <div className='text-sm text-gray-500 truncate'>{conversation.lastMessage ? conversation.lastMessage.content : <span className='italic text-gray-400'>Aucun message</span>}</div>
                   </div>
+                  {conversation.lastMessage?.created_at && <span className='ml-2 text-xs text-gray-400 whitespace-nowrap'>{new Date(new Date(conversation.lastMessage.created_at).getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}{' '}
                 </div>
               );
             })
@@ -164,7 +183,7 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
       </div>
 
       {/* Colonne des messages */}
-      <div className='w-2/3 flex flex-col bg-white h-full'>
+      <div className='w-3/5 flex flex-col bg-white h-full'>
         {selectedConversationId ? (
           <div className='flex-1 flex flex-col min-h-0'>
             <ChatCard

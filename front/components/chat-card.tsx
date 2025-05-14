@@ -4,8 +4,9 @@
 import { SmilePlus, Check, CheckCheck, MoreHorizontal, Send } from 'lucide-react';
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useSendMessage } from '@/hooks/message/useSendMessage';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export interface Message {
   id: string;
@@ -57,6 +58,11 @@ export function ChatCard({
 }: ChatCardProps) {
   const [messages, setMessages] = useState<Message[]>(initialMessages);
   const [hasLocalMessage, setHasLocalMessage] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages]);
 
   useEffect(() => {
     if (!hasLocalMessage) {
@@ -122,42 +128,72 @@ export function ChatCard({
         <div className={cn('px-4 py-3 flex items-center justify-between border-b', isLightTheme ? 'border-zinc-200' : 'border-zinc-800')}>
           <div className='flex items-center gap-3'>
             <div className='relative'>
-              <div className='w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center text-lg font-medium text-white'>{chatName.charAt(0)}</div>
+              <div className='w-10 h-10 rounded-full bg-violet-500 flex items-center justify-center text-lg font-medium text-white'>{chatName.charAt(0).toLocaleUpperCase()}</div>
               <div className={cn('absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2', isLightTheme ? 'ring-white' : 'ring-zinc-900')} />
             </div>
             <div>
               <h3 className={cn('font-medium', isLightTheme ? 'text-zinc-900' : 'text-zinc-100')}>{chatName}</h3>
-              <p className={cn('text-sm', isLightTheme ? 'text-zinc-500' : 'text-zinc-400')}>{membersCount} members •</p>
+              <p className={cn('text-sm', isLightTheme ? 'text-zinc-500' : 'text-zinc-400')}>{membersCount > 1 ? `${membersCount} membres` : ''}</p>{' '}
             </div>
           </div>
-          <button type='button' onClick={onMoreClick} className={cn('p-2 rounded-full', isLightTheme ? 'hover:bg-zinc-100 text-zinc-500' : 'hover:bg-zinc-800 text-zinc-400')}>
-            <MoreHorizontal className='w-5 h-5' />
-          </button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button type='button' className={cn('p-2 rounded-full', isLightTheme ? 'hover:bg-zinc-100 text-zinc-500' : 'hover:bg-zinc-800 text-zinc-400')}>
+                <MoreHorizontal className='w-5 h-5' />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align='end'>
+              <DropdownMenuLabel>Options</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={onMoreClick}>{membersCount > 2 ? 'Voir les membres' : 'Voir le profil'}</DropdownMenuItem>
+              <DropdownMenuItem>Ajouter aux favoris</DropdownMenuItem>
+              {membersCount > 2 && (
+                <DropdownMenuItem
+                  onClick={() => {
+                    /* ouvrir modale rename ici */
+                  }}
+                >
+                  Renommer le groupe
+                </DropdownMenuItem>
+              )}
+              <DropdownMenuItem className='text-red-500'>Supprimer la conversation</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
         {/* Messages */}
         <div className='flex-1 overflow-y-auto p-4 space-y-4 min-h-0'>
-          {messages.map((message) => {
+          {messages.map((message, idx) => {
             const isCurrentUser = message.sender.isCurrentUser;
+            const isLast = idx === messages.length - 1 && isCurrentUser;
             return (
-              <div key={message.id} className={cn('flex items-start gap-3', isCurrentUser ? 'justify-end' : 'justify-start')}>
-                {/* {!isCurrentUser && <Image src={message.sender.avatar} alt={message.sender.name} width={36} height={36} className='rounded-full' />} */}
-                <div className={cn('flex-1 min-w-0 max-w-xs', isCurrentUser ? 'bg-blue-500 text-white rounded-tl-2xl rounded-bl-2xl rounded-br-md ml-auto' : 'bg-zinc-200 text-zinc-900 rounded-tr-2xl rounded-br-2xl rounded-bl-md mr-auto')} style={{ padding: '12px 16px' }}>
-                  <div className='flex items-center gap-2 mb-1'>
-                    <span className={cn('font-medium', isCurrentUser ? 'text-white' : 'text-zinc-900')}>{message.sender.name}</span>
-                    <span className={cn('text-sm', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
-                  </div>
-                  <p className={cn('break-words', isCurrentUser ? 'text-white' : 'text-zinc-700')}>{message.content}</p>
+              <div key={message.id} className={cn('flex items-end', isCurrentUser ? 'justify-end' : 'justify-start', isLast ? 'animate-pop' : '')}>
+                <div className={cn('max-w-xs break-words px-4 py-2', isCurrentUser ? 'bg-blue-500 text-white rounded-2xl rounded-br-md' : 'bg-zinc-200 text-zinc-900 rounded-2xl rounded-bl-md')} style={{ minWidth: '40px' }}>
+                  {membersCount > 2 ? (
+                    <>
+                      <div className='flex items-center gap-2 mb-1'>
+                        <span className={cn('font-medium', isCurrentUser ? 'text-white' : 'text-zinc-900')}>{message.sender.name}</span>
+                        <span className={cn('text-sm', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
+                      </div>
+                      <div>{message.content}</div>
+                    </>
+                  ) : (
+                    <span>
+                      {message.content}
+                      <span className={cn('ml-2 text-xs align-middle', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
+                    </span>
+                  )}
                   {message.imageUrl && <img src={message.imageUrl.startsWith('blob:') ? message.imageUrl : `http://localhost:80/${message.content}`} alt='Image envoyée' className='max-w-xs max-h-60 rounded-lg mt-2' style={{ objectFit: 'cover' }} />}
                 </div>
-                {isCurrentUser && (
+                {/* {isCurrentUser && (
                   <div className='flex items-center self-end mb-1 ml-2'>
                     {message.status === 'read' && <CheckCheck className='w-4 h-4 text-blue-200' />}
                     {message.status === 'delivered' && <Check className='w-4 h-4 text-blue-200' />}
                   </div>
-                )}
+                )} */}
               </div>
             );
           })}
+          <div ref={messagesEndRef} />
         </div>
         {/* Input */}
         <div className={cn('p-4', isLightTheme ? 'bg-white' : 'bg-zinc-900')}>
