@@ -191,7 +191,7 @@ export function ChatCard({
           })}
           <div ref={messagesEndRef} />
         </div>
-        {/* Input */}
+        {/* Input  */}
         <div className={cn('p-0', isLightTheme ? 'bg-white' : 'bg-zinc-900')}>
           {' '}
           <div className='flex items-center gap-2'>
