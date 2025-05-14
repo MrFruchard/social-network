@@ -9,7 +9,7 @@ import (
 
 type Hub struct {
 	clients    map[*websocket.Conn]string // Stocke les connexions WebSocket actives
-	broadcast  chan interface{}           // Canal pour diffuser les messages à tous les clients
+	broadcast  chan interface{}           // Canal pour diffuser les messageImages à tous les clients
 	unregister chan *websocket.Conn       // Canal pour supprimer une connexion
 	mu         sync.Mutex                 // Mutex pour éviter les conflits d'accès
 	DB         *sql.DB                    // Connexion à la base de données pour vérifier la session

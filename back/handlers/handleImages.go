@@ -50,6 +50,13 @@ func HandleImages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
+	} else if typeImg == "messageImages" {
+		err := services.CanPassPrivateMessages(db, userID, id)
+		if err != nil {
+			utils.ErrorResponse(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+
 	} else if typeImg != "avatars" && typeImg != "groupImages" {
 		utils.ErrorResponse(w, http.StatusInternalServerError, "Invalid image type")
 		return
