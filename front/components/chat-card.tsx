@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils';
 import { useEffect, useRef, useState } from 'react';
 import { useSendMessage } from '@/hooks/message/useSendMessage';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { AIInputWithFile } from '@/components/ui/ai-input-with-file';
 
 export interface Message {
   id: string;
@@ -138,16 +139,16 @@ export function ChatCard({
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button type='button' className={cn('p-2 rounded-full', isLightTheme ? 'hover:bg-zinc-100 text-zinc-500' : 'hover:bg-zinc-800 text-zinc-400')}>
+              <button type='button' className={cn('p-2 rounded-full', isLightTheme ? 'hover:bg-zinc-100 text-zinc-500' : 'hover:bg-zinc-800 text-zinc-400', 'focus:outline-none focus:ring-0')}>
                 <MoreHorizontal className='w-5 h-5' />
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align='end'>
               <DropdownMenuLabel>Options</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem onClick={onMoreClick}>{membersCount > 2 ? 'Voir les membres' : 'Voir le profil'}</DropdownMenuItem>
+              <DropdownMenuItem onClick={onMoreClick}>{membersCount > 1 ? 'Voir les membres' : 'Voir le profil'}</DropdownMenuItem>
               <DropdownMenuItem>Ajouter aux favoris</DropdownMenuItem>
-              {membersCount > 2 && (
+              {membersCount > 1 && (
                 <DropdownMenuItem
                   onClick={() => {
                     /* ouvrir modale rename ici */
@@ -184,78 +185,29 @@ export function ChatCard({
                   )}
                   {message.imageUrl && <img src={message.imageUrl.startsWith('blob:') ? message.imageUrl : `http://localhost:80/${message.content}`} alt='Image envoyée' className='max-w-xs max-h-60 rounded-lg mt-2' style={{ objectFit: 'cover' }} />}
                 </div>
-                {/* {isCurrentUser && (
-                  <div className='flex items-center self-end mb-1 ml-2'>
-                    {message.status === 'read' && <CheckCheck className='w-4 h-4 text-blue-200' />}
-                    {message.status === 'delivered' && <Check className='w-4 h-4 text-blue-200' />}
-                  </div>
-                )} */}
+                {}
               </div>
             );
           })}
           <div ref={messagesEndRef} />
         </div>
         {/* Input */}
-        <div className={cn('p-4', isLightTheme ? 'bg-white' : 'bg-zinc-900')}>
+        <div className={cn('p-0', isLightTheme ? 'bg-white' : 'bg-zinc-900')}>
+          {' '}
           <div className='flex items-center gap-2'>
             <div className='relative flex-1 flex flex-col'>
-              <div className='flex items-center'>
-                <label className={cn('mr-2 cursor-pointer', isLightTheme ? 'text-zinc-500' : 'text-zinc-400')}>
-                  <input
-                    key={fileInputKey}
-                    type='file'
-                    accept='image/*'
-                    style={{ display: 'none' }}
-                    onChange={(e) => {
-                      if (e.target.files && e.target.files[0]) {
-                        setImageFile(e.target.files[0]);
-                      }
-                    }}
-                  />
-                  <span className='inline-block p-1.5 rounded-full hover:bg-zinc-200 dark:hover:bg-zinc-700'>
-                    <svg className='w-5 h-5' fill='none' stroke='currentColor' strokeWidth={2} viewBox='0 0 24 24'>
-                      <path strokeLinecap='round' strokeLinejoin='round' d='M15.172 7l-6.586 6.586a2 2 0 002.828 2.828L18 9.828M7 7h.01M21 21H3V3h18v18z' />
-                    </svg>
-                  </span>
-                </label>
-                <input
-                  type='text'
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendMessage();
-                    }
-                  }}
-                  placeholder='Write a message...'
-                  className={cn('w-full px-4 py-2.5 rounded-lg border-none', 'focus:outline-none focus:ring-1', isLightTheme ? 'bg-zinc-100 text-zinc-900 placeholder-zinc-500 focus:ring-zinc-300' : 'bg-zinc-800 text-zinc-100 placeholder-zinc-500 focus:ring-zinc-600')}
-                />
-                <button type='button' className={cn('absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded-full', isLightTheme ? 'hover:bg-zinc-200 text-zinc-500' : 'hover:bg-zinc-700 text-zinc-400')}>
-                  <SmilePlus className='w-5 h-5' />
-                </button>
-              </div>
-              {/* Affichage du nom de l'image sélectionnée */}
-              {imageFile && (
-                <div className='mt-2 text-sm text-blue-500 flex items-center gap-2'>
-                  <span>📎 {imageFile.name}</span>
-                  <button
-                    type='button'
-                    onClick={() => {
-                      setImageFile(undefined);
-                      setInputValue('');
-                      setFileInputKey(Date.now()); // force le reset de l'input file
-                    }}
-                    className='ml-2 text-xs text-red-500 hover:underline'
-                  >
-                    Retirer
-                  </button>
-                </div>
-              )}
+              <AIInputWithFile
+                key={fileInputKey}
+                placeholder='Écris un message ou ajoute une image'
+                onSubmit={(message, file) => {
+                  if (onSendMessage) onSendMessage(message, file);
+                  setFileInputKey(Date.now());
+                }}
+                imageFile={imageFile}
+                setImageFile={setImageFile}
+                className='w-full'
+              />
             </div>
-            <button onClick={handleSendMessage} className={cn('p-2.5 rounded-lg transition-colors', isLightTheme ? 'bg-zinc-100 hover:bg-zinc-200 text-zinc-500 hover:text-zinc-600' : 'bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-zinc-300')}>
-              <Send className='w-5 h-5' />
-            </button>
           </div>
         </div>
       </div>

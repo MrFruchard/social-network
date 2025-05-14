@@ -17,6 +17,17 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
   const safeMessages = Array.isArray(messages) ? messages : Array.isArray(messages?.messages) ? messages.messages : [];
   const [conversationsLoaded, setConversationsLoaded] = useState(false);
   const [localMessages, setLocalMessages] = useState<ChatCardMessage[]>([]);
+  const sortedConversations = Array.isArray(conversations)
+    ? [...conversations].sort((a, b) => {
+        const aDate = a.lastMessage?.created_at ? new Date(a.lastMessage.created_at).getTime() : 0;
+        const bDate = b.lastMessage?.created_at ? new Date(b.lastMessage.created_at).getTime() : 0;
+        return bDate - aDate;
+      })
+    : [];
+  const selectedConversation = Array.isArray(conversations) ? conversations.find((conv) => conv.id === selectedConversationId) : undefined;
+
+  const others = selectedConversation?.participants ? selectedConversation.participants.filter((p) => p.id !== user?.id) : recipients.filter((p) => p.id !== user?.id);
+  const chatName = others.length > 1 ? 'Groupe' : others.length === 1 ? others[0].username : 'Conversation';
 
   useEffect(() => {
     fetchConversations().then(() => setConversationsLoaded(true));
@@ -33,12 +44,10 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
   }, [selectedConversationId, messages]);
 
   useEffect(() => {
-    if (conversationsLoaded && Array.isArray(conversations) && conversations.length > 0 && !selectedConversationId) {
-      setSelectedConversationId(conversations[0].id);
+    if (conversationsLoaded && Array.isArray(sortedConversations) && sortedConversations.length > 0 && !selectedConversationId) {
+      setSelectedConversationId(sortedConversations[0].id);
     }
-  }, [conversationsLoaded, conversations, selectedConversationId]);
-
-  const selectedConversation = Array.isArray(conversations) ? conversations.find((conv) => conv.id === selectedConversationId) : undefined;
+  }, [conversationsLoaded, sortedConversations, selectedConversationId]);
 
   // Utilise les participants de la conversation sélectionnée si elle existe
   const chatCardMessages: ChatCardMessage[] = safeMessages.map((message) => {
@@ -66,17 +75,7 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
       imageUrl: message.imageUrl || message.image || undefined, // adapte selon ton backend
     };
   });
-  const others = selectedConversation?.participants ? selectedConversation.participants.filter((p) => p.id !== user?.id) : recipients.filter((p) => p.id !== user?.id);
 
-  const chatName = others.length > 1 ? 'Groupe' : others.length === 1 ? others[0].username : 'Conversation';
-
-  const sortedConversations = Array.isArray(conversations)
-    ? [...conversations].sort((a, b) => {
-        const aDate = a.lastMessage?.created_at ? new Date(a.lastMessage.created_at).getTime() : 0;
-        const bDate = b.lastMessage?.created_at ? new Date(b.lastMessage.created_at).getTime() : 0;
-        return bDate - aDate;
-      })
-    : [];
   const handleSendMessage = async (msg: string, imageFile?: File) => {
     if (!selectedConversationId) return;
     const receiverId = others.length === 1 ? others[0].id : others.length > 1 ? others.map((u) => u.id) : undefined;
@@ -138,7 +137,11 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
                   {/* Trait bleu vertical à gauche si sélectionné */}
                   {isSelected && <div className='absolute left-0 top-0 h-full w-1 bg-blue-500 rounded-r-lg' />}
                   <div className='flex items-center ml-2'>
-                    {others[0]?.avatar && others[0]?.avatar !== '/default-avatar.png' ? (
+                    {others.length > 1 ? (
+                      <div className='w-10 h-10 rounded-full bg-blue-200 flex items-center justify-center border'>
+                        <span className='text-blue-700 text-lg font-bold'>G</span>
+                      </div>
+                    ) : others[0]?.avatar && others[0]?.avatar !== '/default-avatar.png' ? (
                       <img src={others[0].avatar} alt={others[0]?.username || 'Avatar'} className='w-10 h-10 rounded-full object-cover border' />
                     ) : (
                       <div className='w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center border'>
