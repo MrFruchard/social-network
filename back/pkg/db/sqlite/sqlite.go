@@ -3,11 +3,12 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"log"
+
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/sqlite"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	_ "github.com/mattn/go-sqlite3"
-	"log"
 )
 
 func StartMigration() {
@@ -16,12 +17,6 @@ func StartMigration() {
 		"sqlite://pkg/db/database.db")
 	if err != nil {
 		log.Fatalf("Erreur de migrations fichiers : %v", err)
-	}
-
-	// Execute les migrations en do/**/wn
-	err = m.Down()
-	if err != nil {
-		log.Fatalf("Erreur de migrations down: %v", err)
 	}
 
 	// Execute les migrations en up
