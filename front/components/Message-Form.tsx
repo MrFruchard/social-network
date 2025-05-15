@@ -17,6 +17,8 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
   const safeMessages = Array.isArray(messages) ? messages : Array.isArray(messages?.messages) ? messages.messages : [];
   const [conversationsLoaded, setConversationsLoaded] = useState(false);
   const [localMessages, setLocalMessages] = useState<ChatCardMessage[]>([]);
+  const [userCache, setUserCache] = useState<{ [id: string]: { firstName: string; lastName: string } }>({});
+
   const sortedConversations = Array.isArray(conversations)
     ? [...conversations].sort((a, b) => {
         const aDate = a.lastMessage?.created_at ? new Date(a.lastMessage.created_at).getTime() : 0;
@@ -49,6 +51,25 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
     }
   }, [conversationsLoaded, sortedConversations, selectedConversationId]);
 
+  useEffect(() => {
+    const idsToFetch = [];
+    for (const conv of sortedConversations) {
+      const currentUserId = user?.id;
+      const others = Array.isArray(conv.participants) ? conv.participants.filter((p) => p.id !== currentUserId) : [];
+      for (const u of others) {
+        if (u.id && !userCache[u.id]) {
+          idsToFetch.push(u.id);
+        }
+      }
+    }
+    // Supprime les doublons
+    const uniqueIds = [...new Set(idsToFetch)];
+    // Fetch pour chaque id manquant
+    uniqueIds.forEach((id) => {
+      fetchUserInfo(id);
+    });
+  }, [sortedConversations, userCache, user]);
+
   // Utilise les participants de la conversation sélectionnée si elle existe
   const chatCardMessages: ChatCardMessage[] = safeMessages.map((message) => {
     const isCurrentUser = message.sender === user?.id || message.sender === 'currentUser';
@@ -75,6 +96,30 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
       imageUrl: message.imageUrl || message.image || undefined, // adapte selon ton backend
     };
   });
+
+  const fetchUserInfo = async (id: string) => {
+    if (!userCache[id]) {
+      const res = await fetch(`/api/user/${id}`);
+      if (res.ok) {
+        const data = await res.json();
+        setUserCache((prev) => ({ ...prev, [id]: data }));
+      }
+    }
+  };
+
+  function formatRelativeTime(dateString: string) {
+    const now = new Date();
+    const date = new Date(new Date(dateString).getTime() + 2 * 60 * 60 * 1000); // Décalage si besoin
+    const diff = Math.floor((now.getTime() - date.getTime()) / 1000);
+
+    if (diff < 60) return 'maintenant';
+    if (diff < 3600) return `il y a ${Math.floor(diff / 60)} min`;
+    if (diff < 86400) return `il y a ${Math.floor(diff / 3600)} h`;
+    if (diff < 172800) return 'hier';
+    if (diff < 604800) return `il y a ${Math.floor(diff / 86400)} j`;
+    if (diff < 2592000) return `il y a ${Math.floor(diff / 604800)} sem.`;
+    return date.toLocaleDateString();
+  }
 
   const handleSendMessage = async (msg: string, imageFile?: File) => {
     if (!selectedConversationId) return;
@@ -123,12 +168,25 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
               const currentUserId = user?.id;
               const others = Array.isArray(conversation.participants) ? conversation.participants.filter((p) => p.id !== currentUserId) : [];
               const isSelected = selectedConversationId === conversation.id;
+              const userId = others[0]?.id;
+              // others.forEach((u) => {
+              //   console.log('User:', {
+              //     id: u.id,
+              //     username: u.username,
+              //     firstName: userCache[u.id]?.first_name,
+              //     lastName: userCache[u.id]?.last_name,
+              //   });
+              // });
               //console.log('conversation:', conversation);
               // console.log('selectedConversationId:', selectedConversationId);
               // console.log('others:', others);
               // console.log('currentUserId:', currentUserId);
               // console.log('isSelected:', isSelected);
-              console.log('avatar:', others[0]?.avatar);
+              //console.log('userId:', userId);
+              //console.log('avatar:', others[0]?.avatar);
+
+              const userInfo = userId ? userCache[userId] : null;
+
               return (
                 <div key={conversation.id} className={`relative flex items-center gap-3 p-4 cursor-pointer hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`} onClick={() => setSelectedConversationId(conversation.id)}>
                   {isSelected && <div className='absolute left-0 top-0 h-full w-1 bg-blue-500 rounded-r-lg' />}
@@ -146,10 +204,27 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
                     )}
                   </div>
                   <div className='flex-1 min-w-0'>
-                    <div className='font-semibold text-gray-900 truncate'>{others.length > 2 ? `${others[0].username}, ${others[1].username} +${others.length - 2}` : others.map((u) => u.username).join(', ')}</div>
+                    <div className='flex-1 min-w-0'>
+                      {others.length === 1 && userCache[others[0]?.id] ? (
+                        <span className='text-gray-900 font-semibold'>
+                          {userCache[others[0].id].first_name} {userCache[others[0].id].last_name}
+                          <span className='text-gray-500 font-normal'> @{others[0].username}</span>
+                          {conversation.lastMessage?.created_at && <span className='text-gray-400 font-normal'> · {formatRelativeTime(conversation.lastMessage.created_at)}</span>}{' '}
+                        </span>
+                      ) : (
+                        <span className='text-gray-900 font-semibold'>
+                          {others.map((u, idx) => (
+                            <span key={u.id}>
+                              {u.username}
+                              {idx < others.length - 1 && ', '}
+                              {idx === others.length - 1 && conversation.lastMessage?.created_at && <span className='text-gray-400 font-normal'> · {formatRelativeTime(conversation.lastMessage.created_at)}</span>}{' '}
+                            </span>
+                          ))}
+                        </span>
+                      )}
+                    </div>
                     <div className='text-sm text-gray-500 truncate'>{conversation.lastMessage ? conversation.lastMessage.content : <span className='italic text-gray-400'>Aucun message</span>}</div>
                   </div>
-                  {conversation.lastMessage?.created_at && <span className='ml-2 text-xs text-gray-400 whitespace-nowrap'>{new Date(new Date(conversation.lastMessage.created_at).getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>}
                 </div>
               );
             })

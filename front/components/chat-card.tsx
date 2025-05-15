@@ -180,7 +180,7 @@ export function ChatCard({
                   ) : (
                     <span>
                       {message.content}
-                      <span className={cn('ml-2 text-xs align-middle', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
+                      <span className={cn('ml-3 text-xs align-middle', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
                     </span>
                   )}
                   {message.imageUrl && <img src={message.imageUrl.startsWith('blob:') ? message.imageUrl : `http://localhost:80/${message.content}`} alt='Image envoyée' className='max-w-xs max-h-60 rounded-lg mt-2' style={{ objectFit: 'cover' }} />}
@@ -193,9 +193,12 @@ export function ChatCard({
         </div>
         {/* Input  */}
         <div className={cn('p-0', isLightTheme ? 'bg-white' : 'bg-zinc-900')}>
-          {' '}
-          <div className='flex items-center gap-2'>
-            <div className='relative flex-1 flex flex-col'>
+          <div className='flex items-center gap-2 w-full'>
+            {' '}
+            {/* Ajout de w-full ici */}
+            <div className='relative flex-1 flex flex-col w-full min-w-0'>
+              {' '}
+              {/* Ajout de w-full et min-w-0 ici */}
               <AIInputWithFile
                 key={fileInputKey}
                 placeholder='Écris un message ou ajoute une image'
