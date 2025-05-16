@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"net/http"
+	"regexp"
 	"social-network/utils"
 )
 
@@ -10,6 +11,11 @@ func HandleCheckEmail(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	email := r.URL.Query().Get("email")
 	if email == "" {
 		utils.ErrorResponse(w, http.StatusBadRequest, "email required")
+		return
+	}
+
+	if !checkEmailFormat(email) {
+		utils.ErrorResponse(w, http.StatusBadRequest, "invalid email format")
 		return
 	}
 
@@ -52,4 +58,9 @@ func HandleCheckUsername(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	utils.SuccessResponse(w, http.StatusOK, "Username is available")
 
+}
+
+func checkEmailFormat(email string) bool {
+	regexEmail := regexp.MustCompile(`^[\w-.]+@[\w-]+\.[\w-]+$`)
+	return regexEmail.MatchString(email)
 }
