@@ -12,6 +12,7 @@ type SenderMessage struct {
 	Sender  UserInfo `json:"sender"`
 	Content string   `json:"content"`
 	ConvId  string   `json:"convId"`
+	IsImage bool     `json:"isImage"`
 }
 
 type UserInfo struct {
@@ -21,7 +22,7 @@ type UserInfo struct {
 	ProfilePic string `json:"profile_pic"`
 }
 
-func (h *Hub) SendPrivateMessage(members []string, content, sender, convID string, db *sql.DB) error {
+func (h *Hub) SendPrivateMessage(members []string, content, sender, convID string, db *sql.DB, typeMsg int) error {
 	var s SenderMessage
 	var pp, username sql.NullString
 	query := `SELECT LASTNAME, FIRSTNAME, USERNAME, IMAGE FROM USER WHERE ID = ?`
@@ -35,6 +36,12 @@ func (h *Hub) SendPrivateMessage(members []string, content, sender, convID strin
 	}
 	if username.Valid {
 		s.Sender.Username = username.String
+	}
+
+	if typeMsg == 0 {
+		s.IsImage = false
+	} else if typeMsg == 1 {
+		s.IsImage = true
 	}
 
 	s.Content = content

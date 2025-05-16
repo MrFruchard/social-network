@@ -72,14 +72,14 @@ func HandleSendMessage(w http.ResponseWriter, r *http.Request, db *sql.DB, h *we
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
+	utils.SuccessResponse(w, http.StatusOK, convID)
+
 	// Broadcast aux membres
-	err = h.SendPrivateMessage(receivers, content, userID, convID, db)
+	err = h.SendPrivateMessage(receivers, content, userID, convID, db, typeMessage)
 	if err != nil {
 		log.Println(err)
 	}
-
-	w.Header().Set("Content-Type", "application/json")
-	utils.SuccessResponse(w, http.StatusOK, convID)
 }
 
 // Send all Conversation
