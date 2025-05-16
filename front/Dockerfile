@@ -11,7 +11,6 @@ RUN apk add --no-cache libc6-compat
 COPY package.json package-lock.json ./
 
 
-
 # Installer les dépendances en mode développement
 RUN npm install --legacy-peer-deps
 

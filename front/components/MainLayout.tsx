@@ -1,24 +1,13 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { LogoutButton } from "./logout-button";
-import { useUserData } from "@/hooks/user/useUserData";
-import NotificationDropdown from "./NotificationDropdown";
-import PostModal from "./PostModal";
-import {
-  HomeIcon,
-  UserIcon,
-  BellIcon,
-  MailIcon,
-  UsersIcon,
-  PlusIcon,
-  SearchIcon,
-  HashIcon,
-  SettingsIcon,
-  TrendingUpIcon,
-} from "lucide-react";
+import { ReactNode, useState, useEffect } from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { LogoutButton } from './logout-button';
+import { NotificationIndicator } from './notificationsInd';
+import { useUserData } from '@/hooks/user/useUserData';
+import PostModal from './PostModal';
+import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
   children: ReactNode;
@@ -46,7 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     console.log('Pathname changed to:', pathname);
     if (pathname === '/home') {
-      console.log('Resetting selectedTag to null');
+      console.log('Resetting  selectedTag to null');
       setSelectedTag(null);
     }
   }, [pathname]);
@@ -65,6 +54,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <NavItem href='/notifications' icon={<BellIcon className='h-5 w-5' />} label='Notifications' active={pathname === '/notifications'} />
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
           <NavItem href='/groups' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/groups'} />
+          <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
         </nav>
 
         <button className='w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 font-medium mb-4' onClick={openPostForm}>
@@ -103,7 +93,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               {pathname === '/toto-ia' && 'ToToIA'}
             </h2>
             <div className='ml-auto'>
-              <NotificationDropdown />
+              <NotificationIndicator />
             </div>
           </header>
         )}
@@ -265,32 +255,17 @@ export function MainLayout({ children }: MainLayoutProps) {
         <Link href='/explore' className={pathname === '/explore' ? 'text-primary' : 'text-muted-foreground'}>
           <HashIcon className='h-6 w-6' />
         </Link>
-        <Link
-          href="/notifications"
-          className={`
-            ${pathname === "/notifications" ? "text-primary" : "text-muted-foreground"}
-            relative
-          `}
-        >
-          <BellIcon className="h-6 w-6" />
-          
+        <Link href='/notifications' className={pathname === '/notifications' ? 'text-primary' : 'text-muted-foreground'}>
+          <BellIcon className='h-6 w-6' />
         </Link>
-        <Link
-          href="/messages"
-          className={
-            pathname === "/messages" ? "text-primary" : "text-muted-foreground"
-          }
-        >
-          <MailIcon className="h-6 w-6" />
+        <Link href='/messages' className={pathname === '/messages' ? 'text-primary' : 'text-muted-foreground'}>
+          <MailIcon className='h-6 w-6' />
         </Link>
       </div>
 
       {/* Mobile New Post Button */}
-      <button
-        className="md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20"
-        onClick={openPostForm}
-      >
-        <PlusIcon className="h-6 w-6" />
+      <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20'>
+        <PlusIcon className='h-6 w-6' />
       </button>
 
       {isModalOpen && <PostModal onClose={closePostForm} />}
@@ -308,21 +283,9 @@ type NavItemProps = {
 
 function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
   return (
-    <Link
-      href={href}
-      className={`flex items-center px-4 py-3 rounded-full text-lg hover:bg-muted transition-colors ${
-        active ? "font-semibold" : ""
-      }`}
-      onClick={onClick}
-    >
-      <span
-        className={`mr-4 ${active ? "text-primary" : "text-muted-foreground"}`}
-      >
-        {icon}
-      </span>
-      <span className={`${active ? "text-foreground" : "text-muted-foreground"} flex items-center`}>
-        {label}
-      </span>
+    <Link href={href} className={`flex items-center px-4 py-3 rounded-full text-lg hover:bg-muted transition-colors ${active ? 'font-semibold' : ''}`}>
+      <span className={`mr-4 ${active ? 'text-primary' : 'text-muted-foreground'}`}>{icon}</span>
+      <span className={active ? 'text-foreground' : 'text-muted-foreground'}>{label}</span>
     </Link>
   );
 }

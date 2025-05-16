@@ -4,9 +4,12 @@
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00003_create_post.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00010_create_group.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00011_create_group_member.down.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00012_create_group_event.up.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00013_create_response_group_event.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00014_notifcation.down.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00014_notification.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00015_create_conversation.down.sql" dialect="SQLite" />
+    <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00015_create_conversation.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00016_create_message.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00017_create_conversation_members.up.sql" dialect="SQLite" />
     <file url="file://$PROJECT_DIR$/back/pkg/db/migrations/00019_create_ask_group.down.sql" dialect="SQLite" />

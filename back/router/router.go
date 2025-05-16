@@ -173,10 +173,24 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 
 	// GROUPS
 	// get groups info
+	mux.HandleFunc("GET /api/group/info", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetGroupInfo(w, r, db)
+	})
 
 	// get post groups
+	mux.HandleFunc("GET /api/group/post", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetGroupPost(w, r, db)
+	})
 
 	// get event groups
+	mux.HandleFunc("GET /api/group/event", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetEventGroup(w, r, db)
+	})
+
+	// get all members
+	mux.HandleFunc("GET /api/group/members", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetGroupMembers(w, r, db)
+	})
 
 	// create group X
 	mux.HandleFunc("POST /api/group/create", func(w http.ResponseWriter, r *http.Request) {
@@ -218,6 +232,14 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/group/invite", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleInviteGroup(w, r, db)
 	})
+	// create event
+	mux.HandleFunc("POST /api/group/event", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleCreateEvent(w, r, db)
+	})
+	// response event
+	mux.HandleFunc("POST /api/group/response", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleResponseEvent(w, r, db)
+	})
 
 	// CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
@@ -250,6 +272,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// WS
-	mux.Handle("/api/ws", http.HandlerFunc(hub.WsHandler))
-
+	mux.Handle("/api/ws", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		hub.WsHandler(w, r, db)
+	}))
 }
