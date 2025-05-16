@@ -35,7 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     console.log('Pathname changed to:', pathname);
     if (pathname === '/home') {
-      console.log('Resetting selectedTag to null');
+      console.log('Resetting  selectedTag to null');
       setSelectedTag(null);
     }
   }, [pathname]);
