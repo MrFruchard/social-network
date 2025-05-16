@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LogoutButton } from "./logout-button";
 import { useUserData } from "@/hooks/user/useUserData";
-import { useNotifications } from "@/hooks/utils/useNotifications";
+import NotificationDropdown from "./NotificationDropdown";
 import PostModal from "./PostModal";
 import {
   HomeIcon,
@@ -65,7 +65,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           <NavItem href='/notifications' icon={<BellIcon className='h-5 w-5' />} label='Notifications' active={pathname === '/notifications'} />
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
           <NavItem href='/groups' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/groups'} />
-          <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
         </nav>
 
         <button className='w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 font-medium mb-4' onClick={openPostForm}>
@@ -104,7 +103,7 @@ export function MainLayout({ children }: MainLayoutProps) {
               {pathname === '/toto-ia' && 'ToToIA'}
             </h2>
             <div className='ml-auto'>
-              <NotificationIndicator />
+              <NotificationDropdown />
             </div>
           </header>
         )}
@@ -274,9 +273,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           `}
         >
           <BellIcon className="h-6 w-6" />
-          {unreadCount > 0 && (
-            <div className="absolute -top-1 -right-1 w-2 h-2 rounded-full bg-red-500"></div>
-          )}
+          
         </Link>
         <Link
           href="/messages"
@@ -325,9 +322,6 @@ function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
       </span>
       <span className={`${active ? "text-foreground" : "text-muted-foreground"} flex items-center`}>
         {label}
-        {showNotificationDot && (
-          <div className="ml-2 w-2 h-2 rounded-full bg-red-500"></div>
-        )}
       </span>
     </Link>
   );
