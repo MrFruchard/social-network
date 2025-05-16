@@ -36,7 +36,7 @@ func GetUserInfoFromTarget(db *sql.DB, targetId, userID string) (UserInfoRespons
 	query := "SELECT ID,FIRSTNAME,LASTNAME,ABOUT_ME,USERNAME,IMAGE,PUBLIC, CREATED_AT FROM USER WHERE ID = ? LIMIT 1"
 	row := db.QueryRow(query, targetId)
 
-	err := row.Scan(&userInfo.Id, &userInfo.FirstName, &userInfo.LastName, &about, &username, &image, &userInfo.Public, &userInfo.CreatedAt)
+	err := row.Scan(&userInfo.Id, &userInfo.FirstName, &userInfo.LastName, &about, &username, &image, &public, &userInfo.CreatedAt)
 	if err != nil {
 		return userInfo, err
 	}

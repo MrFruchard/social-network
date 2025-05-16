@@ -6,24 +6,16 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./front:/app        # Monte le code source
-      - /app/node_modules   # Ignore node_modules pour éviter les conflits
+      - ./front:/app # Monte le code source
+      - /app/node_modules # Réintégration du montage de node_modules
     depends_on:
       - api
     environment:
       - NODE_ENV=development
       - HOSTNAME=0.0.0.0
-    command: [ "npm", "run", "dev" ]
+      - CHOKIDAR_USEPOLLING=true
+    command: ["npm", "run", "dev"]
     restart: unless-stopped
-    develop:
-      watch:
-        - action: sync
-          path: ./front
-          target: /app
-        - action: rebuild
-          path: ./front/package.json
-        - action: rebuild
-          path: ./front/package-lock.json
 
   api:
     build:
@@ -42,3 +34,6 @@ services:
     depends_on:
       - web
       - api
+
+volumes:
+  node_modules:
