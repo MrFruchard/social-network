@@ -7,7 +7,7 @@ import (
 
 type AllMessages struct {
 	Members  []Members  `json:"members"`
-	Messages []Messages `json:"messageImages"`
+	Messages []Messages `json:"messages"`
 }
 
 type Messages struct {
