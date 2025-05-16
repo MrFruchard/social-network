@@ -1,74 +1,62 @@
 'use client';
 
-import React from 'react';
-import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useLogin } from '@/hooks/user/useLogin';
-import { Alert, AlertDescription } from '@/components/ui/alert';
 
-export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<'div'>) {
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const { login, loading, error } = useLogin();
+export function LoginForm() {
+    const [identifier, setIdentifier] = useState('');
+    const [password, setPassword] = useState('');
+    const { login, loading, error } = useLogin();
 
-  const handleSubmit = async (e: { preventDefault: () => void }) => {
-    e.preventDefault();
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        try {
+            await login({ identifier, password });
+        } catch (err) {
+            // Erreur déjà gérée
+        }
+    };
 
-    try {
-      await login({ identifier, password });
-    } catch (err) {
-      // L'erreur est déjà gérée par le hook useLogin
-    }
-  };
-  return (
-    <div className={cn('flex flex-col gap-6', className)} {...props}>
-      <Card>
-        <CardHeader>
-          <CardTitle className='text-2xl'>Login</CardTitle>
-          <CardDescription>Enter your email or username to login to your account</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit}>
+    return (
+        <form onSubmit={handleSubmit} className="w-full max-w-sm  p-6 mb-2">
+
             {error && (
-              <Alert variant='destructive' className='mb-4'>
-                <AlertDescription>{error}</AlertDescription>
-              </Alert>
-            )}
-            <div className='flex flex-col gap-6'>
-              <div className='grid gap-2'>
-                <Label htmlFor='identifier'>Email or Username</Label>
-                <Input id='identifier' type='text' placeholder='example@mail.com or username' required value={identifier} onChange={(e) => setIdentifier(e.target.value)} />
-              </div>
-              <div className='grid gap-2'>
-                <div className='flex items-center'>
-                  <Label htmlFor='password'>Password</Label>
-                  <a href='#' className='ml-auto inline-block text-sm underline-offset-4 hover:underline'>
-                    Forgot your password ?
-                  </a>
+                <div className="text-red-500 text-sm mb-4 text-center">
+                    {error}
                 </div>
-                <Input id='password' type='password' required value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
-              <Button type='submit' className='w-full' disabled={loading}>
-                {loading ? 'Connexion en cours...' : 'Login'}
-              </Button>
+            )}
 
-              <Button variant='outline' className='w-full' disabled={loading}>
-                Login with Google
-              </Button>
+            <div className="mb-4">
+                <label htmlFor="identifier" className="block mb-1 text-sm font-medium">Email ou nom d'utilisateur</label>
+                <input
+                    id="identifier"
+                    type="text"
+                    value={identifier}
+                    onChange={(e) => setIdentifier(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
             </div>
-            <div className='mt-4 text-center text-sm'>
-              Don&apos;t have an account?{' '}
-              <a href='/signup' className='underline underline-offset-4'>
-                Sign up
-              </a>
+
+            <div className="mb-6">
+                <label htmlFor="password" className="block mb-1 text-sm font-medium">Mot de passe</label>
+                <input
+                    id="password"
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md"
+                />
             </div>
-          </form>
-        </CardContent>
-      </Card>
-    </div>
-  );
+
+            <button
+                type="submit"
+                disabled={loading}
+                className="py-3 px-6 bg-black text-white font-semibold rounded-full text-center transition hover:bg-gray-800 w-full cursor-pointer"
+            >
+                {loading ? 'Connexion en cours...' : 'Se connecter'}
+            </button>
+        </form>
+    );
 }
