@@ -147,8 +147,6 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
       imageFile,
     });
   };
-
-  // console.log('others:', others);
   return (
     <div className='flex h-screen bg-white overflow-hidden'>
       {/* Colonne des conversations */}

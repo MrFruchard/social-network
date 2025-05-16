@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -35,7 +35,7 @@ export function MainLayout({ children }: MainLayoutProps) {
   useEffect(() => {
     console.log('Pathname changed to:', pathname);
     if (pathname === '/home') {
-      console.log('Resetting selectedTag to null');
+      console.log('Resetting  selectedTag to null');
       setSelectedTag(null);
     }
   }, [pathname]);
@@ -98,7 +98,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           </header>
         )}
 
-        {/* ...existing code... */}
         {/* Content Container with Feed and Right Sidebar */}
         <div className='flex w-full'>
           {/* Center Feed */}
