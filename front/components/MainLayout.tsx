@@ -1,4 +1,4 @@
-'use client';
+"use client";
 
 import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -98,7 +98,6 @@ export function MainLayout({ children }: MainLayoutProps) {
           </header>
         )}
 
-        {/* ...existing code... */}
         {/* Content Container with Feed and Right Sidebar */}
         <div className='flex w-full'>
           {/* Center Feed */}
