@@ -9,7 +9,7 @@ import (
 
 type MessageGroup struct {
 	User     User     `json:"user"`
-	Messages Messages `json:"messages"`
+	Messages Messages `json:"messageImages"`
 	GroupID  string   `json:"groupID"`
 }
 
@@ -27,11 +27,11 @@ func SendMessageGroup(db *sql.DB, userId, groupID string) ([]MessageGroup, error
 		return nil, errors.New("User is not member of group")
 	}
 
-	log.Printf("User %s is a member of group %s. Fetching messages...", userId, groupID)
+	log.Printf("User %s is a member of group %s. Fetching messageImages...", userId, groupID)
 	query = `SELECT ID, SENDER_ID, CONVERSATION_ID, CONTENT, SEEN, TYPE, GROUP_ID, CREATED_AT FROM MESSAGES WHERE GROUP_ID = ?`
 	rows, err := db.Query(query, groupID)
 	if err != nil {
-		//log.Printf("Error fetching messages: %v", err)
+		//log.Printf("Error fetching messageImages: %v", err)
 		return nil, err
 	}
 	defer rows.Close()

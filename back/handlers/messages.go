@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
@@ -50,7 +51,7 @@ func HandleSendMessage(w http.ResponseWriter, r *http.Request, db *sql.DB, h *we
 			utils.ErrorResponse(w, http.StatusBadRequest, "File too large (max 4MB)")
 			return
 		}
-		content, err = utils.SaveImage("Images/messages/", file, image)
+		content, err = utils.SaveImage("Images/messageImages/", file, image)
 		if err != nil {
 			utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to save image")
 			return
@@ -72,6 +73,10 @@ func HandleSendMessage(w http.ResponseWriter, r *http.Request, db *sql.DB, h *we
 	}
 
 	// Broadcast aux membres
+	err = h.SendPrivateMessage(receivers, content, userID, convID, db)
+	if err != nil {
+		log.Println(err)
+	}
 
 	w.Header().Set("Content-Type", "application/json")
 	utils.SuccessResponse(w, http.StatusOK, convID)
@@ -109,7 +114,7 @@ func HandleGetMessages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	messages, err := services.GetMessages(db, userID, convID)
 	if err != nil {
-		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to retrieve messages")
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to retrieve messageImages")
 		return
 	}
 

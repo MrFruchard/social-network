@@ -60,7 +60,7 @@ func GetUserInfos(db *sql.DB, userId string) (UserInfoResponse, error) {
 	}
 	userInfo.Public = public != 0
 
-	// Comptage des messages non lus
+	// Comptage des messageImages non lus
 	query4 := `SELECT CONVERSATION_ID FROM CONVERSATION_MEMBERS WHERE USER_ID = ?`
 	rows, err := db.Query(query4, userId)
 	if err != nil {

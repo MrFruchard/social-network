@@ -27,6 +27,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("GET /api/avatars/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleImages(w, r, db)
 	})
+	// Image Messages
+	mux.HandleFunc("GET /api/messageImages/", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleImages(w, r, db)
+	})
+
 	// Image Post
 	mux.HandleFunc("GET /api/postImages/", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleImages(w, r, db)
@@ -166,7 +171,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("GET /api/conversation", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetConversation(w, r, db)
 	})
-	// get messages
+	// get messageImages
 	mux.HandleFunc("GET /api/messages", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetMessages(w, r, db)
 	})
@@ -275,4 +280,9 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.Handle("/api/ws", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		hub.WsHandler(w, r, db)
 	}))
+
+	// TotoAI
+	mux.HandleFunc("POST /api/totoAi", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleTotoAi(w, r, db)
+	})
 }
