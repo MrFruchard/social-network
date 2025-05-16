@@ -1,65 +1,26 @@
-// front/app/login/page.tsx
-"use client";
+'use client';
 
-import { useState } from "react";
-import { useAuth } from "@/app/contexts/AuthContext";
-import { useRouter } from "next/navigation";
+import { useAuth } from '@/hooks/user/checkAuth';
+import { LoginForm } from '@/components/login-form';
 
-export default function Login() {
-  const [credentials, setCredentials] = useState("");
-  const [password, setPassword] = useState("");
-  const { login, error, loading } = useAuth();
-  const router = useRouter();
+export default function LoginPage() {
+  const { isLoading } = useAuth({
+    redirectIfAuthenticated: '/home',
+  });
 
-  const handleLogin = async (e: { preventDefault: () => void; }) => {
-    e.preventDefault();
-    await login(credentials, password);
-
-    // Si pas d'erreur après login, rediriger vers la page d'accueil
-    if (!error) {
-      router.push("/");
-    }
-  };
+  if (isLoading) {
+    return <div className='flex items-center justify-center min-h-screen'>Loading...</div>;
+  }
 
   return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-100">
-        <div className="p-6 rounded-lg shadow-lg w-96">
-          <h2 className="text-xl font-bold mb-4 text-center">Connexion</h2>
-
-          {error && <p className="text-red-500 text-center">{error}</p>}
-
-          <form onSubmit={handleLogin} className="space-y-4">
-            <div>
-              <label className="block text-gray-700">Nom d'utilisateur</label>
-              <input
-                  type="text"
-                  value={credentials}
-                  onChange={(e) => setCredentials(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-black"
-                  required
-              />
-            </div>
-
-            <div>
-              <label className="block text-gray-700">Mot de pass</label>
-              <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 text-black"
-                  required
-              />
-            </div>
-
-            <button
-                type="submit"
-                disabled={loading}
-                className="w-full bg-red-500 text-white p-2 rounded-lg hover:bg-blue-600 transition disabled:bg-blue-300"
-            >
-              {loading ? "Connexion en cours..." : "Se connecter"}
-            </button>
-          </form>
+    <div className='flex items-center justify-center min-h-screen bg-background'>
+      <div className='w-full max-w-md p-8 space-y-8 bg-card rounded-lg shadow-lg'>
+        <div className='text-center'>
+          <h1 className='text-2xl font-bold'>Login to Social Network</h1>
+          <p className='mt-2 text-sm text-muted-foreground'>Enter your credentials to access your account</p>
         </div>
+        <LoginForm />
       </div>
+    </div>
   );
 }
