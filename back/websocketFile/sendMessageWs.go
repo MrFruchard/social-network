@@ -9,11 +9,12 @@ import (
 )
 
 type SenderMessage struct {
-	Type    string    `json:"type"`
-	Sender  UserInfo  `json:"sender"`
-	Content string    `json:"content"`
-	ConvId  string    `json:"convId"`
-	Time    time.Time `json:"time"`
+	Type      string    `json:"type"`
+	Sender    UserInfo  `json:"sender"`
+	Content   string    `json:"content"`
+	ConvId    string    `json:"convId"`
+	MessageId string    `json:"messageId"`
+	Time      time.Time `json:"time"`
 }
 
 type UserInfo struct {
@@ -24,7 +25,7 @@ type UserInfo struct {
 	ProfilePic string `json:"profile_pic"`
 }
 
-func (h *Hub) SendPrivateMessage(members []string, content, sender, convID string, db *sql.DB) error {
+func (h *Hub) SendPrivateMessage(members []string, content, sender, convID, msgID string, db *sql.DB) error {
 	var s SenderMessage
 	var pp, username sql.NullString
 	query := `SELECT LASTNAME, FIRSTNAME, USERNAME, IMAGE FROM USER WHERE ID = ?`
@@ -45,6 +46,7 @@ func (h *Hub) SendPrivateMessage(members []string, content, sender, convID strin
 	s.ConvId = convID
 	s.Type = "private_message"
 	s.Time = time.Now()
+	s.MessageId = msgID
 
 	msgJSON, err := json.Marshal(s)
 	if err != nil {
