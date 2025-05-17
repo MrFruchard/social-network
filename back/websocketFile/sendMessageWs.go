@@ -5,16 +5,19 @@ import (
 	"encoding/json"
 	"github.com/gorilla/websocket"
 	"log"
+	"time"
 )
 
 type SenderMessage struct {
-	Type    string   `json:"type"`
-	Sender  UserInfo `json:"sender"`
-	Content string   `json:"content"`
-	ConvId  string   `json:"convId"`
+	Type    string    `json:"type"`
+	Sender  UserInfo  `json:"sender"`
+	Content string    `json:"content"`
+	ConvId  string    `json:"convId"`
+	Time    time.Time `json:"time"`
 }
 
 type UserInfo struct {
+	Id         string `json:"id"`
 	Username   string `json:"username"`
 	LastName   string `json:"last_name"`
 	FirstName  string `json:"first_name"`
@@ -37,9 +40,11 @@ func (h *Hub) SendPrivateMessage(members []string, content, sender, convID strin
 		s.Sender.Username = username.String
 	}
 
+	s.Sender.Id = sender
 	s.Content = content
 	s.ConvId = convID
 	s.Type = "private_message"
+	s.Time = time.Now()
 
 	msgJSON, err := json.Marshal(s)
 	if err != nil {
