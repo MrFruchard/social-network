@@ -245,6 +245,15 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	mux.HandleFunc("POST /api/group/response", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleResponseEvent(w, r, db)
 	})
+	// list of ask to join
+	mux.HandleFunc("GET /api/group/ask", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetListAskToJoinGroup(w, r, db)
+	})
+
+	// accepte ask to join
+	mux.HandleFunc("POST /api/group/acceptAsk", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleAcceptAskToJoinGroup(w, r, db)
+	})
 
 	// CHECK
 	mux.HandleFunc("GET /api/check/username", func(w http.ResponseWriter, r *http.Request) {
