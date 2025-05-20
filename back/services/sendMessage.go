@@ -8,7 +8,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-func AddMessage(db *sql.DB, members []string, senderID, conversationID, content string, typeMsg int) (string, error) {
+func AddMessage(db *sql.DB, members []string, senderID, conversationID, content string, typeMsg int) (string, string, error) {
 	if conversationID != "" {
 		// Vérifie que le sender est bien membre de la conversation
 		var isMember bool
@@ -20,10 +20,10 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 		`, conversationID, senderID).Scan(&isMember)
 
 		if err != nil {
-			return "", errors.Wrap(err, "failed to check membership")
+			return "", "", errors.Wrap(err, "failed to check membership")
 		}
 		if !isMember {
-			return "", errors.New("you are not a member of this conversation")
+			return "", "", errors.New("you are not a member of this conversation")
 		}
 
 		// Ajoute le message
@@ -33,9 +33,9 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 			VALUES (?, ?, ?, ?, 0, ?, datetime('now'))
 		`, msgID, senderID, conversationID, content, typeMsg)
 		if err != nil {
-			return "", errors.Wrap(err, "failed to insert message in existing conversation")
+			return "", "", errors.Wrap(err, "failed to insert message in existing conversation")
 		}
-		return conversationID, nil
+		return conversationID, msgID, nil
 	}
 
 	// Nettoyage + suppression doublons + validation
@@ -51,10 +51,10 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 			SELECT EXISTS(SELECT 1 FROM FOLLOWERS WHERE USER_ID = ? AND FOLLOWERS = ?)
 		`, userID, senderID).Scan(&follows)
 		if err != nil {
-			return "", errors.Wrapf(err, "failed to check follow status for user %s", userID)
+			return "", "", errors.Wrapf(err, "failed to check follow status for user %s", userID)
 		}
 		if !follows {
-			return "", errors.Errorf("user %s does not follow you", userID)
+			return "", "", errors.Errorf("user %s does not follow you", userID)
 		}
 		unique[userID] = true
 	}
@@ -83,7 +83,7 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 		`, senderID, otherID).Scan(&existingConvID)
 
 		if err != nil && err != sql.ErrNoRows {
-			return "", errors.Wrap(err, "failed to check existing private conversation")
+			return "", "", errors.Wrap(err, "failed to check existing private conversation")
 		}
 
 		if existingConvID != "" {
@@ -94,9 +94,9 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 				VALUES (?, ?, ?, ?, 0, ?, datetime('now'))
 			`, msgID, senderID, existingConvID, content, typeMsg)
 			if err != nil {
-				return "", errors.Wrap(err, "failed to insert message in existing private conversation")
+				return "", "", errors.Wrap(err, "failed to insert message in existing private conversation")
 			}
-			return existingConvID, nil
+			return existingConvID, msgID, nil
 		}
 	}
 
@@ -112,7 +112,7 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 		VALUES (?, ?, datetime('now'))
 	`, convID, isGroup)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to create conversation")
+		return "", "", errors.Wrap(err, "failed to create conversation")
 	}
 
 	// Ajoute les membres + sender
@@ -123,7 +123,7 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 			VALUES (?, ?)
 		`, convID, userID)
 		if err != nil {
-			return "", errors.Wrapf(err, "failed to add user %s to conversation", userID)
+			return "", "", errors.Wrapf(err, "failed to add user %s to conversation", userID)
 		}
 	}
 
@@ -134,8 +134,8 @@ func AddMessage(db *sql.DB, members []string, senderID, conversationID, content 
 		VALUES (?, ?, ?, ?, 0, ?, datetime('now'))
 	`, msgID, senderID, convID, content, typeMsg)
 	if err != nil {
-		return "", errors.Wrap(err, "failed to insert message")
+		return "", "", errors.Wrap(err, "failed to insert message")
 	}
 
-	return convID, nil
+	return convID, "", nil
 }

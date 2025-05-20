@@ -66,14 +66,14 @@ func HandleSendMessage(w http.ResponseWriter, r *http.Request, db *sql.DB, h *we
 
 	members := append(receivers, userID)
 
-	convID, err := services.AddMessage(db, members, userID, conversationID, content, typeMessage)
+	convID, msgID, err := services.AddMessage(db, members, userID, conversationID, content, typeMessage)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	// Broadcast aux membres
-	err = h.SendPrivateMessage(receivers, content, userID, convID, db)
+	err = h.SendPrivateMessage(receivers, content, userID, convID, msgID, db)
 	if err != nil {
 		log.Println(err)
 	}

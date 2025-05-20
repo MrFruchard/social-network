@@ -77,14 +77,11 @@ const handleFollow = async (targetUserId?: string) => {
     method: "POST",
     credentials: "include" as RequestCredentials,
   };
-
-  // Utiliser le targetUserId passé en paramètre si disponible, sinon prendre l'ID de l'URL
   const user_id = targetUserId || new URL(location.href).searchParams.get("id");
-
   try {
     const response = await fetch(
-      `http://localhost:80/api/user/follow?user=${user_id}`,
-      requestOptions
+        `http://localhost:80/api/user/follow?user=${user_id}`,
+        requestOptions
     );
     const result = await response.text();
     console.log('Follow result:', result);
@@ -100,14 +97,11 @@ const handleAcceptFollow = async (targetUserId?: string) => {
     method: "POST",
     credentials: "include" as RequestCredentials,
   };
-
-  // Utiliser le targetUserId passé en paramètre si disponible, sinon prendre l'ID de l'URL
   const user_id = targetUserId || new URL(location.href).searchParams.get("id");
-
   try {
     const response = await fetch(
-      `http://localhost:80/api/user/agree?user=${user_id}`,
-      requestOptions
+        `http://localhost:80/api/user/agree?user=${user_id}`,
+        requestOptions
     );
     const result = await response.text();
     console.log('Accept follow result:', result);
@@ -121,21 +115,17 @@ const handleAcceptFollow = async (targetUserId?: string) => {
 const handleUnfollow = async (targetUserId?: string) => {
   const myHeaders = new Headers();
   myHeaders.append("Content-Type", "application/json");
-
   const requestOptions = {
     method: "POST",
     headers: myHeaders,
     credentials: "include" as RequestCredentials,
     redirect: "follow" as RequestRedirect,
   };
-
-  // Utiliser le targetUserId passé en paramètre si disponible, sinon prendre l'ID de l'URL
   const user_id = targetUserId || new URL(location.href).searchParams.get("id");
-
   try {
     const response = await fetch(
-      `http://localhost:80/api/user/unfollow?user=${user_id}`,
-      requestOptions
+        `http://localhost:80/api/user/unfollow?user=${user_id}`,
+        requestOptions
     );
     const result = await response.text();
     console.log('Unfollow result:', result);
@@ -161,11 +151,10 @@ export function ProfileContent({ userId }: { userId?: string }) {
         redirect: "follow" as RequestRedirect,
         credentials: "include" as RequestCredentials,
       };
-
       try {
         const response = await fetch(
-          `http://localhost:80/api/user/${userId}`,
-          requestOptions
+            `http://localhost:80/api/user/${userId}`,
+            requestOptions
         );
         const data = await response.json();
         console.log('Profile data:', data);
@@ -174,7 +163,6 @@ export function ProfileContent({ userId }: { userId?: string }) {
         console.error("Error fetching user profile:", error);
       }
     };
-
     if (userId) {
       fetchUserProfile();
     }
@@ -186,11 +174,10 @@ export function ProfileContent({ userId }: { userId?: string }) {
         method: "GET",
         credentials: "include" as RequestCredentials,
       };
-
       try {
         const response = await fetch(
-          "http://localhost:80/api/user/info",
-          requestOptions
+            "http://localhost:80/api/user/info", // Cet endpoint devrait renvoyer l'email de l'utilisateur
+            requestOptions
         );
         const data = await response.json();
         console.log(data);
@@ -199,16 +186,13 @@ export function ProfileContent({ userId }: { userId?: string }) {
         console.error("Error fetching own profile:", error);
       }
     };
-
     if (isOwnProfile) {
       fetchOwnProfile();
     }
   }, [isOwnProfile]);
-  
-  // Référence pour savoir si le profil a changé
+
   const [currentProfileId, setCurrentProfileId] = useState<string | null>(null);
-  
-  // Réinitialiser les listes lors du changement de profil
+
   useEffect(() => {
     if (userProfile?.id && currentProfileId !== userProfile.id) {
       setCurrentProfileId(userProfile.id);
@@ -217,30 +201,23 @@ export function ProfileContent({ userId }: { userId?: string }) {
     }
   }, [userProfile?.id, currentProfileId]);
 
-  // Charger les abonnés
   useEffect(() => {
     const fetchFollowers = async () => {
       if (!userProfile?.id) return;
-      
       setLoadingFollowers(true);
       try {
-        // Utiliser le userProfile.id directement plutôt que userId pour assurer la cohérence
         const profileIdToFetch = userProfile.id;
         const response = await fetch(
-          `http://localhost:80/api/user/listfollower?user=${profileIdToFetch}`,
-          { credentials: 'include' }
+            `http://localhost:80/api/user/listfollower?user=${profileIdToFetch}`,
+            { credentials: 'include' }
         );
-        
         if (!response.ok) {
           console.error('Failed to fetch followers:', response.status);
           return;
         }
-        
         const data = await response.json();
         console.log('Followers data for', profileIdToFetch, ':', data);
-        
         if (data.status === 'success' && Array.isArray(data.followers)) {
-          // Vérifier si le profil courant correspond toujours à celui demandé
           if (userProfile.id === profileIdToFetch) {
             setFollowers(data.followers);
           }
@@ -251,34 +228,26 @@ export function ProfileContent({ userId }: { userId?: string }) {
         setLoadingFollowers(false);
       }
     };
-    
     fetchFollowers();
   }, [userProfile?.id]);
-  
-  // Charger les abonnements
+
   useEffect(() => {
     const fetchFollowing = async () => {
       if (!userProfile?.id) return;
-      
       setLoadingFollowing(true);
       try {
-        // Utiliser le userProfile.id directement plutôt que userId pour assurer la cohérence
         const profileIdToFetch = userProfile.id;
         const response = await fetch(
-          `http://localhost:80/api/user/listfollow?user=${profileIdToFetch}`,
-          { credentials: 'include' }
+            `http://localhost:80/api/user/listfollow?user=${profileIdToFetch}`,
+            { credentials: 'include' }
         );
-        
         if (!response.ok) {
           console.error('Failed to fetch following:', response.status);
           return;
         }
-        
         const data = await response.json();
         console.log('Following data for', profileIdToFetch, ':', data);
-        
         if (data.status === 'success' && Array.isArray(data.follow)) {
-          // Vérifier si le profil courant correspond toujours à celui demandé
           if (userProfile.id === profileIdToFetch) {
             setFollowing(data.follow);
           }
@@ -289,24 +258,21 @@ export function ProfileContent({ userId }: { userId?: string }) {
         setLoadingFollowing(false);
       }
     };
-    
     fetchFollowing();
   }, [userProfile?.id]);
 
-  // Rafraîchir les données du profil
   const refreshProfileData = async () => {
     if (!userProfile?.id) return;
     
     try {
-      // Utiliser l'endpoint approprié selon qu'il s'agit de son propre profil ou non
-      const url = isOwnProfile 
-        ? 'http://localhost:80/api/user/info'
-        : `http://localhost:80/api/user/${userProfile.id}`;
-      
+      const url = isOwnProfile
+          ? 'http://localhost:80/api/user/info'
+          : `http://localhost:80/api/user/${userProfile!.id}`; // userProfile ne sera pas null ici si !isOwnProfile
+
       const response = await fetch(url, {
         credentials: 'include'
       });
-      
+
       if (response.ok) {
         const data = await response.json();
         setUserProfile(data);
@@ -320,24 +286,20 @@ export function ProfileContent({ userId }: { userId?: string }) {
   const handleFollowToggle = async () => {
     if (!userProfile || !userProfile.id) return;
 
-    // Cas où l'utilisateur est déjà abonné et souhaite se désabonner
-    if (userProfile.is_following === 1) {
+    if (userProfile.is_following === 1) { // Unfollow
       const success = await handleUnfollow(userProfile.id);
-      
       if (success) {
-        // Mise à jour de l'état du profil
         setUserProfile({
           ...userProfile,
           is_following: 0,
           followers: userProfile.followers - 1,
         });
-        
-        // Rafraîchir la liste des abonnés
+        // Rafraîchir la liste des abonnés après le désabonnement
         setLoadingFollowers(true);
         try {
           const response = await fetch(
-            `http://localhost:80/api/user/listfollower?user=${userProfile.id}`,
-            { credentials: 'include' }
+              `http://localhost:80/api/user/listfollower?user=${userProfile.id}`,
+              { credentials: 'include' }
           );
           if (response.ok) {
             const data = await response.json();
@@ -351,26 +313,21 @@ export function ProfileContent({ userId }: { userId?: string }) {
           setLoadingFollowers(false);
         }
       }
-    } 
-    // Cas où l'utilisateur n'est pas abonné et souhaite s'abonner ou demander à s'abonner
-    else if (userProfile.is_following === 0) {
+    } else if (userProfile.is_following === 0) { // Follow or request follow
       const success = await handleFollow(userProfile.id);
-      
       if (success) {
         if (userProfile.public) {
-          // Profil public: abonnement direct
           setUserProfile({
             ...userProfile,
             is_following: 1,
             followers: userProfile.followers + 1,
           });
-          
-          // Rafraîchir la liste des abonnés
+          // Rafraîchir la liste des abonnés après l'abonnement (profil public)
           setLoadingFollowers(true);
           try {
             const response = await fetch(
-              `http://localhost:80/api/user/listfollower?user=${userProfile.id}`,
-              { credentials: 'include' }
+                `http://localhost:80/api/user/listfollower?user=${userProfile.id}`,
+                { credentials: 'include' }
             );
             if (response.ok) {
               const data = await response.json();
@@ -384,10 +341,9 @@ export function ProfileContent({ userId }: { userId?: string }) {
             setLoadingFollowers(false);
           }
         } else {
-          // Profil privé: demande d'abonnement en attente
           setUserProfile({
             ...userProfile,
-            is_following: 2, // En attente
+            is_following: 2, // Waiting for approval
           });
         }
       }
@@ -397,8 +353,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
   const renderFollowButton = () => {
     if (!userProfile || isOwnProfile) return null;
 
-    // La personne a envoyé une demande d'abonnement à l'utilisateur actuel
-    if (userProfile.is_following === 3) {
+    if (userProfile.is_following === 3) { // Received follow request
       return (
         <div className="flex space-x-2 mt-4">
           <Button 
@@ -546,7 +501,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
                       {userProfile?.email || "Aucun email disponible"}
                     </span>
                   </div>
-                  
+
                   {/* Date de naissance */}
                   <div className="flex items-center gap-2">
                     <CalendarIcon className="text-muted-foreground h-4 w-4" />
@@ -554,7 +509,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
                       {userProfile?.date_of_birth ? new Date(userProfile.date_of_birth).toLocaleDateString() : "Aucune date de naissance disponible"}
                     </span>
                   </div>
-                  
+
                   {/* À propos */}
                   <div className="flex items-center gap-2">
                     <UserIcon className="text-muted-foreground h-4 w-4" />
