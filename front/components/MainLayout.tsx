@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { LogoutButton } from './logout-button';
 import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
-import PostModal from './PostModal';
+import { PostModal } from '@/components/post';
 import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
@@ -40,6 +40,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   }, [pathname]);
 
+  // @ts-ignore
   return (
     <div className='flex w-full min-h-screen bg-background'>
       {/* Left Sidebar - fixed */}
@@ -79,24 +80,8 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className='hidden md:block w-64 flex-shrink-0'></div>
 
       {/* Main Content Area */}
-      {/* Main Content Area */}
       <div className='flex-1 flex flex-col w-full'>
-        {/* Top Header - Hide for messages and toto-ia routes */}
-        {pathname !== '/messages' && pathname !== '/toto-ia' && (
-          <header className='h-14 border-b border-border flex items-center px-4 sticky top-0 bg-background z-10'>
-            <h2 className='text-xl font-semibold'>
-              {pathname === '/home' && 'Home'}
-              {pathname.startsWith('/profile') && 'Profile'}
-              {pathname === '/notifications' && 'Notifications'}
-              {pathname === '/messages' && 'Messages'}
-              {pathname === '/groups' && 'Groups'}
-              {pathname === '/toto-ia' && 'ToToIA'}
-            </h2>
-            <div className='ml-auto'>
-              <NotificationIndicator />
-            </div>
-          </header>
-        )}
+
 
         {/* Content Container with Feed and Right Sidebar */}
         <div className='flex w-full'>

@@ -49,7 +49,7 @@ func CreateComment(userId, postId, content, img string, db *sql.DB) error {
 	if ownerId != userId {
 		idNotif := uuid.New().String()
 		notifQuery := `INSERT INTO NOTIFICATIONS(ID, TYPE, USER_ID, ID_TYPE, READ, CREATED_AT) VALUES (?,?,?,?,0, datetime('now'))`
-		_, err = db.Exec(notifQuery, idNotif, ownerId, "COMMENT", id)
+		_, err = db.Exec(notifQuery, idNotif, "COMMENT", ownerId, id)
 		if err != nil {
 			return err
 		}

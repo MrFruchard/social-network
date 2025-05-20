@@ -121,16 +121,50 @@ export function useNotifications() {
       } else if (Array.isArray(data)) {
         // Vérifier et nettoyer les données si nécessaire
         const cleanedData = data.map((notif: Notification) => {
-          // S'assurer que les notifications de type ASK_FOLLOW ont les bons champs
-          if (notif.type === 'ASK_FOLLOW' && notif.data) {
+          // Vérifier que la notification a un type et des données valides
+          if (!notif.type || !notif.data) {
+            console.warn('Notification mal formatée (type ou data manquants):', notif);
+            return notif; // Garder la notification pour traitement ultérieur
+          }
+          
+          // S'assurer que les notifications ont les structures de données valides selon leur type
+          if (notif.type === 'LIKE' || notif.type === 'DISLIKE') {
+            if (!notif.data.user) {
+              console.warn(`Notification ${notif.type} sans objet user:`, notif);
+              // Ajouter un objet user minimal pour éviter les erreurs
+              notif.data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+            }
+          } else if (notif.type === 'COMMENT' || notif.type === 'COMMENT_LIKE' || notif.type === 'COMMENT_DISLIKE') {
+            if (!notif.data.user) {
+              console.warn(`Notification ${notif.type} sans objet user:`, notif);
+              // Ajouter un objet user minimal pour éviter les erreurs
+              notif.data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+            }
+          } else if (notif.type === 'ASK_FOLLOW' || notif.type === 'NEW_FOLLOWER') {
             // Vérifier que sender existe et a un id
             if (!notif.data.sender || !notif.data.sender.id) {
-              console.warn('Notification ASK_FOLLOW mal formatée:', notif);
+              console.warn(`Notification ${notif.type} sans objet sender valide:`, notif);
+              // Ajouter un objet sender minimal
+              notif.data.sender = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
             }
             
             // Pour le débogage
-            console.log('Notification ASK_FOLLOW:', notif.id, 'traitée:', processedIds.includes(notif.id));
+            if (notif.type === 'ASK_FOLLOW') {
+              console.log('Notification ASK_FOLLOW:', notif.id, 'traitée:', processedIds.includes(notif.id));
+            }
+          } else if (notif.type === 'INVITE_GROUP') {
+            if (!notif.data.user) {
+              console.warn(`Notification ${notif.type} sans objet user:`, notif);
+              // Ajouter un objet user minimal pour éviter les erreurs
+              notif.data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+            }
+            // Vérifier également que group_name existe
+            if (!notif.data.group_name) {
+              console.warn(`Notification ${notif.type} sans nom de groupe:`, notif);
+              notif.data.group_name = 'inconnu';
+            }
           }
+          
           return notif;
         });
         
@@ -366,35 +400,87 @@ export function useNotifications() {
 
   // Formatage du texte de notification
   const getNotificationText = useCallback((notification: Notification): string => {
+    // Déboguer les problèmes de structure de notification
+    if (!notification.data) {
+      console.error('Notification sans données:', notification);
+      return 'Notification sans contexte';
+    }
+    
+    // Loguer les notifications problématiques pour DISLIKE
+    if (notification.type === 'DISLIKE') {
+      console.log('Debuggage DISLIKE notification complète:', JSON.stringify(notification, null, 2));
+    }
     switch (notification.type) {
       case 'LIKE':
         const likeData = notification.data as LikeData;
-        return `${likeData.user.firstname} ${likeData.user.lastname} a aimé votre publication.`;
+        // Vérifier si l'objet user existe
+        if (!likeData.user) {
+          console.error('LIKE notification sans objet user:', notification.id);
+          return `Quelqu'un a aimé votre publication.`;
+        }
+        return `${likeData.user?.firstname || 'Utilisateur'} ${likeData.user?.lastname || ''} (@${likeData.user?.username || 'utilisateur'}) a aimé votre publication.`;
       case 'DISLIKE':
         const dislikeData = notification.data as LikeData;
-        return `${dislikeData.user.firstname} ${dislikeData.user.lastname} n'a pas aimé votre publication.`;
+        // Ajouter un log pour déboguer les données de notification problématiques
+        console.log('Notification DISLIKE data:', JSON.stringify(dislikeData, null, 2));
+        // S'assurer que l'objet user existe avant d'accéder à ses propriétés
+        if (!dislikeData.user) {
+          console.error('DISLIKE notification sans objet user:', notification.id);
+          return `Quelqu'un n'a pas aimé votre publication.`;
+        }
+        return `${dislikeData.user?.firstname || 'Utilisateur'} ${dislikeData.user?.lastname || ''} (@${dislikeData.user?.username || 'utilisateur'}) n'a pas aimé votre publication.`;
       case 'COMMENT':
         const commentData = notification.data as CommentData;
-        return `${commentData.user.firstname} ${commentData.user.lastname} a commenté votre publication.`;
+        // Vérifier si l'objet user existe
+        if (!commentData.user) {
+          console.error('COMMENT notification sans objet user:', notification.id);
+          return `Quelqu'un a commenté votre publication.`;
+        }
+        return `${commentData.user?.firstname || 'Utilisateur'} ${commentData.user?.lastname || ''} (@${commentData.user?.username || 'utilisateur'}) a commenté votre publication.`;
       case 'COMMENT_LIKE':
         const commentLikeData = notification.data as CommentData;
-        return `${commentLikeData.user.firstname} ${commentLikeData.user.lastname} a aimé votre commentaire.`;
+        // Vérifier si l'objet user existe
+        if (!commentLikeData.user) {
+          console.error('COMMENT_LIKE notification sans objet user:', notification.id);
+          return `Quelqu'un a aimé votre commentaire.`;
+        }
+        return `${commentLikeData.user?.firstname || 'Utilisateur'} ${commentLikeData.user?.lastname || ''} (@${commentLikeData.user?.username || 'utilisateur'}) a aimé votre commentaire.`;
       case 'COMMENT_DISLIKE':
         const commentDislikeData = notification.data as CommentData;
-        return `${commentDislikeData.user.firstname} ${commentDislikeData.user.lastname} n'a pas aimé votre commentaire.`;
+        // Vérifier si l'objet user existe
+        if (!commentDislikeData.user) {
+          console.error('COMMENT_DISLIKE notification sans objet user:', notification.id);
+          return `Quelqu'un n'a pas aimé votre commentaire.`;
+        }
+        return `${commentDislikeData.user?.firstname || 'Utilisateur'} ${commentDislikeData.user?.lastname || ''} (@${commentDislikeData.user?.username || 'utilisateur'}) n'a pas aimé votre commentaire.`;
       case 'ASK_FOLLOW':
         const followData = notification.data as FollowRequestData;
+        // Vérifier si l'objet sender existe
+        if (!followData.sender) {
+          console.error('ASK_FOLLOW notification sans objet sender:', notification.id);
+          return `Quelqu'un souhaite vous suivre.`;
+        }
         // Vérifier si la demande a été acceptée
         if (followData.status === 'accepted') {
-          return `${followData.sender.firstname} ${followData.sender.lastname} vous suit maintenant.`;
+          return `${followData.sender?.firstname || 'Utilisateur'} ${followData.sender?.lastname || ''} (@${followData.sender?.username || 'utilisateur'}) vous suit maintenant.`;
         }
-        return `${followData.sender.firstname} ${followData.sender.lastname} souhaite vous suivre.`;
+        return `${followData.sender?.firstname || 'Utilisateur'} ${followData.sender?.lastname || ''} (@${followData.sender?.username || 'utilisateur'}) souhaite vous suivre.`;
       case 'NEW_FOLLOWER':
         const newFollowerData = notification.data as FollowRequestData;
-        return `${newFollowerData.sender.firstname} ${newFollowerData.sender.lastname} vous suit maintenant.`;
+        // Vérifier si l'objet sender existe
+        if (!newFollowerData.sender) {
+          console.error('NEW_FOLLOWER notification sans objet sender:', notification.id);
+          return `Quelqu'un vous suit maintenant.`;
+        }
+        return `${newFollowerData.sender?.firstname || 'Utilisateur'} ${newFollowerData.sender?.lastname || ''} (@${newFollowerData.sender?.username || 'utilisateur'}) vous suit maintenant.`;
       case 'INVITE_GROUP':
         const groupData = notification.data as GroupInviteData;
-        return `${groupData.user.firstname} ${groupData.user.lastname} vous invite à rejoindre le groupe ${groupData.group_name}.`;
+        // Vérifier si l'objet user existe
+        if (!groupData.user) {
+          console.error('INVITE_GROUP notification sans objet user:', notification.id);
+          return `Vous êtes invité à rejoindre le groupe ${groupData.group_name || 'inconnu'}.`;
+        }
+        return `${groupData.user?.firstname || 'Utilisateur'} ${groupData.user?.lastname || ''} (@${groupData.user?.username || 'utilisateur'}) vous invite à rejoindre le groupe ${groupData.group_name || 'inconnu'}.`;
       default:
         return 'Nouvelle notification';
     }

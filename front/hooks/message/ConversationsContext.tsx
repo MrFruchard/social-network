@@ -66,12 +66,42 @@ function useConversationsInternal() {
   const addConversation = useCallback((newConversation: Conversation) => {
     setState((prev) => {
       const conversations = Array.isArray(prev.conversations) ? prev.conversations : [];
-      const updated = {
+      
+      // Vérifions si cette conversation existe déjà (éviter les doublons)
+      const conversationExists = conversations.some(conv => 
+        conv.id === newConversation.id || 
+        (Array.isArray(conv.participants) && 
+         Array.isArray(newConversation.participants) &&
+         conv.participants.length === newConversation.participants.length &&
+         conv.participants.every(p1 => 
+           newConversation.participants.some(p2 => p1.id === p2.id)
+         )
+        )
+      );
+      
+      // Si elle existe déjà, ne pas la rajouter
+      if (conversationExists) {
+        return {
+          ...prev,
+          currentConversation: conversations.find(conv => 
+            conv.id === newConversation.id || 
+            (Array.isArray(conv.participants) && 
+             Array.isArray(newConversation.participants) &&
+             conv.participants.length === newConversation.participants.length &&
+             conv.participants.every(p1 => 
+               newConversation.participants.some(p2 => p1.id === p2.id)
+             )
+            )
+          ) || newConversation
+        };
+      }
+      
+      // Sinon, l'ajouter à la liste
+      return {
         ...prev,
         conversations: [...conversations, newConversation],
         currentConversation: newConversation,
       };
-      return updated;
     });
   }, []);
 
