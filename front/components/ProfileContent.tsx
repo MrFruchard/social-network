@@ -52,6 +52,8 @@ interface UserProfile {
   following: number;
   created_at: string;
   is_following: number; // 0: Not Following, 1: Following, 2: Waiting, 3: Received Follow Request
+  email?: string;
+  date_of_birth?: string;
 }
 
 interface FollowedUser {
@@ -521,6 +523,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
               )}
             </div>
 
+
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-2xl font-bold mb-2">
                 {userProfile?.first_name || "Prénom"}{" "}
@@ -533,11 +536,28 @@ export function ProfileContent({ userId }: { userId?: string }) {
                 </h2>
               )}
 
-              {/* Afficher la description uniquement si le profil est public, l'utilisateur est abonné, ou c'est le profil de l'utilisateur */}
+              {/* Afficher les informations uniquement si le profil est public, l'utilisateur est abonné, ou c'est le profil de l'utilisateur */}
               {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
                 <div className="flex flex-col gap-2 mb-4">
+                  {/* Email */}
                   <div className="flex items-center gap-2">
                     <MailIcon className="text-muted-foreground h-4 w-4" />
+                    <span>
+                      {userProfile?.email || "Aucun email disponible"}
+                    </span>
+                  </div>
+                  
+                  {/* Date de naissance */}
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="text-muted-foreground h-4 w-4" />
+                    <span>
+                      {userProfile?.date_of_birth ? new Date(userProfile.date_of_birth).toLocaleDateString() : "Aucune date de naissance disponible"}
+                    </span>
+                  </div>
+                  
+                  {/* À propos */}
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="text-muted-foreground h-4 w-4" />
                     <span>
                       {userProfile?.about || "Aucune description disponible."}
                     </span>
