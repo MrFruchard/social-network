@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useMemo } from 'react';
+import React, { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useConversations } from '../hooks/message/ConversationsContext';
 import { useMessages } from '../hooks/message/useMessages';
 import { MailPlus } from 'lucide-react';
@@ -76,38 +76,104 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
     }
   }, [selectedConversationId, fetchApiMessages]);
 
+  // useRef pour comparer les messages précédents
+  const prevApiMessagesRef = useRef<any[]>([]);
+  const prevUserIdRef = useRef<string | null>(null);
+  
   useEffect(() => {
+    // Ne transformer les messages que si on a une conversation sélectionnée
     if (selectedConversationId) {
-      const transformedApiMessages: ChatCardMessage[] = safeApiMessages.map((apiMsg) => {
-        const isCurrentUser = apiMsg.sender === user?.id;
-        let senderDetails = selectedConversation?.participants?.find((p) => p.id === apiMsg.sender);
-        if (!senderDetails && apiMsg.sender && userCache[apiMsg.sender]) {
-          const cachedUser = userCache[apiMsg.sender];
-          senderDetails = { id: apiMsg.sender, username: cachedUser.username || `${cachedUser.firstName} ${cachedUser.lastName}`, avatar: cachedUser.avatar || null };
+      // Helper pour vérifier si les messages ont changé
+      const areMessagesChanged = () => {
+        const prev = prevApiMessagesRef.current;
+        if (prev.length !== safeApiMessages.length) return true;
+        
+        // Comparer les IDs des messages
+        const prevIds = new Set(prev.map(msg => msg.id));
+        const currentIds = new Set(safeApiMessages.map(msg => msg.id));
+        
+        if (prevIds.size !== currentIds.size) return true;
+        
+        for (const id of currentIds) {
+          if (!prevIds.has(id)) return true;
         }
+        
+        return false;
+      };
+      
+      // Vérifier si les messages ou l'utilisateur ont changé
+      const apiMessagesChanged = areMessagesChanged();
+      const userChanged = user?.id !== prevUserIdRef.current;
+      
+      // Ne mettre à jour que si nécessaire
+      if (apiMessagesChanged || userChanged) {
+        // Transformer les messages API en format ChatCardMessage
+        const transformedApiMessages: ChatCardMessage[] = safeApiMessages.map((apiMsg) => {
+          const isCurrentUser = apiMsg.sender === user?.id;
+          let senderDetails = selectedConversation?.participants?.find((p) => p.id === apiMsg.sender);
+          
+          if (!senderDetails && apiMsg.sender && userCache[apiMsg.sender]) {
+            const cachedUser = userCache[apiMsg.sender];
+            senderDetails = { 
+              id: apiMsg.sender, 
+              username: cachedUser.username || `${cachedUser.firstName} ${cachedUser.lastName}`, 
+              avatar: cachedUser.avatar || null 
+            };
+          }
 
-        return {
-          id: apiMsg.id,
-          content: apiMsg.content,
-          sender: {
-            name: isCurrentUser ? user?.username || 'You' : senderDetails?.username || 'Unknown User',
-            avatar: isCurrentUser ? user?.avatar || '/default-avatar.png' : senderDetails?.avatar || '/default-avatar.png',
-            isCurrentUser: isCurrentUser,
-          },
-          timestamp: new Date(new Date(apiMsg.createdAt).getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          status: 'delivered',
-          reactions: apiMsg.reactions || [],
-          imageUrl: apiMsg.imageUrl || apiMsg.image || undefined,
-        };
-      });
-      setLocalMessages(transformedApiMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+          return {
+            id: apiMsg.id,
+            content: apiMsg.content,
+            sender: {
+              name: isCurrentUser ? user?.username || 'You' : senderDetails?.username || 'Unknown User',
+              avatar: isCurrentUser ? user?.avatar || '/default-avatar.png' : senderDetails?.avatar || '/default-avatar.png',
+              isCurrentUser: isCurrentUser,
+            },
+            timestamp: new Date(new Date(apiMsg.createdAt).getTime() + 2 * 60 * 60 * 1000)
+              .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            status: 'delivered',
+            reactions: apiMsg.reactions || [],
+            imageUrl: apiMsg.imageUrl || apiMsg.image || undefined,
+          };
+        });
+        
+        // Trier les messages et mettre à jour l'état
+        setLocalMessages(
+          transformedApiMessages.sort((a, b) => 
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+          )
+        );
+        
+        // Mettre à jour les références
+        prevApiMessagesRef.current = safeApiMessages;
+        prevUserIdRef.current = user?.id || null;
+      }
     } else {
+      // Si aucune conversation n'est sélectionnée, réinitialiser les messages locaux
       setLocalMessages([]);
+      prevApiMessagesRef.current = [];
     }
-  }, [safeApiMessages, selectedConversationId, user, selectedConversation, userCache]);
+  }, [safeApiMessages, selectedConversationId, user?.id, user?.username, user?.avatar, selectedConversation, userCache]);
 
+  // Une référence pour vérifier si on a déjà sélectionné une conversation
+  const hasSelectedInitialConversation = useRef(false);
+  
   useEffect(() => {
-    if (conversationsLoaded && Array.isArray(sortedConversations) && sortedConversations.length > 0 && !selectedConversationId) {
+    // Ne sélectionner automatiquement une conversation que si:
+    // 1. Les conversations sont chargées
+    // 2. Il y a au moins une conversation
+    // 3. Aucune conversation n'est déjà sélectionnée
+    // 4. Nous n'avons pas encore fait de sélection automatique
+    if (conversationsLoaded && 
+        Array.isArray(sortedConversations) && 
+        sortedConversations.length > 0 && 
+        !selectedConversationId && 
+        !hasSelectedInitialConversation.current) {
+      
+      // Marquer que nous avons sélectionné une conversation
+      hasSelectedInitialConversation.current = true;
+      
+      // Sélectionner la première conversation
       setSelectedConversationId(sortedConversations[0].id);
     }
   }, [conversationsLoaded, sortedConversations, selectedConversationId]);
@@ -133,30 +199,39 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
     }
   }, [sortedConversations, user?.id, fetchUserInfo]);
 
+  // Utilisons useRef pour suivre les IDs des messages déjà traités
+  const processedMessageIds = React.useRef(new Set());
+  
   useEffect(() => {
-    wsReceivedMessages.forEach((wsMessage: WSMessageType) => {
-      console.log('WebSocket message received:', wsMessage);
-      console.log('Selected conversation ID:', selectedConversationId);
-      console.log('User ID:', user?.id);
-      console.log('Local messages:', localMessages);
-      console.log('Sender ID:', wsMessage.senderId);
-      console.log('Message ID:', wsMessage.id);
-      console.log('Conversation ID:', wsMessage.conversationId);
-      console.log('Message content:', wsMessage.content);
-      console.log('Image file:', wsMessage.imageFile);
-      console.log('Timestamp:', wsMessage.timestamp);
-      console.log(
-        'Sender details:',
-        selectedConversation?.participants?.find((p) => p.id === wsMessage.senderId)
-      );
-      console.log('User cache:', userCache);
-      console.log('User cache for sender:', userCache[wsMessage.senderId]);
-
-      if (wsMessage.id && wsMessage.conversationId === selectedConversationId && wsMessage.senderId !== user?.id && !localMessages.find((lm) => lm.id === wsMessage.id)) {
+    // On ne réagit qu'aux nouveaux messages WebSocket
+    const newMessages = wsReceivedMessages.filter((msg: WSMessageType) => 
+      msg.id && !processedMessageIds.current.has(msg.id));
+    
+    if (newMessages.length === 0) return;
+    
+    // Traitons les nouveaux messages en batch pour éviter des mises à jour multiples
+    const messagesToAdd: ChatCardMessage[] = [];
+    
+    newMessages.forEach((wsMessage: WSMessageType) => {
+      // On marque ce message comme traité
+      if (wsMessage.id) {
+        processedMessageIds.current.add(wsMessage.id);
+      }
+      
+      // Vérifions si ce message appartient à la conversation actuelle et n'est pas de l'utilisateur courant
+      if (wsMessage.id && 
+          wsMessage.conversationId === selectedConversationId && 
+          wsMessage.senderId !== user?.id) {
+        
+        // Récupérons les détails de l'expéditeur
         let senderDetails = selectedConversation?.participants?.find((p) => p.id === wsMessage.senderId);
         if (!senderDetails && wsMessage.senderId && userCache[wsMessage.senderId]) {
           const cachedUser = userCache[wsMessage.senderId];
-          senderDetails = { id: wsMessage.senderId, username: cachedUser.username || `${cachedUser.firstName} ${cachedUser.lastName}`, avatar: cachedUser.avatar || null };
+          senderDetails = { 
+            id: wsMessage.senderId, 
+            username: cachedUser.username || `${cachedUser.firstName} ${cachedUser.lastName}`, 
+            avatar: cachedUser.avatar || null 
+          };
         } else if (!senderDetails && wsMessage.senderId) {
           fetchUserInfo(wsMessage.senderId);
         }
@@ -169,32 +244,46 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
             avatar: senderDetails?.avatar || '/default-avatar.png',
             isCurrentUser: false,
           },
-          timestamp: wsMessage.timestamp ? new Date(wsMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: wsMessage.timestamp 
+            ? new Date(wsMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) 
+            : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
           status: 'delivered',
           reactions: wsMessage.reactions || [],
           imageUrl: wsMessage.imageFile,
         };
 
-        setLocalMessages((prevMessages) => {
-          if (prevMessages.find((pm) => pm.id === newCardMessage.id)) {
-            return prevMessages;
-          }
-          // Add and sort messages
-          return [...prevMessages, newCardMessage].sort((a, b) => {
-            // Helper to parse timestamp string to comparable value
-            const parseTime = (ts: string) => {
-              const [time, period] = ts.split(' ');
-              let [hours, minutes] = time.split(':').map(Number);
-              if (period?.toLowerCase() === 'pm' && hours !== 12) hours += 12;
-              if (period?.toLowerCase() === 'am' && hours === 12) hours = 0; // Midnight case
-              return hours * 60 + minutes;
-            };
-            return parseTime(a.timestamp) - parseTime(b.timestamp);
-          });
-        });
+        // Ajoutons le message à notre batch
+        messagesToAdd.push(newCardMessage);
       }
     });
-  }, [wsReceivedMessages, selectedConversationId, user?.id, localMessages, selectedConversation, userCache, fetchUserInfo]);
+    
+    // Si nous avons des messages à ajouter, mettons à jour l'état une seule fois
+    if (messagesToAdd.length > 0) {
+      setLocalMessages((prevMessages) => {
+        // Filtrons les messages déjà présents
+        const newMessages = messagesToAdd.filter(
+          newMsg => !prevMessages.some(existingMsg => existingMsg.id === newMsg.id)
+        );
+        
+        if (newMessages.length === 0) {
+          return prevMessages;
+        }
+        
+        // Ajoutons et trions tous les messages
+        return [...prevMessages, ...newMessages].sort((a, b) => {
+          // Fonction pour convertir l'heure en minutes depuis minuit
+          const parseTime = (ts: string) => {
+            const [time, period] = ts.split(' ');
+            let [hours, minutes] = time.split(':').map(Number);
+            if (period?.toLowerCase() === 'pm' && hours !== 12) hours += 12;
+            if (period?.toLowerCase() === 'am' && hours === 12) hours = 0;
+            return hours * 60 + minutes;
+          };
+          return parseTime(a.timestamp) - parseTime(b.timestamp);
+        });
+      });
+    }
+  }, [wsReceivedMessages, selectedConversationId, user?.id, selectedConversation, userCache, fetchUserInfo]);
 
   function formatRelativeTime(dateString: string) {
     const now = new Date();
@@ -212,11 +301,20 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
 
   const handleSendMessageProp = useCallback(
     async (msg: string, imageFile?: File) => {
-      // MODIFICATION: Mémoïsation
+      // Ne rien faire si pas de conversation ou d'utilisateur
       if (!selectedConversationId || !user) return;
-      const currentReceiverId = others.length === 1 && others[0] ? others[0].id : others.length > 1 ? others.map((u) => u.id) : undefined;
+      
+      // Déterminer le destinataire du message
+      const currentReceiverId = others.length === 1 && others[0] 
+        ? others[0].id 
+        : others.length > 1 
+          ? others.map((u) => u.id) 
+          : undefined;
 
+      // Créer un ID temporaire pour le message optimiste
       const tempId = `optimistic-${Date.now()}`;
+      
+      // Créer un message optimiste à afficher immédiatement
       const optimisticMessage: ChatCardMessage = {
         id: tempId,
         content: msg,
@@ -226,25 +324,36 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
           isOnline: true,
           isCurrentUser: true,
         },
-        timestamp: new Date(Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
         status: 'sent',
         reactions: [],
         imageUrl: imageFile ? URL.createObjectURL(imageFile) : undefined,
       };
-      setLocalMessages((prev) =>
-        [...prev, optimisticMessage].sort((a, b) => {
-          const parseTime = (ts: string) => {
-            const [time, period] = ts.split(' ');
-            let [hours, minutes] = time.split(':').map(Number);
-            if (period?.toLowerCase() === 'pm' && hours !== 12) hours += 12;
-            if (period?.toLowerCase() === 'am' && hours === 12) hours = 0;
-            return hours * 60 + minutes;
-          };
-          return parseTime(a.timestamp) - parseTime(b.timestamp);
-        })
-      );
+      
+      // Ajouter le message optimiste dans l'état local
+      setLocalMessages(prev => {
+        // Vérifier si le message existe déjà (éviter les doublons)
+        if (prev.some(m => m.id === tempId)) {
+          return prev;
+        }
+        
+        // Helper pour trier les messages par heure
+        const parseTime = (ts: string) => {
+          const [time, period] = ts.split(' ');
+          let [hours, minutes] = time.split(':').map(Number);
+          if (period?.toLowerCase() === 'pm' && hours !== 12) hours += 12;
+          if (period?.toLowerCase() === 'am' && hours === 12) hours = 0;
+          return hours * 60 + minutes;
+        };
+        
+        // Ajouter et trier
+        return [...prev, optimisticMessage].sort((a, b) => 
+          parseTime(a.timestamp) - parseTime(b.timestamp)
+        );
+      });
 
       try {
+        // Envoyer le message au serveur
         const response = await send({
           content: msg,
           conversationId: selectedConversationId,
@@ -252,18 +361,46 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
           imageFile,
         });
 
-        if (response && response.id && response.id !== tempId) {
-          setLocalMessages((prev) => prev.map((m) => (m.id === tempId ? { ...optimisticMessage, id: response.id, status: 'delivered', timestamp: new Date(new Date(response.createdAt).getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) } : m)));
-        } else if (response && response.id && !response.createdAt) {
-          // If createdAt is missing from response
-          setLocalMessages((prev) => prev.map((m) => (m.id === tempId ? { ...optimisticMessage, id: response.id, status: 'delivered' } : m)));
+        // Mise à jour du message optimiste avec les données du serveur
+        if (response && response.id) {
+          setLocalMessages(prev => {
+            // Vérifier si le message temporaire existe toujours
+            const tempMessageExists = prev.some(m => m.id === tempId);
+            if (!tempMessageExists) return prev;
+            
+            // Mettre à jour le message temporaire avec l'ID réel
+            return prev.map(m => {
+              if (m.id !== tempId) return m;
+              
+              return { 
+                ...optimisticMessage, 
+                id: response.id, 
+                status: 'delivered',
+                // Utiliser la date du serveur si disponible
+                timestamp: response.createdAt 
+                  ? new Date(new Date(response.createdAt).getTime() + 2 * 60 * 60 * 1000)
+                      .toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                  : optimisticMessage.timestamp
+              };
+            });
+          });
         }
       } catch (error) {
         console.error('Failed to send message:', error);
-        setLocalMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, status: 'failed' } : m)));
+        
+        // Marquer le message comme échoué
+        setLocalMessages(prev => {
+          // Vérifier si le message temporaire existe toujours
+          const tempMessageExists = prev.some(m => m.id === tempId);
+          if (!tempMessageExists) return prev;
+          
+          return prev.map(m => 
+            m.id === tempId ? { ...m, status: 'failed' } : m
+          );
+        });
       }
     },
-    [selectedConversationId, user, others, send, setLocalMessages]
+    [selectedConversationId, user, others, send]
   );
 
   const currentUserForCard = useMemo(

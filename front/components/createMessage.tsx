@@ -56,23 +56,38 @@ export default function CreateMessage({ isOpen, onClose, onSelectConversation }:
     try {
       setIsCreatingConversation(true);
 
+      // Vérifions d'abord si cette conversation existe déjà
       const selectedIds = selectedUsers.map((u) => u.id).sort();
       const existingConv = Array.isArray(conversations)
         ? conversations.find((conv: Conversation) => {
+            // S'assurer que participants est un tableau et a la même longueur que selectedIds
+            if (!Array.isArray(conv.participants) || conv.participants.length !== selectedIds.length) {
+              return false;
+            }
             const convIds = conv.participants.map((p: User) => p.id).sort();
-            return convIds.length === selectedIds.length && convIds.every((id: string, idx: number) => id === selectedIds[idx]);
+            return convIds.every((id: string, idx: number) => id === selectedIds[idx]);
           })
         : null;
 
+      // Si la conversation existe déjà, afficher une animation et ne pas créer de doublons
       if (existingConv) {
         setShake(true);
         setTimeout(() => setShake(false), 500);
+        
+        // Sélectionnons la conversation existante au lieu d'en créer une nouvelle
+        if (onSelectConversation) {
+          onSelectConversation(existingConv);
+        }
+        
+        onClose();
         setIsCreatingConversation(false);
         return;
       }
 
+      // Créons une nouvelle conversation avec un ID temporaire
+      const newConversationId = `temp-${Date.now()}`;
       const newConversation: Conversation = {
-        id: `temp-${Date.now()}`,
+        id: newConversationId,
         participants: selectedUsers.map((user: User) => ({
           id: user.id,
           username: user.username,
@@ -81,13 +96,15 @@ export default function CreateMessage({ isOpen, onClose, onSelectConversation }:
         lastMessage: null,
       };
 
+      // Ajoutons la conversation au contexte
       addConversation(newConversation);
 
+      // Informons le parent de la sélection si nécessaire
       if (onSelectConversation) {
         onSelectConversation(newConversation);
       }
 
-      setShowMessageForm(true);
+      // Fermons le modal de création
       onClose();
     } catch (error) {
       console.error('Error creating conversation:', error);
