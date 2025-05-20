@@ -1,11 +1,22 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { useAuth } from '../hooks/user/checkAuth';
+
+export type MessageType = {
+  type: string;
+  id: string;
+  content: string;
+  conversationId: string;
+  senderId?: string;
+  imageFile?: string;
+  timestamp?: string | Date;
+};
 
 type WebSocketContextType = {
   isConnected: boolean;
   sendMessage: (data: any) => void;
-  messages: any[];
+  messages: MessageType[];
 };
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
@@ -30,11 +41,27 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
     ws.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        setMessages((prev) => [...prev, data]);
-        // Tu peux ajouter une logique de gestion des notifications ici
+        const rawData = event.data;
+        const receivedMessage = JSON.parse(rawData);
+
+        const formattedData: MessageType = {
+          type: receivedMessage.type,
+          id: receivedMessage.id || `ws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          content: receivedMessage.content,
+          conversationId: receivedMessage.convId,
+          senderId: receivedMessage.sender?.id || receivedMessage.senderId,
+          timestamp: receivedMessage.timestamp || new Date().toISOString(),
+        };
+
+        if (!formattedData.id || !formattedData.senderId || !formattedData.conversationId) {
+          return;
+        }
+
+        if (formattedData.type === 'private_message') {
+          setMessages((prevMessages) => [...prevMessages, formattedData]);
+        }
       } catch (error) {
-        console.error('Erreur de parsing des données WebSocket:', error);
+        console.error('Erreur de parsing/formatting des données WebSocket dans le contexte:', error, 'Raw data:', event.data);
       }
     };
 
@@ -88,19 +115,14 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
 // Composant caché qui s'abonne aux événements de connexion/déconnexion
 function WebSocketControls({ connect, disconnect }: { connect: () => void; disconnect: () => void }) {
-  useEffect(() => {
-    // Vérifier si l'utilisateur est connecté (via localStorage ou cookie)
-    const checkUserStatus = () => {
-      const isLoggedIn = localStorage.getItem('userId') !== null;
-      if (isLoggedIn) {
-        connect();
-      } else {
-        disconnect();
-      }
-    };
+  const { isAuthenticated } = useAuth();
 
-    // Vérifier à l'initialisation
-    checkUserStatus();
+  useEffect(() => {
+    if (isAuthenticated) {
+      connect();
+    } else {
+      disconnect();
+    }
 
     // Écouter les événements de changement d'état de connexion
     window.addEventListener('login', connect);
@@ -110,7 +132,7 @@ function WebSocketControls({ connect, disconnect }: { connect: () => void; disco
       window.removeEventListener('login', connect);
       window.removeEventListener('logout', disconnect);
     };
-  }, [connect, disconnect]);
+  }, [isAuthenticated, connect, disconnect]);
 
   return null;
 }
