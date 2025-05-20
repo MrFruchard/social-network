@@ -78,13 +78,18 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
 
   useEffect(() => {
     if (selectedConversationId) {
-      const transformedApiMessages: ChatCardMessage[] = safeApiMessages.map((apiMsg) => {
+      const transformedApiMessages = safeApiMessages.map((apiMsg) => {
         const isCurrentUser = apiMsg.sender === user?.id;
         let senderDetails = selectedConversation?.participants?.find((p) => p.id === apiMsg.sender);
         if (!senderDetails && apiMsg.sender && userCache[apiMsg.sender]) {
           const cachedUser = userCache[apiMsg.sender];
           senderDetails = { id: apiMsg.sender, username: cachedUser.username || `${cachedUser.firstName} ${cachedUser.lastName}`, avatar: cachedUser.avatar || null };
         }
+
+        // Store the original createdAt for reliable sorting
+        const originalCreatedAt = new Date(apiMsg.createdAt).getTime();
+        // Adjust time for display if necessary (e.g., timezone offset)
+        const displayTimestamp = new Date(originalCreatedAt + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
         return {
           id: apiMsg.id,
@@ -94,13 +99,18 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
             avatar: isCurrentUser ? user?.avatar || '/default-avatar.png' : senderDetails?.avatar || '/default-avatar.png',
             isCurrentUser: isCurrentUser,
           },
-          timestamp: new Date(new Date(apiMsg.createdAt).getTime() + 2 * 60 * 60 * 1000).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          timestamp: displayTimestamp, // For display
+          originalCreatedAt: originalCreatedAt, // For sorting
           status: 'delivered',
           reactions: apiMsg.reactions || [],
           imageUrl: apiMsg.imageUrl || apiMsg.image || undefined,
-        };
+        } as ChatCardMessage & { originalCreatedAt: number };
       });
-      setLocalMessages(transformedApiMessages.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()));
+
+      // Sort by the original creation timestamp
+      const sortedMessages = transformedApiMessages.sort((a, b) => a.originalCreatedAt - b.originalCreatedAt);
+
+      setLocalMessages(sortedMessages.map(({ originalCreatedAt, ...rest }) => rest));
     } else {
       setLocalMessages([]);
     }
