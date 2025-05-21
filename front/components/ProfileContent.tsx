@@ -20,12 +20,11 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import Link from "next/link";
 import {
   CalendarIcon,
-  UserIcon, // Potentiellement utiliser pour la bio si on change l'icône
-  MailIcon, // Utilisé pour l'email et actuellement pour la bio
+  UserIcon,
+  MailIcon,
   ClockIcon,
   LockIcon,
   LockOpenIcon,
-  InfoIcon, // Alternative pour la bio
 } from "lucide-react";
 import { UserPostsList } from "@/components/UserPostsList";
 import React, { useEffect, useState } from "react";
@@ -45,8 +44,7 @@ interface UserProfile {
   id: string;
   last_name: string;
   first_name: string;
-  about: string; // Bio de l'utilisateur
-  email?: string; // Email de l'utilisateur, optionnel et surtout pour son propre profil
+  about: string;
   username: string;
   image_url: string;
   public: boolean;
@@ -54,9 +52,10 @@ interface UserProfile {
   following: number;
   created_at: string;
   is_following: number; // 0: Not Following, 1: Following, 2: Waiting, 3: Received Follow Request
+  email?: string;
+  date_of_birth?: string;
 }
 
-// L'interface FollowedUser semble être un duplicata de FollowUser, vous pourriez envisager de les fusionner
 interface FollowedUser {
   user_id: string;
   first_name: string;
@@ -158,7 +157,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
             requestOptions
         );
         const data = await response.json();
-        console.log('Profile data for other user:', data);
+        console.log('Profile data:', data);
         setUserProfile(data);
       } catch (error) {
         console.error("Error fetching user profile:", error);
@@ -181,7 +180,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
             requestOptions
         );
         const data = await response.json();
-        console.log('Own profile data:', data);
+        console.log(data);
         setUserProfile(data);
       } catch (error) {
         console.error("Error fetching own profile:", error);
@@ -263,8 +262,8 @@ export function ProfileContent({ userId }: { userId?: string }) {
   }, [userProfile?.id]);
 
   const refreshProfileData = async () => {
-    if (!userProfile?.id && !isOwnProfile) return; // Correction: S'assurer qu'on a un ID ou que c'est son propre profil
-
+    if (!userProfile?.id) return;
+    
     try {
       const url = isOwnProfile
           ? 'http://localhost:80/api/user/info'
@@ -293,7 +292,7 @@ export function ProfileContent({ userId }: { userId?: string }) {
         setUserProfile({
           ...userProfile,
           is_following: 0,
-          followers: Math.max(0, userProfile.followers - 1), // S'assurer que ça ne devienne pas négatif
+          followers: userProfile.followers - 1,
         });
         // Rafraîchir la liste des abonnés après le désabonnement
         setLoadingFollowers(true);
@@ -356,74 +355,87 @@ export function ProfileContent({ userId }: { userId?: string }) {
 
     if (userProfile.is_following === 3) { // Received follow request
       return (
-          <div className="flex space-x-2 mt-4">
-            <Button
-                onClick={async () => {
-                  const success = await handleAcceptFollow(userProfile.id);
-                  if (success) {
-                    refreshProfileData(); // Refresh profile to reflect new state (is_following should become 1)
-                  }
-                }}
-                variant="default"
-            >
-              Accepter
-            </Button>
-            <Button
-                onClick={async () => {
-                  const response = await fetch(`http://localhost:80/api/user/decline?user=${userProfile.id}`, {
-                    method: 'POST',
-                    credentials: 'include',
-                  });
-                  if (response.ok) {
-                    refreshProfileData(); // Refresh profile to reflect new state (is_following should become 0)
-                  }
-                }}
-                variant="outline"
-            >
-              Refuser
-            </Button>
-          </div>
+        <div className="flex space-x-2 mt-4">
+          <Button 
+            onClick={async () => {
+              const success = await handleAcceptFollow(userProfile.id);
+              if (success) {
+                // Rafraîchir les données du profil pour refléter le nouvel état
+                refreshProfileData();
+              }
+            }} 
+            variant="default"
+          >
+            Accepter
+          </Button>
+          <Button 
+            onClick={async () => {
+              // Refuser la demande
+              const response = await fetch(`http://localhost:80/api/user/decline?user=${userProfile.id}`, {
+                method: 'POST',
+                credentials: 'include',
+              });
+              
+              if (response.ok) {
+                // Rafraîchir les données du profil pour refléter le nouvel état
+                refreshProfileData();
+              }
+            }} 
+            variant="outline"
+          >
+            Refuser
+          </Button>
+        </div>
       );
     }
 
     switch (userProfile.is_following) {
-      case 0: // Not Following
-        return (
-            <Button onClick={handleFollowToggle} className="mt-4">
-              {userProfile.public ? "Suivre" : "Demander à suivre"}
-            </Button>
+      case 0: // Pas d'abonnement
+        return userProfile.public ? (
+          // Si profil public, bouton simple pour suivre
+          <Button onClick={handleFollowToggle} className="mt-4">
+            Suivre
+          </Button>
+        ) : (
+          // Si profil privé, bouton pour envoyer une demande
+          <Button onClick={handleFollowToggle} className="mt-4">
+            Demander à suivre
+          </Button>
         );
-      case 1: // Following
+      case 1: // Déjà abonné
         return (
-            <Button onClick={handleFollowToggle} className="mt-4" variant="outline">
-              Ne plus suivre
-            </Button>
+          <Button onClick={handleFollowToggle} className="mt-4" variant="outline">
+            Ne plus suivre
+          </Button>
         );
-      case 2: // Requested, pending
+      case 2: // Demande envoyée, en attente
         return (
-            <div className="flex space-x-2 mt-4">
-              <Button
-                  onClick={async () => {
-                    try {
-                      const response = await fetch(`http://localhost:80/api/user/abort?user=${userProfile.id}`, {
-                        method: 'GET', // Ou POST/DELETE selon votre API pour annuler une demande
-                        credentials: 'include'
-                      });
-                      if (response.ok) {
-                        setUserProfile({ // Mettre à jour localement ou rafraîchir via refreshProfileData()
-                          ...userProfile,
-                          is_following: 0,
-                        });
-                      }
-                    } catch (error) {
-                      console.error('Error aborting follow request:', error);
-                    }
-                  }}
-                  variant="outline"
-              >
-                Annuler la demande
-              </Button>
-            </div>
+          <div className="flex space-x-2 mt-4">
+            <Button 
+              onClick={async () => {
+                // Annuler la demande d'abonnement
+                try {
+                  const response = await fetch(`http://localhost:80/api/user/abort?user=${userProfile.id}`, {
+                    method: 'GET',
+                    credentials: 'include'
+                  });
+                  
+                  if (response.ok) {
+                    // Rafraîchir les données du profil pour refléter le nouvel état
+                    setUserProfile({
+                      ...userProfile,
+                      is_following: 0,
+                    });
+                  }
+                } catch (error) {
+                  console.error('Error aborting follow request:', error);
+                }
+              }} 
+              variant="outline"
+            >
+              Annuler la demande
+            </Button>
+          </div>
         );
       default:
         return null;
@@ -440,317 +452,306 @@ export function ProfileContent({ userId }: { userId?: string }) {
     return "U";
   };
 
-  if (!userProfile && (loadingFollowers || loadingFollowing || !userId && !isOwnProfile )) { // Amélioration condition de chargement initial
-    return (
-        <div className="flex justify-center items-center h-full">
-          <div className="animate-spin w-12 h-12 border-4 border-primary border-t-transparent rounded-full"></div>
-        </div>
-    );
-  }
-  if (!userProfile && !isOwnProfile && userId) { // Si userId est fourni mais userProfile est encore null après les fetches initiaux (ex: profil non trouvé)
-    return <div className="p-4 text-center">Profil non trouvé ou erreur de chargement.</div>;
-  }
-
-
   return (
-      <div className="h-full overflow-auto p-4">
-        <Card className="mb-8">
-          <CardContent className="p-6">
-            <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
-              <div className="flex flex-col items-center gap-4">
-                <Avatar className="w-24 h-24 border-2 border-primary">
-                  <AvatarImage
-                      src={
-                        (userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) && userProfile?.image_url
-                            ? `http://localhost:80/api/avatars/${userProfile.image_url}`
-                            : undefined
-                      }
-                      alt={userProfile?.username || "profile"}
-                  />
-                  <AvatarFallback className="text-xl">
-                    {getInitials()}
-                  </AvatarFallback>
-                </Avatar>
-                {!userProfile?.public && userProfile?.is_following !== 1 && !isOwnProfile && (
-                    <Badge variant="outline" className="gap-1">
-                      <LockIcon size={12} /> Compte privé
-                    </Badge>
-                )}
-              </div>
+    <div className="h-full overflow-auto p-4">
+      <Card className="mb-8">
+        <CardContent className="p-6">
+          <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">
+            <div className="flex flex-col items-center gap-4">
+              <Avatar className="w-24 h-24 border-2 border-primary">
+                <AvatarImage
+                  src={
+                    (userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) && userProfile?.image_url
+                      ? `http://localhost:80/api/avatars/${userProfile.image_url}`
+                      : undefined
+                  }
+                  alt={userProfile?.username || "profile"}
+                />
+                <AvatarFallback className="text-xl">
+                  {getInitials()}
+                </AvatarFallback>
+              </Avatar>
+              {!userProfile?.public && userProfile?.is_following !== 1 && !isOwnProfile && (
+                <Badge variant="outline" className="gap-1">
+                  <LockIcon size={12} /> Compte privé
+                </Badge>
+              )}
+            </div>
 
-              <div className="flex-1 text-center md:text-left">
-                <h1 className="text-2xl font-bold mb-2">
-                  {userProfile?.first_name || "Prénom"}{" "}
-                  {userProfile?.last_name || "Nom"}
-                </h1>
 
-                {userProfile?.username && (
-                    <h2 className="text-lg text-muted-foreground mb-4">
-                      @{userProfile.username}
-                    </h2>
-                )}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-2xl font-bold mb-2">
+                {userProfile?.first_name || "Prénom"}{" "}
+                {userProfile?.last_name || "Nom"}
+              </h1>
 
-                {/* MODIFICATION ICI pour afficher l'email ou la bio */}
-                {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
-                    <div className="flex flex-col gap-2 mb-4">
-                      <div className="flex items-center gap-2">
-                        {/* L'icône peut rester MailIcon, ou vous pouvez la conditionner aussi */}
-                        <MailIcon className="text-muted-foreground h-4 w-4" />
-                        <span>
-                      {isOwnProfile
-                          ? (userProfile?.email || "Aucun email renseigné.")
-                          : (userProfile?.about || "Aucune description disponible.")
-                      }
+              {userProfile?.username && (
+                <h2 className="text-lg text-muted-foreground mb-4">
+                  @{userProfile.username}
+                </h2>
+              )}
+
+              {/* Afficher les informations uniquement si le profil est public, l'utilisateur est abonné, ou c'est le profil de l'utilisateur */}
+              {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
+                <div className="flex flex-col gap-2 mb-4">
+                  {/* Email */}
+                  <div className="flex items-center gap-2">
+                    <MailIcon className="text-muted-foreground h-4 w-4" />
+                    <span>
+                      {userProfile?.email || "Aucun email disponible"}
                     </span>
-                      </div>
-                    </div>
-                ) : (
-                    <div className="mb-4 text-muted-foreground">
-                      Abonnez-vous pour voir plus d'informations
-                    </div>
-                )}
-
-                <div className="flex gap-4 justify-center md:justify-start">
-                  <div>
-                    <div className="text-2xl font-bold">
-                      {userProfile?.followers || 0}
-                    </div>
-                    <div className="text-sm text-muted-foreground">Abonnés</div>
                   </div>
-                  <div>
-                    <div className="text-2xl font-bold">
-                      {userProfile?.following || 0}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      Abonnements
-                    </div>
+
+                  {/* Date de naissance */}
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="text-muted-foreground h-4 w-4" />
+                    <span>
+                      {userProfile?.date_of_birth ? new Date(userProfile.date_of_birth).toLocaleDateString() : "Aucune date de naissance disponible"}
+                    </span>
+                  </div>
+
+                  {/* À propos */}
+                  <div className="flex items-center gap-2">
+                    <UserIcon className="text-muted-foreground h-4 w-4" />
+                    <span>
+                      {userProfile?.about || "Aucune description disponible."}
+                    </span>
                   </div>
                 </div>
+              ) : (
+                <div className="mb-4 text-muted-foreground">
+                  Abonnez-vous pour voir plus d'informations
+                </div>
+              )}
 
-                {renderFollowButton()}
+              <div className="flex gap-4 justify-center md:justify-start">
+                <div>
+                  <div className="text-2xl font-bold">
+                    {userProfile?.followers || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">Abonnés</div>
+                </div>
 
-                {isOwnProfile && (
-                    <div className="flex items-center gap-2 mt-4">
-                      <Switch
-                          id="public-toggle"
-                          checked={userProfile?.public}
-                          onCheckedChange={async (checked: boolean) => {
-                            const newStatus: boolean = checked;
-                            try {
-                              const response: Response = await fetch(
-                                  `http://localhost:80/api/user/public`, // Assurez-vous que cet endpoint bascule le statut public
-                                  {
-                                    method: "PATCH", // Ou POST, selon votre API
-                                    credentials: "include",
-                                    headers: { // Important si votre API attend du JSON pour le corps
-                                      'Content-Type': 'application/json'
-                                    },
-                                    body: JSON.stringify({ public: newStatus }) // Envoyez le nouveau statut
-                                  }
-                              );
-                              if (response.ok) {
-                                setUserProfile(
-                                    userProfile
-                                        ? { ...userProfile, public: newStatus }
-                                        : null
-                                );
-                                console.log("Public status updated successfully.");
-                              } else {
-                                // Peut-être rafraîchir pour obtenir le statut réel du serveur en cas d'échec de la mise à jour
-                                const errorData = await response.json().catch(() => null);
-                                console.error(
-                                    "Failed to toggle public status. Response not OK.", response.status, errorData
-                                );
-                                refreshProfileData();
-                              }
-                            } catch (error: unknown) {
-                              console.error("Error toggling public status:", error);
-                              refreshProfileData(); // Rafraîchir en cas d'erreur réseau
-                            }
-                          }}
-                      />
-                      <label htmlFor="public-toggle" className="cursor-pointer">
-                        {userProfile?.public ? "Profil Public" : "Profil Privé"}
-                      </label>
-                    </div>
-                )}
+                <div>
+                  <div className="text-2xl font-bold">
+                    {userProfile?.following || 0}
+                  </div>
+                  <div className="text-sm text-muted-foreground">
+                    Abonnements
+                  </div>
+                </div>
               </div>
+
+              {renderFollowButton()}
+
+              {isOwnProfile && (
+                <div className="flex items-center gap-2 mt-4">
+                  <Switch
+                    id="public-toggle"
+                    checked={userProfile?.public}
+                    onCheckedChange={async (checked: boolean) => {
+                      const newStatus: boolean = checked;
+                      try {
+                        const response: Response = await fetch(
+                          `http://localhost:80/api/user/public`,
+                          { method: "PATCH" }
+                        );
+                        if (response.ok) {
+                          setUserProfile(
+                            userProfile
+                              ? { ...userProfile, public: newStatus }
+                              : null
+                          );
+                          console.log("Public status updated successfully.");
+                        } else {
+                          console.error(
+                            "Failed to toggle public status. Response not OK."
+                          );
+                        }
+                      } catch (error: unknown) {
+                        console.error("Error toggling public status:", error);
+                      }
+                    }}
+                  />
+                  <label htmlFor="public-toggle">
+                    {userProfile?.public ? "Public" : "Privé"}
+                  </label>
+                </div>
+              )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </CardContent>
+      </Card>
 
-        <Tabs defaultValue="posts">
-          <TabsList className="mb-4">
-            <TabsTrigger value="posts">Publications</TabsTrigger>
-            <TabsTrigger value="followers">Abonnés</TabsTrigger>
-            <TabsTrigger value="following">Abonnements</TabsTrigger>
-          </TabsList>
+      <Tabs defaultValue="posts">
+        <TabsList className="mb-4">
+          <TabsTrigger value="posts">Publications</TabsTrigger>
+          <TabsTrigger value="followers">Abonnés</TabsTrigger>
+          <TabsTrigger value="following">Abonnements</TabsTrigger>
+        </TabsList>
 
-          <TabsContent value="posts">
-            <Card>
-              <CardHeader>
-                <CardTitle>Publications</CardTitle>
-                <CardDescription>
-                  Toutes les publications de {userProfile?.first_name || "Prénom"}{" "}
-                  {userProfile?.last_name || "Nom"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
-                    userProfile?.id && <UserPostsList userId={userProfile.id} />
+        <TabsContent value="posts">
+          <Card>
+            <CardHeader>
+              <CardTitle>Publications</CardTitle>
+              <CardDescription>
+                Toutes les publications de {userProfile?.first_name || "Prénom"}{" "}
+                {userProfile?.last_name || "Nom"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Afficher les publications seulement si le profil est public, l'utilisateur est abonné, ou c'est son propre profil */}
+              {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
+                userProfile?.id && <UserPostsList userId={userProfile.id} />
+              ) : (
+                <div className="text-center py-8">
+                  <LockIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-2">Compte privé</p>
+                  <p className="text-sm text-muted-foreground">
+                    Abonnez-vous pour voir les publications de {userProfile?.first_name || "cet utilisateur"}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="followers">
+          <Card>
+            <CardHeader>
+              <CardTitle>Abonnés</CardTitle>
+              <CardDescription>
+                Personnes qui suivent {userProfile?.first_name || "Prénom"}{" "}
+                {userProfile?.last_name || "Nom"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Afficher les abonnés seulement si le profil est public, l'utilisateur est abonné, ou c'est son propre profil */}
+              {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
+                loadingFollowers ? (
+                  <div className="flex justify-center p-4">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                  </div>
+                ) : followers.length > 0 ? (
+                  <div className="space-y-2">
+                    {followers.map(user => (
+                      <Link 
+                        href={`/profile?id=${user.user_id}`} 
+                        key={user.user_id}
+                        className="block transition-transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+                      >
+                        <Card className="overflow-hidden hover:bg-muted/50">
+                          <CardContent className="p-4 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Avatar>
+                                <AvatarImage 
+                                  src={user.image ? `http://localhost:80/api/avatars/${user.image}` : undefined} 
+                                  alt={user.username || "utilisateur"} 
+                                />
+                                <AvatarFallback>
+                                  {(user.username || user.first_name).substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-semibold">
+                                  {user.first_name} {user.last_name}
+                                </div>
+                                {user.username && (
+                                  <p className="text-sm text-muted-foreground">
+                                    @{user.username}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
                 ) : (
-                    <div className="text-center py-8">
-                      <LockIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-2">Compte privé</p>
-                      <p className="text-sm text-muted-foreground">
-                        Abonnez-vous pour voir les publications de {userProfile?.first_name || "cet utilisateur"}
-                      </p>
-                    </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
+                  <p className="text-muted-foreground">Pas encore d'abonnés.</p>
+                )
+              ) : (
+                <div className="text-center py-8">
+                  <LockIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-2">Compte privé</p>
+                  <p className="text-sm text-muted-foreground">
+                    Abonnez-vous pour voir les abonnés de {userProfile?.first_name || "cet utilisateur"}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
 
-          <TabsContent value="followers">
-            <Card>
-              <CardHeader>
-                <CardTitle>Abonnés</CardTitle>
-                <CardDescription>
-                  Personnes qui suivent {userProfile?.first_name || "Prénom"}{" "}
-                  {userProfile?.last_name || "Nom"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
-                    loadingFollowers ? (
-                        <div className="flex justify-center p-4">
-                          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                        </div>
-                    ) : followers.length > 0 ? (
-                        <div className="space-y-2">
-                          {followers.map(user => (
-                              <Link
-                                  href={`/profile?id=${user.user_id}`}
-                                  key={user.user_id}
-                                  className="block transition-transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
-                                  onClick={() => { // Optionnel: reset le profil si on navigue vers un autre profil depuis cette liste
-                                    // setUserProfile(null);
-                                  }}
-                              >
-                                <Card className="overflow-hidden hover:bg-muted/50">
-                                  <CardContent className="p-4 flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                      <Avatar>
-                                        <AvatarImage
-                                            src={user.image ? `http://localhost:80/api/avatars/${user.image}` : undefined}
-                                            alt={user.username || "utilisateur"}
-                                        />
-                                        <AvatarFallback>
-                                          {(user.username || user.first_name || "U").substring(0, 2).toUpperCase()}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                        <div className="font-semibold">
-                                          {user.first_name} {user.last_name}
-                                        </div>
-                                        {user.username && (
-                                            <p className="text-sm text-muted-foreground">
-                                              @{user.username}
-                                            </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              </Link>
-                          ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground">Pas encore d'abonnés.</p>
-                    )
+        <TabsContent value="following">
+          <Card>
+            <CardHeader>
+              <CardTitle>Abonnements</CardTitle>
+              <CardDescription>
+                Personnes que {userProfile?.first_name || "Prénom"}{" "}
+                {userProfile?.last_name || "Nom"} suit
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              {/* Afficher les abonnements seulement si le profil est public, l'utilisateur est abonné, ou c'est son propre profil */}
+              {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
+                loadingFollowing ? (
+                  <div className="flex justify-center p-4">
+                    <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
+                  </div>
+                ) : following.length > 0 ? (
+                  <div className="space-y-2">
+                    {following.map(user => (
+                      <Link 
+                        href={`/profile?id=${user.user_id}`} 
+                        key={user.user_id}
+                        className="block transition-transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
+                      >
+                        <Card className="overflow-hidden hover:bg-muted/50">
+                          <CardContent className="p-4 flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                              <Avatar>
+                                <AvatarImage 
+                                  src={user.image ? `http://localhost:80/api/avatars/${user.image}` : undefined} 
+                                  alt={user.username || "utilisateur"} 
+                                />
+                                <AvatarFallback>
+                                  {(user.username || user.first_name).substring(0, 2).toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <div>
+                                <div className="font-semibold">
+                                  {user.first_name} {user.last_name}
+                                </div>
+                                {user.username && (
+                                  <p className="text-sm text-muted-foreground">
+                                    @{user.username}
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </Link>
+                    ))}
+                  </div>
                 ) : (
-                    <div className="text-center py-8">
-                      <LockIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-2">Compte privé</p>
-                      <p className="text-sm text-muted-foreground">
-                        Abonnez-vous pour voir les abonnés de {userProfile?.first_name || "cet utilisateur"}
-                      </p>
-                    </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="following">
-            <Card>
-              <CardHeader>
-                <CardTitle>Abonnements</CardTitle>
-                <CardDescription>
-                  Personnes que {userProfile?.first_name || "Prénom"}{" "}
-                  {userProfile?.last_name || "Nom"} suit
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                {(userProfile?.public || userProfile?.is_following === 1 || isOwnProfile) ? (
-                    loadingFollowing ? (
-                        <div className="flex justify-center p-4">
-                          <div className="animate-spin w-8 h-8 border-4 border-primary border-t-transparent rounded-full"></div>
-                        </div>
-                    ) : following.length > 0 ? (
-                        <div className="space-y-2">
-                          {following.map(user => (
-                              <Link
-                                  href={`/profile?id=${user.user_id}`}
-                                  key={user.user_id}
-                                  className="block transition-transform hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-lg"
-                                  onClick={() => {
-                                    // setUserProfile(null);
-                                  }}
-                              >
-                                <Card className="overflow-hidden hover:bg-muted/50">
-                                  <CardContent className="p-4 flex items-center justify-between">
-                                    <div className="flex items-center space-x-3">
-                                      <Avatar>
-                                        <AvatarImage
-                                            src={user.image ? `http://localhost:80/api/avatars/${user.image}` : undefined}
-                                            alt={user.username || "utilisateur"}
-                                        />
-                                        <AvatarFallback>
-                                          {(user.username || user.first_name || "U").substring(0, 2).toUpperCase()}
-                                        </AvatarFallback>
-                                      </Avatar>
-                                      <div>
-                                        <div className="font-semibold">
-                                          {user.first_name} {user.last_name}
-                                        </div>
-                                        {user.username && (
-                                            <p className="text-sm text-muted-foreground">
-                                              @{user.username}
-                                            </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </CardContent>
-                                </Card>
-                              </Link>
-                          ))}
-                        </div>
-                    ) : (
-                        <p className="text-muted-foreground">Ne suit personne pour l'instant.</p>
-                    )
-                ) : (
-                    <div className="text-center py-8">
-                      <LockIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <p className="text-muted-foreground mb-2">Compte privé</p>
-                      <p className="text-sm text-muted-foreground">
-                        Abonnez-vous pour voir les abonnements de {userProfile?.first_name || "cet utilisateur"}
-                      </p>
-                    </div>
-                )}
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      </div>
+                  <p className="text-muted-foreground">Ne suit personne pour l'instant.</p>
+                )
+              ) : (
+                <div className="text-center py-8">
+                  <LockIcon className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <p className="text-muted-foreground mb-2">Compte privé</p>
+                  <p className="text-sm text-muted-foreground">
+                    Abonnez-vous pour voir les abonnements de {userProfile?.first_name || "cet utilisateur"}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
   );
 }
