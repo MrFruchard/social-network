@@ -177,6 +177,11 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 
 	// GROUPS
+
+	//get all groups
+	mux.HandleFunc("GET /api/groups", func(w http.ResponseWriter, r *http.Request) {
+		handlers.HandleGetAllGroups(w, r, db)
+	})
 	// get groups info
 	mux.HandleFunc("GET /api/group/info", func(w http.ResponseWriter, r *http.Request) {
 		handlers.HandleGetGroupInfo(w, r, db)

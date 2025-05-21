@@ -414,3 +414,23 @@ func HandleAcceptAskToJoinGroup(w http.ResponseWriter, r *http.Request, db *sql.
 
 	utils.SuccessResponse(w, http.StatusOK, "Invitation Accepted")
 }
+
+func HandleGetAllGroups(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	groups, err := services.SendAllGroup(db, userId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(groups); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+		return
+	}
+}

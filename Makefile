@@ -10,7 +10,7 @@ push:
 	git commit -m "$(m)"
 	git push
 
-compose:
+up:
 	docker compose up -d
 build:
 	docker compose build

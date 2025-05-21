@@ -7,10 +7,21 @@ import { LogoutButton } from './logout-button';
 import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
 import PostModal from './PostModal';
+import {useDebounce} from '@/hooks/search/useDebounce';
 import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
   children: ReactNode;
+};
+
+type SearchResult = {
+  type: 'User' | 'Group';
+  data: {
+    id: string;
+    name: string;
+    group_pic_url?: string;
+    avatar_url?: string;
+  };
 };
 
 export function MainLayout({ children }: MainLayoutProps) {
@@ -18,7 +29,9 @@ export function MainLayout({ children }: MainLayoutProps) {
   const { userData } = useUserData();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
-
+  const [searchTerm, setSearchTerm] = useState('');
+  const debouncedSearch = useDebounce(searchTerm, 300); // délai debounce 300ms
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const openPostForm = () => {
     setIsModalOpen(true);
   };
@@ -39,6 +52,27 @@ export function MainLayout({ children }: MainLayoutProps) {
       setSelectedTag(null);
     }
   }, [pathname]);
+
+  useEffect(() => {
+    const fetchResults = async () => {
+      if (debouncedSearch.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/search?search=${encodeURIComponent(debouncedSearch)}`);
+        if (!res.ok) throw new Error('Erreur de requête');
+        const data = await res.json();
+        setSearchResults(data); // Ta réponse est un tableau
+      } catch (error) {
+        console.error('Erreur de recherche:', error);
+        setSearchResults([]);
+      }
+    };
+
+    fetchResults();
+  }, [debouncedSearch]);
 
   return (
     <div className='flex w-full min-h-screen bg-background'>
@@ -110,7 +144,40 @@ export function MainLayout({ children }: MainLayoutProps) {
                 <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
                   <SearchIcon className='h-4 w-4 text-muted-foreground' />
                 </div>
-                <input type='text' placeholder='Search' className='bg-muted w-full py-2 pl-10 pr-4 rounded-full text-sm border-none focus:ring-1 focus:ring-primary' />
+                <input
+                    type='text'
+                    placeholder='Search'
+                    className='bg-muted w-full py-2 pl-10 pr-4 rounded-full text-sm border-none focus:ring-1 focus:ring-primary'
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchResults.length > 0 && (
+                    <div className='absolute z-10 mt-1 w-full bg-background border border-border rounded shadow-sm max-h-60 overflow-y-auto'>
+                      {Array.isArray(searchResults) && searchResults.length > 0 && (
+                          <div className='absolute z-[9999] mt-1 w-full bg-background border border-border rounded shadow-sm max-h-60 overflow-y-auto'>
+                            {searchResults.map((result) => (
+                                <Link
+                                    key={result.data.id}
+                                    href={result.type === 'User' ? `/profile/${result.data.id}` : `/groups/${result.data.id}`}
+                                    className='flex items-center gap-2 px-4 py-2 text-sm hover:bg-muted transition-colors'
+                                >
+                                  {result.data.group_pic_url || result.data.avatar_url ? (
+                                      <img
+                                          src={`/images/${result.data.group_pic_url || result.data.avatar_url}`}
+                                          alt={result.data.name}
+                                          className='h-6 w-6 rounded-full object-cover'
+                                      />
+                                  ) : (
+                                      <UsersIcon className='h-5 w-5 text-muted-foreground' />
+                                  )}
+                                  <span>{result.data.name}</span>
+                                  <span className='text-xs text-muted-foreground ml-auto'>({result.type})</span>
+                                </Link>
+                            ))}
+                          </div>
+                      )}
+                    </div>
+                )}
               </div>
 
               {/* Who to follow section */}
