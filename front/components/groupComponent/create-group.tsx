@@ -1,5 +1,8 @@
 import { useState } from "react";
 
+import { Button } from '@/components/ui/button';
+
+
 export function CreateGroup({ onCreateSuccess }: { onCreateSuccess: () => void }) {
     const [showForm, setShowForm] = useState(false);
     const [title, setTitle] = useState("");
@@ -46,13 +49,13 @@ export function CreateGroup({ onCreateSuccess }: { onCreateSuccess: () => void }
         <>
             {/* Button aligned to the right */}
             <div className="flex justify-end p-4">
-                <button
+                <Button
                     onClick={() => setShowForm(!showForm)}
-                    className="text-white bg-black hover:bg-gray-800 font-bold rounded-full px-4 py-2 text-sm cursor-pointer"
+                    className={"cursor-pointer"}
                     title="Create a group"
                 >
-                    Create Group +
-                </button>
+                    Create Group
+                </Button>
             </div>
 
             {/* Compact form under the button */}
@@ -97,12 +100,12 @@ export function CreateGroup({ onCreateSuccess }: { onCreateSuccess: () => void }
                         {error && <p className="text-red-600 text-sm">{error}</p>}
                         {success && <p className="text-green-600 text-sm">Group created successfully!</p>}
                         <div className="flex justify-end">
-                            <button
+                            <Button
                                 type="submit"
-                                className="bg-black text-white px-4 py-1.5 text-sm rounded-full hover:bg-blue-950 cursor-pointer"
+                                className={"cursor-pointer"}
                             >
                                 Create
-                            </button>
+                            </Button>
                         </div>
                     </form>
                 </div>

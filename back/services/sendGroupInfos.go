@@ -33,7 +33,7 @@ func SendGroupInfos(db *sql.DB, userId, groupId string) (GroupInfo, error) {
 	}
 
 	queryTotalMember := `SELECT COUNT(*) FROM GROUPS_MEMBERS WHERE GROUP_ID = ?`
-	err = db.QueryRow(queryTotalMember, userId, groupId).Scan(&g.TotalMembers)
+	err = db.QueryRow(queryTotalMember, groupId).Scan(&g.TotalMembers)
 	if err != nil {
 		return g, err
 	}

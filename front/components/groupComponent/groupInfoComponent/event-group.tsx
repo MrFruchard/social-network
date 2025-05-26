@@ -1,5 +1,8 @@
 import { useEffect, useState } from "react";
 
+import { Button } from '@/components/ui/button';
+
+
 interface User {
     id: string;
     username?: string;
@@ -129,12 +132,12 @@ export function EventGroup({ groupId }: EventGroupProps) {
             )}
 
             {/* ✅ Bouton pour toggle le formulaire */}
-            <button
+            <Button
                 onClick={() => setShowForm(!showForm)}
-                className="mb-4 bg-gray-200 hover:bg-gray-300 px-3 py-1 rounded cursor-pointer"
+                className={"cursor-pointer"}
             >
                 {showForm ? "Annuler" : "Proposer un événement"}
-            </button>
+            </Button>
 
             {/* ✅ Affichage conditionnel du formulaire */}
             {showForm && (
@@ -171,13 +174,13 @@ export function EventGroup({ groupId }: EventGroupProps) {
                         />
                     </div>
 
-                    <button
+                    <Button
                         type="submit"
                         disabled={loading}
-                        className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50"
+                        className=" px-4 py-2  disabled:opacity-50 cursor-pointer"
                     >
                         {loading ? "Envoi..." : "Créer l'événement"}
-                    </button>
+                    </Button>
                 </form>
             )}
         </div>

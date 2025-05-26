@@ -1,7 +1,11 @@
 "use client";
 import { useState } from "react";
 import { MoreHorizontal } from "lucide-react";
-import { useRouter } from "next/navigation"; // <-- import ici
+import { useRouter } from "next/navigation";
+import {Button} from "@/components/ui/button";
+import {PendingRequests} from "@/components/groupComponent/groupInfoComponent/pending-request"; // <-- import ici
+import { FollowersListWithInvite } from "@/components/groupComponent/groupInfoComponent/invite-group-friend";
+
 
 interface GroupApiResponse {
     group_infos: {
@@ -14,6 +18,7 @@ interface GroupApiResponse {
     total_members: number;
     is_member: boolean;
     is_admin: boolean;
+    is_waiting: boolean;
 }
 
 export function HeaderGroup({ data }: { data: GroupApiResponse }) {
@@ -21,6 +26,8 @@ export function HeaderGroup({ data }: { data: GroupApiResponse }) {
     const [showMenu, setShowMenu] = useState(false);
     const [showConfirm, setShowConfirm] = useState(false);
     const router = useRouter(); // <-- ici
+    const [showRequests, setShowRequests] = useState(false);
+    const [showInvites, setShowInvites] = useState(false);
 
 
     async function handleDelete() {
@@ -33,7 +40,7 @@ export function HeaderGroup({ data }: { data: GroupApiResponse }) {
             const result = await res.json();
             console.log("Groupe supprimé :", result);
             // redirection possible ici si tu veux
-            router.push("/groups");
+            router.push("/group");
         } catch (error) {
             console.error(error);
         } finally {
@@ -71,19 +78,19 @@ export function HeaderGroup({ data }: { data: GroupApiResponse }) {
                     </div>
 
                     {showMenu  && (
-                        <div className="absolute top-0 right-0 mt-6 bg-white border rounded shadow-md z-10 p-2 text-sm w-40">
-                            <button className="block w-full text-left hover:bg-gray-100 px-2 py-1 rounded">
+                        <div className="absolute top-0 right-0 mt-6 bg-white border rounded shadow-md z-1 0 p-2 text-sm w-40 space-y-2">
+                            <Button className="block w-full text-left  px-2 py-1  cursor-pointer ">
                                 Modifier le groupe
-                            </button>
-                            <button
-                                className="block w-full text-left text-white bg-red-500 hover:bg-red-700 px-2 py-1 rounded cursor-pointer"
+                            </Button>
+                            <Button
+                                className="block w-full text-left text-white bg-red-500 hover:bg-red-700 px-2 py-1  cursor-pointer"
                                 onClick={() => {
                                     setShowConfirm(true);
                                     setShowMenu(false);
                                 }}
                             >
                                 Delete Group
-                            </button>
+                            </Button>
                         </div>
                     )}
 
@@ -92,8 +99,8 @@ export function HeaderGroup({ data }: { data: GroupApiResponse }) {
                         Created at: {new Date(group_infos.created_at).toLocaleString()}
                     </p>
 
-                    <div className="text-sm text-gray-700 space-y-1">
-                        <p>{total_members} member{total_members > 1 ? "s" : "" }</p>
+                    <div className="text-sm text-gray-700 space-y-1 ">
+                        <a className={"cursor-pointer hover:underline hover:font-semibold"}>{total_members} member{total_members  > 1 ? "s" : "" }</a>
                     </div>
                 </div>
             </div>
@@ -107,22 +114,66 @@ export function HeaderGroup({ data }: { data: GroupApiResponse }) {
                             Es-tu sûr de vouloir supprimer ce groupe ? <br/><span className={"font-bold"}>Cette action est irréversible</span>.
                         </p>
                         <div className="flex justify-end gap-2">
-                            <button
+                            <Button
                                 onClick={() => setShowConfirm(false)}
-                                className="px-4 py-2 text-gray-700 hover:text-black hover:bg-gray-200 cursor-pointer rounded-full"
+                                className="px-4 py-2 cursor-pointer "
                             >
-                                Annuler
-                            </button>
-                            <button
+                                Cancel
+                            </Button>
+                            <Button
                                 onClick={handleDelete}
-                                className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 cursor-pointer rounded-full"
+                                className="px-4 py-2 bg-red-600 text-white  hover:bg-red-700 cursor-pointer"
                             >
-                                Supprimer
-                            </button>
+                                Delete
+                            </Button>
                         </div>
                     </div>
                 </div>
             )}
+
+            {!data.is_member && !data.is_admin && (
+                <div className="mt-4">
+                    <Button
+                        onClick={async () => {
+                            try {
+                                const res = await fetch(`/api/group/ask?groupId=${group_infos.id}`, {
+                                    method: "POST",
+                                    credentials: "include",
+                                });
+                                if (!res.ok) throw new Error("Échec de la demande.");
+                                alert("Demande envoyée !");
+                            } catch (err) {
+                                console.error(err);
+                                alert("Une erreur est survenue.");
+                            }
+                        }}
+                    >
+                        Rejoindre le groupe
+                    </Button>
+                </div>
+            )}
+
+            <div className={"flex flex-nowrap space-x-2"}>
+                {data.is_admin && (
+                    <div className="mt-4">
+                        <Button onClick={() => setShowRequests(prev => !prev)}>
+                            {showRequests ? "Cacher les demandes" : "Voir les demandes"}
+                        </Button>
+                    </div>
+                )}
+
+                {data.is_member && (
+                    <div className="mt-4">
+                        <Button onClick={() => setShowInvites(prev => !prev)}>
+                            {showInvites ? "Fermer" : "Inviter des amis ?"}
+                        </Button>
+                    </div>
+                  )
+                }
+            </div>
+
+            {showRequests && <PendingRequests groupId={group_infos.id} />}
+            {showInvites && <FollowersListWithInvite groupId={group_infos.id} />}
         </div>
     );
 }

@@ -32,7 +32,7 @@ export function ListOfGroups({
                     {groups.map((group) => (
                         <li key={group.id}>
                             <Link
-                                href={`/groups/${group.id}`}
+                                href={`/group/${group.id}`}
                                 className="block border p-3 rounded-lg shadow flex items-center space-x-4 hover:bg-gray-100 transition"
                             >
                                 {group.group_pic_url ? (

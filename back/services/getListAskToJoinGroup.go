@@ -19,7 +19,7 @@ func ListAskToJoinGroup(userID, groupID string, db *sql.DB) ([]User, error) {
 		return nil, errors.New("user is not owner of group " + groupID)
 	}
 
-	queryAskGroup := `SELECT ASKER FROM ASK_GROUP WHERE GROUP_ID = ? `
+	queryAskGroup := `SELECT ASKER FROM ASK_GROUP WHERE GROUP_ID = ? AND ACCEPTED = 0 `
 	rows, err := db.Query(queryAskGroup, groupID)
 	if err != nil {
 		return nil, err

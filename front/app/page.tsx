@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { LoginForm } from "@/components/login-form";
 import { SignupForm } from "@/components/signup-form";
+import {Button} from "@/components/ui/button";
 
 export default function LandingPage() {
     const [showModal, setShowModal] = useState(false);
@@ -29,12 +30,12 @@ export default function LandingPage() {
             <p className="text-lg text-gray-600 mb-6 text-center">Inscrivez-vous pour ne rien rater.</p>
 
             <div className="flex flex-col w-full max-w-sm gap-4">
-                <button
+                <Button
                     onClick={() => setShowModal(true)}
-                    className="py-3 px-6 bg-black text-white font-semibold rounded-full text-center transition hover:bg-gray-800 cursor-pointer"
+                    className="px-6 py-3 text-lg text-center transition cursor-pointer w-full h-full"
                 >
                     Créer un compte
-                </button>
+                </Button>
             </div>
 
             <SignupForm showModal={showModal} setShowModal={setShowModal} />

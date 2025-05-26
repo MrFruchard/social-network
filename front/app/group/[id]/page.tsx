@@ -57,8 +57,12 @@ export default function GroupPage() {
         <MainLayout>
             <section className="overflow-y-auto">
                 <HeaderGroup data={data} />
-                <EventGroup groupId={groupId} />
-                <PostGroup groupId={groupId} />
+                {data.is_member && (
+                    <>
+                        <EventGroup groupId={groupId} />
+                        <PostGroup groupId={groupId} />
+                    </>
+                )}
             </section>
         </MainLayout>
     );
