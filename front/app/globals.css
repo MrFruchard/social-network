@@ -184,3 +184,12 @@
 .animate-pop {
   animation: pop 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+
+/* styles/globals.css ou un fichier global */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE/Edge */
+  scrollbar-width: none;     /* Firefox */
+}

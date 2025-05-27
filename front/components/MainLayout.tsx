@@ -54,7 +54,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <NavItem href='/profile' icon={<UserIcon className='h-5 w-5' />} label='Profile' active={pathname.startsWith('/profile')} />
           <NavItem href='/notifications' icon={<BellIcon className='h-5 w-5' />} label='Notifications' active={pathname === '/notifications'} />
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
-          <NavItem href='/groups' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/groups'} />
+          <NavItem href='/group' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/group'} />
           <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
         </nav>
 
