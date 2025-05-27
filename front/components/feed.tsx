@@ -314,10 +314,10 @@ export default function TwitterLikeFeed() {
           }}
           onPostUpdated={(updatedPost) => {
             // Mettre à jour le post dans la liste
-            setPosts(prevPosts => 
-              prevPosts.map(post => 
-                post.id === updatedPost.id ? updatedPost : post
-              )
+            setPosts(prevPosts =>
+                prevPosts.map(post =>
+                    post.id === updatedPost.id ? updatedPost : post
+                )
             );
           }}
         />

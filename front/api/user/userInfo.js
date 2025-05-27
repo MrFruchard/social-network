@@ -77,13 +77,11 @@ export const togglePrivacyStatus = async () => {
 };
 // Système de suivi
 export const followUser = async (userId) => {
-    const response = await fetch("http://localhost:80/api/user/follow", {
+    const response = await fetch(`http://localhost:80/api/user/follow?user=${userId}`, {
         method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid: userId })
+        credentials: "include"
     });
-    return response.json();
+    return response.ok;
 };
 
 export const acceptFollowRequest = async (userId) => {
@@ -91,7 +89,7 @@ export const acceptFollowRequest = async (userId) => {
         method: "POST",
         credentials: "include"
     });
-    return response.json();
+    return response.ok;
 };
 
 export const declineFollowRequest = async (userId) => {
@@ -99,37 +97,34 @@ export const declineFollowRequest = async (userId) => {
         method: "POST",
         credentials: "include"
     });
-    return response.json();
+    return response.ok;
 };
 
 export const unfollowUser = async (userId) => {
-    const response = await fetch("http://localhost:80/api/user/unfollow", {
+    const response = await fetch(`http://localhost:80/api/user/unfollow?user=${userId}`, {
         method: "POST",
         credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid: userId })
+        headers: { "Content-Type": "application/json" }
     });
-    return response.json();
+    return response.ok;
 };
 
 export const getFollowers = async (userId) => {
-    const response = await fetch("http://localhost:80/api/user/listfollower", {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid: userId })
+    const response = await fetch(`http://localhost:80/api/user/listfollower?user=${userId}`, {
+        credentials: "include"
     });
-    return response.json();
+    if (!response.ok) throw new Error('Failed to fetch followers');
+    const data = await response.json();
+    return data.status === 'success' && Array.isArray(data.followers) ? data.followers : [];
 };
 
 export const getFollowing = async (userId) => {
-    const response = await fetch("http://localhost:80/api/user/listfollow", {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userid: userId })
+    const response = await fetch(`http://localhost:80/api/user/listfollow?user=${userId}`, {
+        credentials: "include"
     });
-    return response.json();
+    if (!response.ok) throw new Error('Failed to fetch following');
+    const data = await response.json();
+    return data.status === 'success' && Array.isArray(data.follow) ? data.follow : [];
 };
 
 export const abortFollowRequest = async (userId) => {
@@ -137,7 +132,7 @@ export const abortFollowRequest = async (userId) => {
         method: "GET",
         credentials: "include"
     });
-    return response.json();
+    return response.ok;
 };
 
 // Vérification
