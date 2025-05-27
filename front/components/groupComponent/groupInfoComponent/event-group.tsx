@@ -28,7 +28,10 @@ interface EventGroupProps {
 
 export function EventGroup({ groupId }: EventGroupProps) {
     const [events, setEvents] = useState<EventInfos[] | null>(null);
+    const [title, setTitle] = useState("");
     const [desc, setDesc] = useState("");
+    const [eventDate, setEventDate] = useState("");
+    const [eventTime, setEventTime] = useState("");
     const [optionA, setOptionA] = useState("");
     const [optionB, setOptionB] = useState("");
     const [loading, setLoading] = useState(false);
@@ -71,7 +74,10 @@ export function EventGroup({ groupId }: EventGroupProps) {
 
             if (!res.ok) throw new Error("Erreur lors de la création de l'événement");
 
+            setTitle("");
             setDesc("");
+            setEventDate("");
+            setEventTime("");
             setOptionA("");
             setOptionB("");
 
@@ -145,13 +151,49 @@ export function EventGroup({ groupId }: EventGroupProps) {
                     <h3 className="text-lg font-semibold">Nouvel événement</h3>
 
                     <div>
+                        <label className="block font-medium">Titre de l&apos;événement</label>
+                        <input
+                            required
+                            type="text"
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="w-full border p-2 rounded"
+                            placeholder="Ex: Sortie au cinéma"
+                        />
+                    </div>
+
+                    <div>
                         <label className="block font-medium">Description</label>
                         <textarea
                             required
                             value={desc}
                             onChange={(e) => setDesc(e.target.value)}
                             className="w-full border p-2 rounded"
+                            placeholder="Décrivez l'événement..."
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block font-medium">Date</label>
+                            <input
+                                required
+                                type="date"
+                                value={eventDate}
+                                onChange={(e) => setEventDate(e.target.value)}
+                                className="w-full border p-2 rounded"
+                            />
+                        </div>
+                        <div>
+                            <label className="block font-medium">Heure</label>
+                            <input
+                                required
+                                type="time"
+                                value={eventTime}
+                                onChange={(e) => setEventTime(e.target.value)}
+                                className="w-full border p-2 rounded"
+                            />
+                        </div>
                     </div>
 
                     <div>
