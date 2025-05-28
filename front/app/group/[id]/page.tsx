@@ -6,6 +6,7 @@ import { MainLayout } from "@/components/MainLayout";
 import { HeaderGroup } from "@/components/groupComponent/groupInfoComponent/header-group";
 import { EventGroup } from "@/components/groupComponent/groupInfoComponent/event-group";
 import { PostGroup } from "@/components/groupComponent/groupInfoComponent/post-group";
+import { GroupChat } from "@/components/groupComponent/groupInfoComponent/group-chat";
 
 interface GroupApiResponse {
     group_infos: {
@@ -18,6 +19,7 @@ interface GroupApiResponse {
     total_members: number;
     is_member: boolean;
     is_admin: boolean;
+    is_waiting: boolean;
 }
 
 export default function GroupPage() {
@@ -58,10 +60,15 @@ export default function GroupPage() {
             <section className="overflow-y-auto">
                 <HeaderGroup data={data} />
                 {data.is_member && (
-                    <>
+                    <div className="space-y-6 p-4">
                         <EventGroup groupId={groupId} />
+                        <GroupChat 
+                            groupId={groupId} 
+                            isAdmin={data.is_admin} 
+                            isMember={data.is_member} 
+                        />
                         <PostGroup groupId={groupId} />
-                    </>
+                    </div>
                 )}
             </section>
         </MainLayout>
