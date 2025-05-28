@@ -224,7 +224,7 @@ func Handlers(mux *http.ServeMux, db *sql.DB, hub *websocketFile.Hub) {
 	})
 	// send message group -- à vérifier
 	mux.HandleFunc("POST /api/group/message", func(w http.ResponseWriter, r *http.Request) {
-		handlers.HandleMessageGroups(w, r, db)
+		handlers.HandleMessageGroups(w, r, db, hub)
 	})
 	// get message group -- à vérifier
 	mux.HandleFunc("GET /api/group/message", func(w http.ResponseWriter, r *http.Request) {
