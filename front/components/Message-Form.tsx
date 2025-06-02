@@ -11,7 +11,7 @@ import { useWebSocket, MessageType as WSMessageType } from '@/contexts/websocket
 export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: string; username: string; avatar: string | null }[]; onClose: () => void }) {
   const { user } = useAuth();
   const { send } = useSendMessage();
-  const { conversations = [], loading: conversationsLoading, fetchConversations } = useConversations();
+  const { conversations = [], loading: conversationsLoading, fetchConversations, updateConversationId } = useConversations();
   const [selectedConversationId, setSelectedConversationId] = useState<string | null>(null);
   const { messages: apiFetchedMessagesRoot, loading: messagesLoading, fetchMessages: fetchApiMessages } = useMessages(selectedConversationId || undefined);
   const [isCreateMessageOpen, setIsCreateMessageOpen] = useState(false);
@@ -363,6 +363,12 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
 
         // Mise à jour du message optimiste avec les données du serveur
         if (response && response.id) {
+          // Update conversation ID if it was temporary and we got a real one
+          if (selectedConversationId?.startsWith('temp-') && response.conversationId && updateConversationId) {
+            updateConversationId(selectedConversationId, response.conversationId);
+            setSelectedConversationId(response.conversationId);
+          }
+          
           setLocalMessages(prev => {
             // Vérifier si le message temporaire existe toujours
             const tempMessageExists = prev.some(m => m.id === tempId);
@@ -400,7 +406,7 @@ export function ChatLayout({ recipients = [], onClose }: { recipients?: { id: st
         });
       }
     },
-    [selectedConversationId, user, others, send]
+    [selectedConversationId, user, others, send, updateConversationId]
   );
 
   const currentUserForCard = useMemo(

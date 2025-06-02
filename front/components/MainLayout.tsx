@@ -7,6 +7,7 @@ import { LogoutButton } from './logout-button';
 import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
 import { PostModal } from '@/components/post';
+import { ToastContainer } from '@/components/ui/toast';
 import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
@@ -249,11 +250,12 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       {/* Mobile New Post Button */}
-      <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20'>
+      <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20' onClick={openPostForm}>
         <PlusIcon className='h-6 w-6' />
       </button>
 
-      {isModalOpen && <PostModal onClose={closePostForm} />}
+      {isModalOpen && <PostModal isOpen={isModalOpen} onClose={closePostForm} />}
+      <ToastContainer />
     </div>
   );
 }

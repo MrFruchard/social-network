@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import {Button} from "@/components/ui/button";
 import {PendingRequests} from "@/components/groupComponent/groupInfoComponent/pending-request"; // <-- import ici
 import { FollowersListWithInvite } from "@/components/groupComponent/groupInfoComponent/invite-group-friend";
+import { showToast } from "@/components/ui/toast";
 
 
 interface GroupApiResponse {
@@ -133,23 +134,31 @@ export function HeaderGroup({ data }: { data: GroupApiResponse }) {
 
             {!data.is_member && !data.is_admin && (
                 <div className="mt-4">
-                    <Button
-                        onClick={async () => {
-                            try {
-                                const res = await fetch(`/api/group/ask?groupId=${group_infos.id}`, {
-                                    method: "POST",
-                                    credentials: "include",
-                                });
-                                if (!res.ok) throw new Error("Échec de la demande.");
-                                alert("Demande envoyée !");
-                            } catch (err) {
-                                console.error(err);
-                                alert("Une erreur est survenue.");
-                            }
-                        }}
-                    >
-                        Rejoindre le groupe
-                    </Button>
+                    {data.is_waiting ? (
+                        <Button disabled className="bg-yellow-500 text-white cursor-not-allowed">
+                            Demande en attente...
+                        </Button>
+                    ) : (
+                        <Button
+                            onClick={async () => {
+                                try {
+                                    const res = await fetch(`/api/group/ask?groupId=${group_infos.id}`, {
+                                        method: "POST",
+                                        credentials: "include",
+                                    });
+                                    if (!res.ok) throw new Error("Échec de la demande.");
+                                    showToast("Demande envoyée avec succès !", "success");
+                                    // Recharger la page pour mettre à jour le statut
+                                    window.location.reload();
+                                } catch (err) {
+                                    console.error(err);
+                                    showToast("Une erreur est survenue lors de l'envoi de la demande.", "error");
+                                }
+                            }}
+                        >
+                            Rejoindre le groupe
+                        </Button>
+                    )}
                 </div>
             )}
 
@@ -162,10 +171,10 @@ export function HeaderGroup({ data }: { data: GroupApiResponse }) {
                     </div>
                 )}
 
-                {data.is_member && (
+                {(data.is_member || data.is_admin) && (
                     <div className="mt-4">
                         <Button onClick={() => setShowInvites(prev => !prev)}>
-                            {showInvites ? "Fermer" : "Inviter des amis ?"}
+                            {showInvites ? "Fermer" : "Inviter des amis"}
                         </Button>
                     </div>
                   )

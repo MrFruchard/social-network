@@ -20,7 +20,7 @@ export interface Message {
     isCurrentUser?: boolean;
   };
   timestamp: string;
-  status: 'sent' | 'delivered' | 'read';
+  status: 'sent' | 'delivered' | 'read' | 'failed';
   reactions?: Array<{
     emoji: string;
     count: number;
