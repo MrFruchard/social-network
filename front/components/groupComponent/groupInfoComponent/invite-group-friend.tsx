@@ -23,10 +23,19 @@ export function FollowersListWithInvite({ groupId }: FollowersListProps) {
     useEffect(() => {
         const fetchFollowers = async () => {
             try {
-                const res = await fetch("/api/user/followers", { credentials: "include" });
+                const res = await fetch("/api/user/listfollow", { credentials: "include" });
                 const data = await res.json();
-                if (Array.isArray(data)) {
-                    setFollowers(data);
+
+                // ✅ Corrigé ici : clé "follow"
+                if (Array.isArray(data.follow)) {
+                    const formatted = data.follow.map((f: any) => ({
+                        id: f.user_id,
+                        username: f.username,
+                        first_name: f.first_name,
+                        last_name: f.last_name,
+                        image_profile_url: f.image || null,
+                    }));
+                    setFollowers(formatted);
                 } else {
                     throw new Error("Format inattendu");
                 }
@@ -42,7 +51,7 @@ export function FollowersListWithInvite({ groupId }: FollowersListProps) {
 
     const handleInvite = async (userId: string) => {
         try {
-            const res = await fetch(`/api/group/invite?groupId=${groupId}&userId=${userId}`, {
+            const res = await fetch(`/api/group/invite?groupId=${groupId}&receiver=${userId}`, {
                 method: "POST",
                 credentials: "include",
             });

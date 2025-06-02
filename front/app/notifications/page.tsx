@@ -238,7 +238,7 @@ export default function NotificationsPage() {
               e.stopPropagation();
               
               // Accepter l'invitation de groupe
-              fetch(`http://localhost:80/api/group/acceptInvite?groupId=${groupData.group_id}`, {
+              fetch(`http://localhost:80/api/group/join?groupId=${groupData.group_id}`, {
                 method: 'POST',
                 credentials: 'include'
               }).then(response => {
