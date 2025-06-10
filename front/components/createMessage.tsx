@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { X, Search } from 'lucide-react';
 import { useListFollow } from '@/hooks/follow/useListFollow';
-import { useConversations } from '../hooks/message/ConversationsContext';
+import { useConversations } from '@/hooks/message/ConversationsContext';
 import { ChatLayout } from './Message-Form';
 
 interface User {
@@ -12,15 +12,19 @@ interface User {
   avatar?: string | null;
 }
 
-export default function CreateMessage({
-  isOpen,
-  onClose,
-  onSelectConversation,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  onSelectConversation?: (conversation: any) => void; // Typage à adapter selon ton modèle
-}) {
+interface Follow {
+  user_id: string;
+  username: string;
+  image?: string;
+}
+
+interface Conversation {
+  id: string;
+  participants: User[];
+  lastMessage: any;
+}
+
+export default function CreateMessage({ isOpen, onClose, onSelectConversation }: { isOpen: boolean; onClose: () => void; onSelectConversation?: (conversation: Conversation) => void }) {
   const [search, setSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState<User[]>([]);
   const { follows, loading, error, fetchFollows } = useListFollow();
@@ -35,10 +39,10 @@ export default function CreateMessage({
     }
   }, [isOpen, fetchFollows]);
 
-  const filteredUsers =
+  const filteredUsers: User[] =
     follows?.follow
-      ?.filter((follow) => follow.username.toLowerCase().includes(search.toLowerCase()))
-      .map((follow) => ({
+      ?.filter((follow: Follow) => follow.username.toLowerCase().includes(search.toLowerCase()))
+      .map((follow: Follow) => ({
         id: follow.user_id,
         username: follow.username,
         avatar: follow.image || null,
@@ -52,26 +56,39 @@ export default function CreateMessage({
     try {
       setIsCreatingConversation(true);
 
-      // Vérifie si une conversation existe déjà avec les mêmes participants
+      // Vérifions d'abord si cette conversation existe déjà
       const selectedIds = selectedUsers.map((u) => u.id).sort();
       const existingConv = Array.isArray(conversations)
-        ? conversations.find((conv) => {
-            const convIds = conv.participants.map((p) => p.id).sort();
-            return convIds.length === selectedIds.length && convIds.every((id, idx) => id === selectedIds[idx]);
+        ? conversations.find((conv: Conversation) => {
+            // S'assurer que participants est un tableau et a la même longueur que selectedIds
+            if (!Array.isArray(conv.participants) || conv.participants.length !== selectedIds.length) {
+              return false;
+            }
+            const convIds = conv.participants.map((p: User) => p.id).sort();
+            return convIds.every((id: string, idx: number) => id === selectedIds[idx]);
           })
         : null;
 
+      // Si la conversation existe déjà, afficher une animation et ne pas créer de doublons
       if (existingConv) {
         setShake(true);
         setTimeout(() => setShake(false), 500);
+        
+        // Sélectionnons la conversation existante au lieu d'en créer une nouvelle
+        if (onSelectConversation) {
+          onSelectConversation(existingConv);
+        }
+        
+        onClose();
         setIsCreatingConversation(false);
-        // NE PAS fermer la modale ici !
         return;
       }
 
-      const newConversation = {
-        id: `temp-${Date.now()}`,
-        participants: selectedUsers.map((user) => ({
+      // Créons une nouvelle conversation avec un ID temporaire
+      const newConversationId = `temp-${Date.now()}`;
+      const newConversation: Conversation = {
+        id: newConversationId,
+        participants: selectedUsers.map((user: User) => ({
           id: user.id,
           username: user.username,
           avatar: user.avatar,
@@ -79,19 +96,20 @@ export default function CreateMessage({
         lastMessage: null,
       };
 
+      // Ajoutons la conversation au contexte
       addConversation(newConversation);
 
+      // Informons le parent de la sélection si nécessaire
       if (onSelectConversation) {
         onSelectConversation(newConversation);
       }
 
-      setShowMessageForm(true);
-      onClose(); // Ferme la modale seulement après création
+      // Fermons le modal de création
+      onClose();
     } catch (error) {
       console.error('Error creating conversation:', error);
     } finally {
       setIsCreatingConversation(false);
-      // onClose(); // <-- Retire cette ligne du finally
     }
   };
 

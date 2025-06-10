@@ -4,7 +4,7 @@ export const fetchHomeGroups = async () => {
         credentials: "include",
     });
     if (!response.ok) {
-        throw new Error('Failed to fetch groups');
+        throw new Error('Failed to fetch group');
     }
     return response.json();
 };

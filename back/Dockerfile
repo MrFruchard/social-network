@@ -3,7 +3,7 @@ FROM golang:1.24.0-alpine AS builder
 
 WORKDIR /app
 
-RUN apk add --no-cache gcc musl-dev sqlite-dev
+RUN apk add  gcc musl-dev sqlite-dev
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -16,7 +16,7 @@ FROM alpine:latest
 
 WORKDIR /root/
 
-RUN apk add --no-cache sqlite
+RUN apk add  sqlite
 
 COPY --from=builder /app/main .
 COPY --from=builder /app/pkg/db/migrations /root/pkg/db/migrations

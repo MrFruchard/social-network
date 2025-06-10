@@ -237,8 +237,8 @@ export default function NotificationsPage() {
               e.preventDefault();
               e.stopPropagation();
               
-              // Cette API n'existe peut-être pas encore, à adapter
-              fetch(`http://localhost:80/api/group/accept?group=${groupData.group_id}`, {
+              // Accepter l'invitation de groupe
+              fetch(`http://localhost:80/api/group/join?groupId=${groupData.group_id}`, {
                 method: 'POST',
                 credentials: 'include'
               }).then(response => {
@@ -269,8 +269,8 @@ export default function NotificationsPage() {
               e.preventDefault();
               e.stopPropagation();
               
-              // Cette API n'existe peut-être pas encore, à adapter
-              fetch(`http://localhost:80/api/group/decline?group=${groupData.group_id}`, {
+              // Refuser l'invitation de groupe
+              fetch(`http://localhost:80/api/group/declineInvite?groupId=${groupData.group_id}`, {
                 method: 'POST',
                 credentials: 'include'
               }).then(response => {

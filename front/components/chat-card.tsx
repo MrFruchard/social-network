@@ -20,7 +20,7 @@ export interface Message {
     isCurrentUser?: boolean;
   };
   timestamp: string;
-  status: 'sent' | 'delivered' | 'read';
+  status: 'sent' | 'delivered' | 'read' | 'failed';
   reactions?: Array<{
     emoji: string;
     count: number;
@@ -65,11 +65,39 @@ export function ChatCard({
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  useEffect(() => {
-    if (!hasLocalMessage) {
-      setMessages(initialMessages);
+  // useRef pour comparer les initialMessages
+  const initialMessagesRef = useRef<ChatCardMessage[]>([]);
+
+  // Fonction de comparaison des messages par ID
+  const areMessageArraysEqual = (a: ChatCardMessage[], b: ChatCardMessage[]) => {
+    if (a.length !== b.length) return false;
+
+    const aIds = new Set(a.map((m) => m.id));
+    const bIds = new Set(b.map((m) => m.id));
+
+    if (aIds.size !== bIds.size) return false;
+
+    for (const id of aIds) {
+      if (!bIds.has(id)) return false;
     }
-  }, [initialMessages]);
+
+    return true;
+  };
+
+  // N'utiliser l'effet qu'une seule fois à l'initialisation ou en cas de changement réel
+  useEffect(() => {
+    // Comparer les nouveaux messages avec ceux qu'on a déjà traités
+    const messagesHaveChanged = !areMessageArraysEqual(initialMessages, initialMessagesRef.current);
+
+    // Ne mettre à jour que si les messages ont changé et qu'on n'a pas de message local
+    if (!hasLocalMessage && messagesHaveChanged) {
+      // Mettre à jour l'état local des messages
+      setMessages(initialMessages);
+
+      // Mettre à jour notre référence
+      initialMessagesRef.current = [...initialMessages];
+    }
+  }, [initialMessages, hasLocalMessage]);
 
   const [inputValue, setInputValue] = useState('');
   const [imageFile, setImageFile] = useState<File | undefined>(undefined);

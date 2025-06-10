@@ -4,12 +4,15 @@ import { Heart, MessageCircle, ThumbsUp, ThumbsDown, Users } from 'lucide-react'
 import Link from 'next/link';
 import UserLink from '@/components/UserLink';
 import { useRouter } from 'next/navigation';
+import { PostDetail } from '@/components/post';
 
 export default function TwitterLikeFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [selectedPostId, setSelectedPostId] = useState<string | number | null>(null);
+  const [postDetailOpen, setPostDetailOpen] = useState(false);
   const router = useRouter();
 
   useEffect(() => {
@@ -263,14 +266,21 @@ export default function TwitterLikeFeed() {
                 )}
 
                 <div className='flex justify-between mt-3 text-gray-500'>
-                  <Link href={`/post/${post.id}`}>
-                    <button className='flex items-center group'>
-                      <div className='p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-500 transition'>
-                        <MessageCircle size={18} />
-                      </div>
-                      <span className='ml-1 text-sm group-hover:text-blue-500'>{post.comment_count}</span>
-                    </button>
-                  </Link>
+                  <button 
+                    className='flex items-center group'
+                    onClick={() => {
+                      // S'assurer que l'ID est bien une chaîne
+                      const safePostId = post.id.toString();
+                      console.log("Opening post with ID:", safePostId);
+                      setSelectedPostId(safePostId);
+                      setPostDetailOpen(true);
+                    }}
+                  >
+                    <div className='p-2 rounded-full group-hover:bg-blue-50 group-hover:text-blue-500 transition'>
+                      <MessageCircle size={18} />
+                    </div>
+                    <span className='ml-1 text-sm group-hover:text-blue-500'>{post.comment_count}</span>
+                  </button>
 
                   <button className='flex items-center group' onClick={() => handleLike(post.id)}>
                     <div className={`p-2 rounded-full transition ${post.liked ? 'bg-green-50 text-green-500' : 'group-hover:bg-green-50 group-hover:text-green-500'}`}>
@@ -291,6 +301,27 @@ export default function TwitterLikeFeed() {
           </div>
         ))}
       </div>
+      
+      {/* PostDetail Dialog */}
+      {selectedPostId && (
+        <PostDetail
+          postId={selectedPostId}
+          isOpen={postDetailOpen}
+          onClose={() => {
+            setPostDetailOpen(false);
+            // Laisser un petit délai avant de réinitialiser l'ID pour éviter des flashs
+            setTimeout(() => setSelectedPostId(null), 200);
+          }}
+          onPostUpdated={(updatedPost) => {
+            // Mettre à jour le post dans la liste
+            setPosts(prevPosts =>
+                prevPosts.map(post =>
+                    post.id === updatedPost.id ? updatedPost : post
+                )
+            );
+          }}
+        />
+      )}
     </div>
   );
 }

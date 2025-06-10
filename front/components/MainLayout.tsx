@@ -6,7 +6,8 @@ import { usePathname } from 'next/navigation';
 import { LogoutButton } from './logout-button';
 import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
-import PostModal from './PostModal';
+import { PostModal } from '@/components/post';
+import { ToastContainer } from '@/components/ui/toast';
 import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
@@ -40,6 +41,7 @@ export function MainLayout({ children }: MainLayoutProps) {
     }
   }, [pathname]);
 
+  // @ts-ignore
   return (
     <div className='flex w-full min-h-screen bg-background'>
       {/* Left Sidebar - fixed */}
@@ -53,7 +55,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <NavItem href='/profile' icon={<UserIcon className='h-5 w-5' />} label='Profile' active={pathname.startsWith('/profile')} />
           <NavItem href='/notifications' icon={<BellIcon className='h-5 w-5' />} label='Notifications' active={pathname === '/notifications'} />
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
-          <NavItem href='/groups' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/groups'} />
+          <NavItem href='/group' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/group'} />
           <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
         </nav>
 
@@ -79,24 +81,8 @@ export function MainLayout({ children }: MainLayoutProps) {
       <div className='hidden md:block w-64 flex-shrink-0'></div>
 
       {/* Main Content Area */}
-      {/* Main Content Area */}
       <div className='flex-1 flex flex-col w-full'>
-        {/* Top Header - Hide for messages and toto-ia routes */}
-        {pathname !== '/messages' && pathname !== '/toto-ia' && (
-          <header className='h-14 border-b border-border flex items-center px-4 sticky top-0 bg-background z-10'>
-            <h2 className='text-xl font-semibold'>
-              {pathname === '/home' && 'Home'}
-              {pathname.startsWith('/profile') && 'Profile'}
-              {pathname === '/notifications' && 'Notifications'}
-              {pathname === '/messages' && 'Messages'}
-              {pathname === '/groups' && 'Groups'}
-              {pathname === '/toto-ia' && 'ToToIA'}
-            </h2>
-            <div className='ml-auto'>
-              <NotificationIndicator />
-            </div>
-          </header>
-        )}
+
 
         {/* Content Container with Feed and Right Sidebar */}
         <div className='flex w-full'>
@@ -264,11 +250,12 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       {/* Mobile New Post Button */}
-      <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20'>
+      <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20' onClick={openPostForm}>
         <PlusIcon className='h-6 w-6' />
       </button>
 
-      {isModalOpen && <PostModal onClose={closePostForm} />}
+      {isModalOpen && <PostModal isOpen={isModalOpen} onClose={closePostForm} />}
+      <ToastContainer />
     </div>
   );
 }

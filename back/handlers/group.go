@@ -366,3 +366,71 @@ func HandleGetEventGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 }
+
+func HandleGetListAskToJoinGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	groupId := r.URL.Query().Get("groupId")
+	if strings.TrimSpace(groupId) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	list, err := services.ListAskToJoinGroup(userId, groupId, db)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(list); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+		return
+	}
+}
+
+func HandleAcceptAskToJoinGroup(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	groupId := r.URL.Query().Get("groupId")
+	asker := r.URL.Query().Get("userId")
+	if strings.TrimSpace(groupId) == "" || strings.TrimSpace(asker) == "" {
+		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupId")
+		return
+	}
+
+	err := services.AcceptAskerToJoinGroup(db, groupId, userId, asker)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	utils.SuccessResponse(w, http.StatusOK, "Invitation Accepted")
+}
+
+func HandleGetAllGroups(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	userId := utils.GetUserIdByCookie(r, db)
+	if userId == "" {
+		utils.ErrorResponse(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	groups, err := services.SendAllGroup(db, userId)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if err := json.NewEncoder(w).Encode(groups); err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")
+		return
+	}
+}

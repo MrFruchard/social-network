@@ -44,11 +44,29 @@ function useConversationsInternal() {
       }));
 
       setState((prev) => {
-        // On garde les conversations temporaires (id qui commence par temp-)
-        const tempConvs = Array.isArray(prev.conversations) ? prev.conversations.filter((c: any) => String(c.id).startsWith('temp-')) : [];
+        const conversations = Array.isArray(prev.conversations) ? prev.conversations : [];
+        
+        // Merge server conversations with temporary ones
+        const mergedConversations = [...mapped];
+        
+        // Add temporary conversations that don't have a server match
+        const tempConvs = conversations.filter((tempConv: any) => {
+          if (!String(tempConv.id).startsWith('temp-')) return false;
+          
+          // Check if this temp conversation matches any server conversation by participants
+          return !mapped.some(serverConv => {
+            if (!Array.isArray(tempConv.participants) || !Array.isArray(serverConv.participants)) return false;
+            if (tempConv.participants.length !== serverConv.participants.length) return false;
+            
+            const tempIds = tempConv.participants.map((p: any) => p.id).sort();
+            const serverIds = serverConv.participants.map((p: any) => p.id).sort();
+            return tempIds.every((id: string, idx: number) => id === serverIds[idx]);
+          });
+        });
+        
         return {
           ...prev,
-          conversations: [...mapped, ...tempConvs],
+          conversations: [...mergedConversations, ...tempConvs],
           error: null,
         };
       });
@@ -62,16 +80,59 @@ function useConversationsInternal() {
     }
   }, []);
 
+  // Met à jour l'ID d'une conversation temporaire avec l'ID du serveur
+  const updateConversationId = useCallback((tempId: string, realId: string) => {
+    setState(prev => ({
+      ...prev,
+      conversations: prev.conversations.map(conv => 
+        conv.id === tempId ? { ...conv, id: realId } : conv
+      ),
+      currentConversation: prev.currentConversation?.id === tempId 
+        ? { ...prev.currentConversation, id: realId }
+        : prev.currentConversation
+    }));
+  }, []);
+
   // Ajoute une conversation temporaire (ou locale)
   const addConversation = useCallback((newConversation: Conversation) => {
     setState((prev) => {
       const conversations = Array.isArray(prev.conversations) ? prev.conversations : [];
-      const updated = {
+      
+      // Vérifions si cette conversation existe déjà (éviter les doublons)
+      const conversationExists = conversations.some(conv => 
+        conv.id === newConversation.id || 
+        (Array.isArray(conv.participants) && 
+         Array.isArray(newConversation.participants) &&
+         conv.participants.length === newConversation.participants.length &&
+         conv.participants.every(p1 => 
+           newConversation.participants.some(p2 => p1.id === p2.id)
+         )
+        )
+      );
+      
+      // Si elle existe déjà, ne pas la rajouter
+      if (conversationExists) {
+        return {
+          ...prev,
+          currentConversation: conversations.find(conv => 
+            conv.id === newConversation.id || 
+            (Array.isArray(conv.participants) && 
+             Array.isArray(newConversation.participants) &&
+             conv.participants.length === newConversation.participants.length &&
+             conv.participants.every(p1 => 
+               newConversation.participants.some(p2 => p1.id === p2.id)
+             )
+            )
+          ) || newConversation
+        };
+      }
+      
+      // Sinon, l'ajouter à la liste
+      return {
         ...prev,
         conversations: [...conversations, newConversation],
         currentConversation: newConversation,
       };
-      return updated;
     });
   }, []);
 
@@ -79,6 +140,7 @@ function useConversationsInternal() {
     ...state,
     fetchConversations,
     addConversation,
+    updateConversationId,
   };
 }
 

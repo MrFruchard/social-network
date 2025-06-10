@@ -4,9 +4,12 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/google/uuid"
+	"strings"
 )
 
 func ResponseEvent(db *sql.DB, userId, groupID, eventId, response string) error {
+	response = strings.ToUpper(response)
+
 	var responseInt int
 	if response == "A" {
 		responseInt = 1
@@ -16,7 +19,7 @@ func ResponseEvent(db *sql.DB, userId, groupID, eventId, response string) error 
 		return errors.New("invalid response")
 	}
 
-	// Vérifier si une réponse existe déjà pour cet utilisateur, groupe et event
+	// Vérifier si une réponse existe déjà
 	var existingID string
 	var existingResponse int
 	err := db.QueryRow(`
@@ -30,17 +33,17 @@ func ResponseEvent(db *sql.DB, userId, groupID, eventId, response string) error 
 
 	if existingID != "" {
 		if existingResponse == responseInt {
-			// Même réponse → toggle = suppression
+			// ✅ Même réponse → toggle (supprime la réponse)
 			_, err = db.Exec(`DELETE FROM RESPONSE_EVENT WHERE ID = ?`, existingID)
 			return err
 		} else {
-			// Réponse différente → mise à jour
+			// ✅ Réponse différente → mise à jour
 			_, err = db.Exec(`UPDATE RESPONSE_EVENT SET RESPONSE = ? WHERE ID = ?`, responseInt, existingID)
 			return err
 		}
 	}
 
-	// Aucune réponse → insertion
+	// ✅ Aucune réponse encore → insertion
 	id := uuid.New().String()
 	_, err = db.Exec(`
 		INSERT INTO RESPONSE_EVENT (ID, USER_ID, RESPONSE, EVENT_ID, GROUP_ID)
