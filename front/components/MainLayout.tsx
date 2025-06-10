@@ -7,6 +7,7 @@ import { LogoutButton } from './logout-button';
 import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
 import { PostModal } from '@/components/post';
+import { ToastContainer } from '@/components/ui/toast';
 import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
@@ -54,7 +55,7 @@ export function MainLayout({ children }: MainLayoutProps) {
           <NavItem href='/profile' icon={<UserIcon className='h-5 w-5' />} label='Profile' active={pathname.startsWith('/profile')} />
           <NavItem href='/notifications' icon={<BellIcon className='h-5 w-5' />} label='Notifications' active={pathname === '/notifications'} />
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
-          <NavItem href='/groups' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/groups'} />
+          <NavItem href='/group' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/group'} />
           <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
         </nav>
 
@@ -249,11 +250,12 @@ export function MainLayout({ children }: MainLayoutProps) {
       </div>
 
       {/* Mobile New Post Button */}
-      <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20'>
+      <button className='md:hidden fixed bottom-20 right-4 h-14 w-14 rounded-full bg-blue-500 text-white flex items-center justify-center shadow-lg z-20' onClick={openPostForm}>
         <PlusIcon className='h-6 w-6' />
       </button>
 
-      {isModalOpen && <PostModal onClose={closePostForm} />}
+      {isModalOpen && <PostModal isOpen={isModalOpen} onClose={closePostForm} />}
+      <ToastContainer />
     </div>
   );
 }

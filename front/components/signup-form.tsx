@@ -129,7 +129,7 @@ export function SignupForm({ showModal, setShowModal }: SignupFormProps) {
   if (!showModal) return null;
 
   return (
-      <div className="fixed inset-0 z-50 px-4 flex items-center justify-center backdrop-blur-sm bg-white/30">
+      <div className="fixed inset-0 z-50 px-4 flex items-center justify-center backdrop-blur-xs bg-white/30">
         <div className="bg-white w-full max-w-lg min-h-[600px] max-h-[90vh] p-6 relative shadow-lg flex flex-col">
           <button
               onClick={() => setShowModal(false)}
@@ -269,6 +269,17 @@ export function SignupForm({ showModal, setShowModal }: SignupFormProps) {
                   </>
               )}
             </div>
+
+            {/* Progress bar */}
+            <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden mb-4">
+              <div
+                  className="h-full bg-black transition-all duration-500"
+                  style={{
+                    width: `${(step   / 3) * 100}%`,
+                  }}
+              />
+            </div>
+
 
             <div className="flex justify-end mt-4 gap-4">
               {step > 1 && (

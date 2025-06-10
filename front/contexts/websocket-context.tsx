@@ -25,6 +25,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
   const [messages, setMessages] = useState<any[]>([]);
   const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const maxReconnectAttempts = 5;
+  const [reconnectAttempts, setReconnectAttempts] = useState(0);
 
   const connectWebSocket = () => {
     if (wsRef.current && (wsRef.current.readyState === WebSocket.OPEN || wsRef.current.readyState === WebSocket.CONNECTING)) {
@@ -46,7 +49,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
 
         const formattedData: MessageType = {
           type: receivedMessage.type,
-          id: receivedMessage.id || `ws-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          id: receivedMessage.id || `ws-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
           content: receivedMessage.content,
           conversationId: receivedMessage.convId,
           senderId: receivedMessage.sender?.id || receivedMessage.senderId,
@@ -57,7 +60,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        if (formattedData.type === 'private_message') {
+        if (formattedData.type === 'private_message' || formattedData.type === 'group_message') {
           setMessages((prevMessages) => [...prevMessages, formattedData]);
         }
       } catch (error) {
@@ -68,15 +71,34 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     ws.onclose = () => {
       console.log('WebSocket déconnecté');
       setIsConnected(false);
+      setReconnectAttempts(prev => prev + 1);
+      
+      // Auto-reconnect logic
+      if (reconnectAttempts < maxReconnectAttempts) {
+        const timeout = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000); // Exponential backoff, max 30s
+        reconnectTimeoutRef.current = setTimeout(() => {
+          console.log(`Tentative de reconnexion ${reconnectAttempts + 1}/${maxReconnectAttempts}`);
+          connectWebSocket();
+        }, timeout);
+      }
     };
 
     ws.onerror = (error) => {
       console.error('Erreur WebSocket:', error);
       setIsConnected(false);
     };
+    
+    // Reset reconnect attempts on successful connection
+    setReconnectAttempts(0);
   };
 
   const disconnectWebSocket = () => {
+    // Clear any pending reconnection
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+    
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -95,6 +117,9 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   // Nettoyer à la fermeture du composant
   useEffect(() => {
     return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+      }
       disconnectWebSocket();
     };
   }, []);

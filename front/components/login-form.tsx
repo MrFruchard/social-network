@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useLogin } from '@/hooks/user/useLogin';
+import {Button} from "@/components/ui/button";
 
 export function LoginForm() {
     const [identifier, setIdentifier] = useState('');
@@ -50,13 +51,13 @@ export function LoginForm() {
                 />
             </div>
 
-            <button
+            <Button
                 type="submit"
                 disabled={loading}
-                className="py-3 px-6 bg-black text-white font-semibold rounded-full text-center transition hover:bg-gray-800 w-full cursor-pointer"
+                className="w-full cursor-pointer"
             >
                 {loading ? 'Connexion en cours...' : 'Se connecter'}
-            </button>
+            </Button>
         </form>
     );
 }
