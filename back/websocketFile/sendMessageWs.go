@@ -14,6 +14,7 @@ type SenderMessage struct {
 	Content   string    `json:"content"`
 	ConvId    string    `json:"convId"`
 	MessageId string    `json:"messageId"`
+	IsImage   bool      `json:"isImage"`
 	Time      time.Time `json:"time"`
 }
 

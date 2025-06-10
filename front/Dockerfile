@@ -5,7 +5,7 @@ FROM node:18-alpine
 WORKDIR /app
 
 # Installer les dépendances système
-RUN apk add --no-cache libc6-compat
+RUN apk add  libc6-compat
 
 # Copier uniquement les fichiers de dépendances pour optimiser le cache
 COPY package.json package-lock.json ./

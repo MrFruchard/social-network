@@ -125,7 +125,7 @@ func HandleGetMessages(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 }
 
 // send Message to group
-func HandleMessageGroups(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+func HandleMessageGroups(w http.ResponseWriter, r *http.Request, db *sql.DB, h *websocketFile.Hub) {
 	userID := utils.GetUserIdByCookie(r, db)
 	if userID == "" {
 		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized")
@@ -170,13 +170,19 @@ func HandleMessageGroups(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		return
 	}
 
-	err = services.SendGroupMessage(db, userID, groupID, content, typeMessage)
+	// Enregistrement du message dans la base de données
+	convID, msgID, err := services.SendGroupMessage(db, userID, groupID, content, typeMessage)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to send group message")
 		return
 	}
 
-	// TODO: broadcast message to group
+	// Broadcast WebSocket
+	err = h.SendGroupMessage(groupID, content, userID, convID, msgID, typeMessage, db)
+	if err != nil {
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to broadcast message")
+		return
+	}
 
 	utils.SuccessResponse(w, http.StatusOK, "Message sent to group")
 }
