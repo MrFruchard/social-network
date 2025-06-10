@@ -10,6 +10,7 @@ func CanPassPostImage(db *sql.DB, userID, imgID string) error {
 	var privacy int
 	var userPostId string
 	var postId string
+	var groupId sql.NullString
 
 	log.Println(imgID)
 
@@ -19,14 +20,29 @@ func CanPassPostImage(db *sql.DB, userID, imgID string) error {
 		return errors.Wrap(err, "CanPassPostImage")
 	}
 
-	query = `SELECT PRIVACY, USER_ID FROM POSTS WHERE ID = ? LIMIT 1`
-	err = db.QueryRow(query, postId).Scan(&privacy, &userPostId)
+	query = `SELECT PRIVACY, USER_ID, GROUP_ID FROM POSTS WHERE ID = ? LIMIT 1`
+	err = db.QueryRow(query, postId).Scan(&privacy, &userPostId, &groupId)
 	if err != nil {
 		return err
 	}
 
 	if userID == userPostId {
 		return nil
+	}
+
+	if groupId.Valid {
+		var isExist bool
+		query = `SELECT EXISTS(SELECT 1 FROM GROUPS_MEMBERS WHERE USER_ID= ? AND GROUP_ID= ? LIMIT 1)`
+		err = db.QueryRow(query, userID, groupId).Scan(&isExist)
+		if err != nil {
+			return errors.Wrap(err, "CanPassPostImage")
+		}
+		if !isExist {
+			return errors.New("User is not a member of the group")
+		} else {
+			return nil
+		}
+
 	}
 
 	if privacy == 2 {

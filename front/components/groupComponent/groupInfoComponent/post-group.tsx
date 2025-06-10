@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation';
 import { reactToPost } from '@/api/post/postApi';
 import UserLink from '@/components/UserLink';
 import { PostDetail } from '@/components/post';
-import {Button} from "@/components/ui/button";
-import { CreatePostModal } from '@/components/groupComponent/groupInfoComponent/create-post-group'; // adapte le chemin si besoin
+import { Button } from "@/components/ui/button";
+import { CreatePostModal } from '@/components/groupComponent/groupInfoComponent/create-post-group';
 
 interface Post {
     id: number | string;
@@ -45,8 +45,8 @@ export function PostGroup({ groupId }: PostGroupProps) {
     const [error, setError] = useState<string | null>(null);
     const [selectedPostId, setSelectedPostId] = useState<string | number | null>(null);
     const [postDetailOpen, setPostDetailOpen] = useState(false);
+    const [createPost, setCreatePost] = useState(false);
     const router = useRouter();
-    const [createPost, setCreatePost] = useState<boolean>(false);
 
     useEffect(() => {
         if (!groupId) return;
@@ -60,38 +60,29 @@ export function PostGroup({ groupId }: PostGroupProps) {
                 if (!res.ok) throw new Error('Erreur lors du chargement des posts');
                 const data = await res.json();
 
-                if (!data || !Array.isArray(data)) {
+                if (!Array.isArray(data)) {
                     setPosts([]);
                     return;
                 }
 
-
-                const postsWithImages = await Promise.all(data.map(async (post: Post) => {
-                    try {
-                        if (post.image_profile_url) {
-                            const res = await fetch(`/api/avatars/${post.image_profile_url}`);
-                            if (res.ok) {
-                                const blob = await res.blob();
+                const postsWithAvatars = await Promise.all(data.map(async (post: Post) => {
+                    if (post.image_profile_url) {
+                        try {
+                            const avatarRes = await fetch(`/api/avatars/${post.image_profile_url}`);
+                            if (avatarRes.ok) {
+                                const blob = await avatarRes.blob();
                                 post.image_profile_url = URL.createObjectURL(blob);
                             } else {
                                 post.image_profile_url = null;
                             }
+                        } catch (err) {
+                            post.image_profile_url = null;
                         }
-
-                        if (post.image_content_url) {
-                            const res = await fetch(`/api/postImages/${post.image_content_url}`);
-                            if (res.ok) {
-                                const blob = await res.blob();
-                                post.image_content_url = URL.createObjectURL(blob);
-                            }
-                        }
-                    } catch (err) {
-                        console.error("Image fetch error", err);
                     }
                     return post;
                 }));
 
-                setPosts(postsWithImages);
+                setPosts(postsWithAvatars);
                 setError(null);
             } catch (err) {
                 console.error(err);
@@ -168,28 +159,31 @@ export function PostGroup({ groupId }: PostGroupProps) {
 
     return (
         <div className="divide-y">
-            <div className="flex justify-end p-4 cursor-pointer">
-                <Button onClick={() => setCreatePost(true)} className={"cursor-pointer"}>Créer un post</Button>
+            <div className="flex justify-end p-4">
+                <Button onClick={() => setCreatePost(true)}>Créer un post</Button>
                 {createPost && (
                     <CreatePostModal
                         groupId={groupId}
                         onClose={() => setCreatePost(false)}
                         onPostCreated={() => {
                             setCreatePost(false);
-                            // Recharge les posts si besoin
+                            // Recharge les posts si nécessaire
                         }}
                     />
                 )}
             </div>
+
             {posts.map(post => (
                 <div key={post.id} className="p-4 hover:bg-gray-50 transition">
                     <div className="flex">
                         <div className="mr-3 cursor-pointer" onClick={() => router.push(`/profile?id=${post.userId}`)}>
                             {post.image_profile_url ? (
-                                <img src={post.image_profile_url} className="w-12 h-12 rounded-full object-cover" />
+                                <img src={post.image_profile_url} className="w-12 h-12 rounded-full object-cover" alt="Avatar" />
                             ) : (
                                 <div className="w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center">
-                                    <span className="text-gray-500 font-semibold text-lg">{post.first_name[0]}{post.last_name[0]}</span>
+                                    <span className="text-gray-500 font-semibold text-lg">
+                                        {post.first_name[0]}{post.last_name[0]}
+                                    </span>
                                 </div>
                             )}
                         </div>
@@ -209,7 +203,8 @@ export function PostGroup({ groupId }: PostGroupProps) {
                             )}
 
                             <div className="mt-1 mb-2 whitespace-pre-line">{post.content}</div>
-                            {post.tags && (
+
+                            {post.tags && post.tags.length > 0 && (
                                 <div className="mt-1">
                                     {post.tags.map((tag, index) => (
                                         <span key={index} className="text-blue-500 hover:underline mr-2 cursor-pointer">#{tag}</span>
@@ -219,7 +214,11 @@ export function PostGroup({ groupId }: PostGroupProps) {
 
                             {post.image_content_url && (
                                 <div className="mt-2 mb-3 rounded-lg overflow-hidden border border-gray-200">
-                                    <img src={post.image_content_url} alt="Contenu du post" className="w-full h-auto object-cover" />
+                                    <img
+                                        src={`/api/postImages/${post.image_content_url}`}
+                                        alt="Contenu du post"
+                                        className="w-full h-auto object-cover"
+                                    />
                                 </div>
                             )}
 
