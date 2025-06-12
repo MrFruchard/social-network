@@ -43,6 +43,20 @@ type GroupInviteData struct {
 	User      User   `json:"user"`
 }
 
+type EventGroupNotification struct {
+	EventID     string `json:"event_id"`
+	GroupID     string `json:"group_id"`
+	GroupName   string `json:"group_name"`
+	GroupPic    string `json:"group_pic"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	OptionA     string `json:"option_a"`
+	OptionB     string `json:"option_b"`
+	DateTime    string `json:"date_time"`
+	CreatedAt   string `json:"created_at"`
+	User        User   `json:"user"`
+}
+
 func SendNotifications(db *sql.DB, userID string) ([]Notification, error) {
 	var notif []Notification
 
@@ -81,6 +95,11 @@ func SendNotifications(db *sql.DB, userID string) ([]Notification, error) {
 			}
 		case "INVITE_GROUP":
 			n.Data, err = askGroupAndInviteGroup(db, idType)
+			if err != nil {
+				continue
+			}
+		case "EVENT_GROUP":
+			n.Data, err = getEventGroupNotificationData(db, idType)
 			if err != nil {
 				continue
 			}
@@ -250,4 +269,37 @@ func getUserByID(db *sql.DB, userID string) (User, error) {
 	}
 
 	return u, nil
+}
+
+func getEventGroupNotificationData(db *sql.DB, groupEventID string) (EventGroupNotification, error) {
+	var e EventGroupNotification
+	var senderID string
+	var groupPic sql.NullString
+
+	// 1. On récupère les infos de l'event dans GROUPS_EVENT
+	query := `SELECT GROUP_ID, SENDER, TITLE, DESCRIPTION, OPTION_A, OPTION_B, DATE_TIME, CREATED_AT FROM GROUPS_EVENT WHERE ID = ?`
+	err := db.QueryRow(query, groupEventID).Scan(&e.GroupID, &senderID, &e.Title, &e.Description, &e.OptionA, &e.OptionB, &e.DateTime, &e.CreatedAt)
+	if err != nil {
+		return e, err
+	}
+
+	e.EventID = groupEventID
+
+	// 2. On récupère les infos du groupe
+	query = `SELECT TITLE, IMAGE FROM ALL_GROUPS WHERE ID = ?`
+	err = db.QueryRow(query, e.GroupID).Scan(&e.GroupName, &groupPic)
+	if err != nil {
+		return e, err
+	}
+	if groupPic.Valid {
+		e.GroupPic = groupPic.String
+	}
+
+	// 3. On récupère l'utilisateur qui a créé l'event
+	e.User, err = getUserByID(db, senderID)
+	if err != nil {
+		return e, err
+	}
+
+	return e, nil
 }

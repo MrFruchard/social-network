@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"social-network/services"
 	"social-network/utils"
@@ -225,18 +226,35 @@ func HandleCreateEvent(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	optionA := r.URL.Query().Get("optionA")
 	optionB := r.URL.Query().Get("optionB")
 	groupId := r.URL.Query().Get("groupId")
-	if strings.TrimSpace(event) == "" || strings.TrimSpace(optionA) == "" || strings.TrimSpace(optionB) == "" || strings.TrimSpace(groupId) == "" {
-		utils.ErrorResponse(w, http.StatusBadRequest, "Missing values")
-		return
+	title := r.URL.Query().Get("title")
+	date := r.URL.Query().Get("date")
+
+	requiredParams := map[string]string{
+		"event":   event,
+		"optionA": optionA,
+		"optionB": optionB,
+		"groupId": groupId,
+		"title":   title,
+		"date":    date,
 	}
 
-	err := services.CreateEventGroup(db, userId, groupId, event, optionA, optionB)
+	for key, value := range requiredParams {
+		if strings.TrimSpace(value) == "" {
+			utils.ErrorResponse(w, http.StatusBadRequest, fmt.Sprintf("Missing value for %s", key))
+			return
+		}
+	}
+	idEvent, err := services.CreateEventGroup(db, userId, groupId, event, optionA, optionB, title, date)
 	if err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
 	utils.SuccessResponse(w, http.StatusOK, "Event Created")
+
+	go func() {
+		services.SendEventGroupNotif(idEvent, groupId, userId, db)
+	}()
 }
 
 func HandleResponseEvent(w http.ResponseWriter, r *http.Request, db *sql.DB) {

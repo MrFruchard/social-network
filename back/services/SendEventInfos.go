@@ -6,16 +6,18 @@ import (
 )
 
 type EventInfos struct {
-	Id      string `json:"id"`
-	GroupId string `json:"group_id"`
-	Sender  User   `json:"sender"`
-	Desc    string `json:"desc"`
-	OptionA string `json:"option_a"`
-	OptionB string `json:"option_b"`
-	Created string `json:"created_at"`
-	Choice  int    `json:"choice"`
-	CountA  int    `json:"count_a"`
-	CountB  int    `json:"count_b"`
+	Id       string `json:"id"`
+	GroupId  string `json:"group_id"`
+	Sender   User   `json:"sender"`
+	Title    string `json:"title"`
+	Desc     string `json:"desc"`
+	OptionA  string `json:"option_a"`
+	OptionB  string `json:"option_b"`
+	Created  string `json:"created_at"`
+	DateTime string `json:"date_time"`
+	Choice   int    `json:"choice"`
+	CountA   int    `json:"count_a"`
+	CountB   int    `json:"count_b"`
 }
 
 func SendEventInfos(db *sql.DB, userId, groupId string) ([]EventInfos, error) {
@@ -32,7 +34,7 @@ func SendEventInfos(db *sql.DB, userId, groupId string) ([]EventInfos, error) {
 		return eventInfos, errors.New("user is not member of group")
 	}
 
-	queryRows := `SELECT ID, SENDER, DESCRIPTION, OPTION_A, OPTION_B, CREATED_AT FROM GROUPS_EVENT WHERE GROUP_ID = ?`
+	queryRows := `SELECT ID, SENDER, DESCRIPTION, OPTION_A, OPTION_B, CREATED_AT, TITLE, DATE_TIME FROM GROUPS_EVENT WHERE GROUP_ID = ?`
 	rows, err := db.Query(queryRows, groupId)
 	if err != nil {
 		return eventInfos, err
@@ -43,7 +45,7 @@ func SendEventInfos(db *sql.DB, userId, groupId string) ([]EventInfos, error) {
 		var e EventInfos
 		e.GroupId = groupId
 
-		err = rows.Scan(&e.Id, &e.Sender.ID, &e.Desc, &e.OptionA, &e.OptionB, &e.Created)
+		err = rows.Scan(&e.Id, &e.Sender.ID, &e.Desc, &e.OptionA, &e.OptionB, &e.Created, &e.Title, &e.DateTime)
 		if err != nil {
 			return eventInfos, err
 		}
