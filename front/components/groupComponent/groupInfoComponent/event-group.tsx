@@ -22,6 +22,8 @@ interface EventInfos {
     choice: number;
     count_a: number;
     count_b: number;
+    date_time: string;   // format: dd/mm/yyyy
+    title: string;
 }
 
 interface EventGroupProps {
@@ -32,6 +34,14 @@ function getInitials(first: string, last: string): string {
     const firstInitial = first?.[0]?.toUpperCase() ?? '';
     const lastInitial = last?.[0]?.toUpperCase() ?? '';
     return `${firstInitial}${lastInitial}`;
+}
+
+function formatDate(date: string | Date): string {
+    const d = new Date(date);
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    return `${day}/${month}/${year}`;
 }
 
 function AvatarOrInitials({
@@ -65,9 +75,11 @@ function AvatarOrInitials({
 
 export function EventGroup({ groupId }: EventGroupProps) {
     const [events, setEvents] = useState<EventInfos[] | null>(null);
-    const [title, setTitle] = useState("");
+    const [desc, setDesc] = useState("");
     const [optionA, setOptionA] = useState("");
     const [optionB, setOptionB] = useState("");
+    const [eventTitle, setEventTitle] = useState("");
+    const [eventDate, setEventDate] = useState("");
     const [loading, setLoading] = useState(false);
     const [showForm, setShowForm] = useState(false);
 
@@ -76,6 +88,7 @@ export function EventGroup({ groupId }: EventGroupProps) {
             const res = await fetch(`/api/group/event?groupId=${groupId}`);
             const data = await res.json();
             setEvents(Array.isArray(data) ? data : []);
+            console.log(data);
         } catch (err) {
             console.error("Erreur lors du chargement des événements :", err);
             setEvents([]);
@@ -86,11 +99,15 @@ export function EventGroup({ groupId }: EventGroupProps) {
         e.preventDefault();
         setLoading(true);
 
+        const formattedDate = formatDate(eventDate);
+
         const query = new URLSearchParams({
             groupId,
-            event: title,
+            event: desc,
             optionA,
             optionB,
+            title: eventTitle,
+            date: formattedDate,
         });
 
         try {
@@ -100,9 +117,11 @@ export function EventGroup({ groupId }: EventGroupProps) {
 
             if (!res.ok) throw new Error("Erreur lors de la création de l'événement");
 
-            setTitle("");
+            setDesc("");
             setOptionA("");
             setOptionB("");
+            setEventTitle("");
+            setEventDate("");
             setShowForm(false);
             await fetchEvents();
         } catch (err) {
@@ -156,10 +175,12 @@ export function EventGroup({ groupId }: EventGroupProps) {
                                         <div className="font-semibold">
                                             {event.sender.username ?? `${event.sender.first_name} ${event.sender.last_name}`}
                                         </div>
-                                        <div className="text-xs">{new Date(event.created_at).toLocaleDateString()}</div>
+                                        <div className="text-xs">{formatDate(event.created_at)}</div>
                                     </div>
                                 </div>
 
+                                <p className="text-black font-bold text-base mb-1">{event.title}</p>
+                                <p className="text-sm text-gray-700 mb-2">Date de l’événement : {event.date_time}</p>
                                 <p className="font-semibold text-lg text-black mb-4">{event.desc}</p>
 
                                 <div className="mb-3 flex flex-col gap-2">
@@ -216,14 +237,37 @@ export function EventGroup({ groupId }: EventGroupProps) {
                     <h3 className="text-lg font-semibold text-black">Créer un nouvel événement</h3>
 
                     <div>
-                        <label className="block font-medium text-black">Titre de l’événement</label>
+                        <label className="block font-medium text-black">Titre</label>
                         <input
                             required
                             type="text"
-                            value={title}
-                            onChange={(e) => setTitle(e.target.value)}
+                            value={eventTitle}
+                            onChange={(e) => setEventTitle(e.target.value)}
                             className="w-full border border-gray-300 p-2 rounded mt-1 bg-white text-black"
-                            placeholder="Ex: Sortie au cinéma"
+                            placeholder="Ex: Soirée bowling"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block font-medium text-black">Date de l’événement</label>
+                        <input
+                            required
+                            type="date"
+                            value={eventDate}
+                            onChange={(e) => setEventDate(e.target.value)}
+                            className="w-full border border-gray-300 p-2 rounded mt-1 bg-white text-black"
+                        />
+                    </div>
+
+                    <div>
+                        <label className="block font-medium text-black">Description</label>
+                        <input
+                            required
+                            type="text"
+                            value={desc}
+                            onChange={(e) => setDesc(e.target.value)}
+                            className="w-full border border-gray-300 p-2 rounded mt-1 bg-white text-black"
+                            placeholder="Ex: Vote pour choisir l’activité"
                         />
                     </div>
 
