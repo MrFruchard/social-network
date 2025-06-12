@@ -6,7 +6,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func CreateEventGroup(db *sql.DB, userId, groupId, eventDesc, optionA, optionB string) error {
+func CreateEventGroup(db *sql.DB, userId, groupId, eventDesc, optionA, optionB, title, date string) (string, error) {
+	// Vérifie que l'utilisateur est bien membre du groupe
 	var exists bool
 	err := db.QueryRow(`
 		SELECT EXISTS (
@@ -15,10 +16,10 @@ func CreateEventGroup(db *sql.DB, userId, groupId, eventDesc, optionA, optionB s
 	`, userId, groupId).Scan(&exists)
 
 	if err != nil {
-		return err
+		return "", err
 	}
 	if !exists {
-		return errors.New("l'utilisateur n'est pas membre de ce groupe")
+		return "", errors.New("l'utilisateur n'est pas membre de ce groupe")
 	}
 
 	// Préparation des données
@@ -26,9 +27,9 @@ func CreateEventGroup(db *sql.DB, userId, groupId, eventDesc, optionA, optionB s
 
 	// Insertion de l'événement
 	_, err = db.Exec(`
-		INSERT INTO GROUPS_EVENT (ID, GROUP_ID, SENDER, DESCRIPTION, OPTION_A, OPTION_B, CREATED_AT)
-		VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
-	`, id, groupId, userId, eventDesc, optionA, optionB)
+		INSERT INTO GROUPS_EVENT (ID, GROUP_ID, SENDER, TITLE, DESCRIPTION, OPTION_A, OPTION_B, DATE_TIME, CREATED_AT)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+	`, id, groupId, userId, title, eventDesc, optionA, optionB, date)
 
-	return err
+	return id, err
 }
