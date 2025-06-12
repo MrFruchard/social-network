@@ -194,6 +194,7 @@ func HandleGetMessageGroups(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 		utils.ErrorResponse(w, http.StatusUnauthorized, "Unauthorized: user ID not found")
 		return
 	}
+
 	groupID := strings.TrimSpace(r.URL.Query().Get("groupID"))
 	if groupID == "" {
 		utils.ErrorResponse(w, http.StatusBadRequest, "Missing groupID field")
@@ -202,9 +203,10 @@ func HandleGetMessageGroups(w http.ResponseWriter, r *http.Request, db *sql.DB) 
 
 	listMessage, err := services.SendMessageGroup(db, userID, groupID)
 	if err != nil {
-		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to send group message")
+		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to get group messages: "+err.Error())
 		return
 	}
+
 	w.Header().Set("Content-Type", "application/json")
 	if err := json.NewEncoder(w).Encode(listMessage); err != nil {
 		utils.ErrorResponse(w, http.StatusInternalServerError, "Failed to encode JSON")

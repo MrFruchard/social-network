@@ -2,88 +2,105 @@ package services
 
 import (
 	"database/sql"
-	"log"
-
+	"github.com/google/uuid"
 	"github.com/pkg/errors"
 )
 
 type MessageGroup struct {
-	User     User     `json:"user"`
-	Messages Messages `json:"messageImages"`
-	GroupID  string   `json:"groupID"`
+	ID          string `json:"id"`
+	GroupID     string `json:"group_id"`
+	SenderID    string `json:"sender_id"`
+	Content     string `json:"content"`
+	Type        int    `json:"type"` // 0 = text, 1 = image
+	CreatedAt   string `json:"created_at"`
+	Sender      User   `json:"sender"`
 }
 
 func SendMessageGroup(db *sql.DB, userId, groupID string) ([]MessageGroup, error) {
-	log.Printf("Checking if user %s is a member of group %s", userId, groupID)
+	var messages []MessageGroup
+
+	// Vérifier que l'utilisateur est membre du groupe
 	var isMember bool
 	query := `SELECT EXISTS(SELECT 1 FROM GROUPS_MEMBERS WHERE USER_ID = ? AND GROUP_ID = ?)`
 	err := db.QueryRow(query, userId, groupID).Scan(&isMember)
 	if err != nil {
-		//log.Printf("Error checking group membership: %v", err)
 		return nil, err
 	}
 	if !isMember {
-		//log.Printf("User %s is not a member of group %s", userId, groupID)
 		return nil, errors.New("User is not member of group")
 	}
 
-	log.Printf("User %s is a member of group %s. Fetching messageImages...", userId, groupID)
-	query = `SELECT ID, SENDER_ID, CONVERSATION_ID, CONTENT, SEEN, TYPE, GROUP_ID, CREATED_AT FROM MESSAGES WHERE GROUP_ID = ?`
+	// Récupérer tous les messages du groupe
+	query = `SELECT ID, SENDER_ID, CONTENT, TYPE, CREATED_AT FROM MESSAGES WHERE GROUP_ID = ? ORDER BY CREATED_AT ASC`
 	rows, err := db.Query(query, groupID)
 	if err != nil {
-		//log.Printf("Error fetching messageImages: %v", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var m []MessageGroup
 	for rows.Next() {
-		var mes MessageGroup
-		var isImage int
-		err = rows.Scan(
-			&mes.Messages.ID,
-			&mes.Messages.Sender,
-			&mes.Messages.ConvID,
-			&mes.Messages.Content,
-			&mes.Messages.Seen,
-			&isImage,
-			&mes.GroupID,
-			&mes.Messages.CreatedAt,
-		)
+		var msg MessageGroup
+		var typeMessage int
+
+		err = rows.Scan(&msg.ID, &msg.SenderID, &msg.Content, &typeMessage, &msg.CreatedAt)
 		if err != nil {
-			//log.Printf("Error scanning message row: %v", err)
-			return nil, err
+			continue
 		}
 
-		mes.Messages.IsImage = isImage == 1
-		//log.Printf("Fetched message ID %s from sender %s (isImage: %v)", mes.Messages.ID, mes.Messages.Sender, mes.Messages.IsImage)
+		msg.GroupID = groupID
+		msg.Type = typeMessage
 
+		// Récupérer les infos de l'expéditeur
 		var username, image sql.NullString
-
-		query = `SELECT ID, FIRSTNAME, LASTNAME, IMAGE, USERNAME FROM USER WHERE ID = ?`
-		//log.Printf("Fetching user data for sender ID %s", mes.User.ID)
-		err = db.QueryRow(query, mes.Messages.Sender).Scan(
-			&mes.User.ID,
-			&mes.User.Firstname,
-			&mes.User.Lastname,
+		userQuery := `SELECT ID, FIRSTNAME, LASTNAME, IMAGE, USERNAME FROM USER WHERE ID = ?`
+		err = db.QueryRow(userQuery, msg.SenderID).Scan(
+			&msg.Sender.ID,
+			&msg.Sender.Firstname,
+			&msg.Sender.Lastname,
 			&image,
 			&username,
 		)
-		if err != nil {
-			//log.Printf("Error fetching user data: %v", err)
-			return nil, err
-		}
-		if username.Valid {
-			mes.User.Username = username.String
-		}
-		if image.Valid {
-			mes.User.ProfilePic = image.String
+		if err == nil {
+			if username.Valid {
+				msg.Sender.Username = username.String
+			}
+			if image.Valid {
+				msg.Sender.ProfilePic = image.String
+			}
 		}
 
-		//log.Printf("Fetched user: %s %s (%s)", mes.User.Firstname, mes.User.Lastname, mes.User.Username)
-
-		m = append(m, mes)
+		messages = append(messages, msg)
 	}
 
-	return m, nil
+	return messages, nil
+}
+
+// Fonction pour envoyer un message dans un groupe
+func CreateGroupMessage(db *sql.DB, userID, groupID, content string, typeMessage int) (string, string, error) {
+	// Vérifier que l'utilisateur est membre du groupe
+	var isMember bool
+	query := `SELECT EXISTS(SELECT 1 FROM GROUPS_MEMBERS WHERE USER_ID = ? AND GROUP_ID = ?)`
+	err := db.QueryRow(query, userID, groupID).Scan(&isMember)
+	if err != nil {
+		return "", "", errors.Wrap(err, "failed to check group membership")
+	}
+	if !isMember {
+		return "", "", errors.New("user is not a member of the group")
+	}
+
+	// Créer un ID pour le message
+	msgID := uuid.New().String()
+	convID := groupID // Utiliser le groupID comme conversation ID
+
+	// Insérer le message
+	query = `
+		INSERT INTO MESSAGES(ID, SENDER_ID, CONVERSATION_ID, CONTENT, TYPE, GROUP_ID, CREATED_AT)
+		VALUES (?, ?, ?, ?, ?, ?, datetime('now'))
+	`
+	_, err = db.Exec(query, msgID, userID, convID, content, typeMessage, groupID)
+	if err != nil {
+		return "", "", errors.Wrap(err, "failed to insert group message")
+	}
+
+	return convID, msgID, nil
 }

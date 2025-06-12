@@ -16,6 +16,7 @@ type SenderMessage struct {
 	MessageId string    `json:"messageId"`
 	IsImage   bool      `json:"isImage"`
 	Time      time.Time `json:"time"`
+	GroupId   string    `json:"groupId,omitempty"` // Nouveau champ pour les groupes
 }
 
 type UserInfo struct {

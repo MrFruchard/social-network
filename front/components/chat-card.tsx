@@ -1,11 +1,9 @@
 // components/ui/chat-card.tsx
 'use client';
 
-import { SmilePlus, Check, CheckCheck, MoreHorizontal, Send } from 'lucide-react';
-import Image from 'next/image';
+import { MoreHorizontal } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useEffect, useRef, useState } from 'react';
-import { useSendMessage } from '@/hooks/message/useSendMessage';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { AIInputWithFile } from '@/components/ui/ai-input-with-file';
 
@@ -66,10 +64,10 @@ export function ChatCard({
   }, [messages]);
 
   // useRef pour comparer les initialMessages
-  const initialMessagesRef = useRef<ChatCardMessage[]>([]);
+  const initialMessagesRef = useRef<Message[]>([]);
 
   // Fonction de comparaison des messages par ID
-  const areMessageArraysEqual = (a: ChatCardMessage[], b: ChatCardMessage[]) => {
+  const areMessageArraysEqual = (a: Message[], b: Message[]) => {
     if (a.length !== b.length) return false;
 
     const aIds = new Set(a.map((m) => m.id));
@@ -197,23 +195,15 @@ export function ChatCard({
             return (
               <div key={message.id} className={cn('flex items-end', isCurrentUser ? 'justify-end' : 'justify-start', isLast ? 'animate-pop' : '')}>
                 <div className={cn('max-w-xs break-words px-4 py-2', isCurrentUser ? 'bg-blue-500 text-white rounded-2xl rounded-br-md' : 'bg-zinc-200 text-zinc-900 rounded-2xl rounded-bl-md')} style={{ minWidth: '40px' }}>
-                  {membersCount > 2 ? (
-                    <>
-                      <div className='flex items-center gap-2 mb-1'>
-                        <span className={cn('font-medium', isCurrentUser ? 'text-white' : 'text-zinc-900')}>{message.sender.name}</span>
-                        <span className={cn('text-sm', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
-                      </div>
-                      <div>{message.content}</div>
-                    </>
-                  ) : (
-                    <span>
-                      {message.content}
-                      <span className={cn('ml-3 text-xs align-middle', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
-                    </span>
-                  )}
+                  <>
+                    <div className='flex items-center gap-2 mb-1'>
+                      <span className={cn('font-medium', isCurrentUser ? 'text-white' : 'text-zinc-900')}>{message.sender.name}</span>
+                      <span className={cn('text-sm', isCurrentUser ? 'text-blue-200' : 'text-zinc-500')}>{message.timestamp}</span>
+                    </div>
+                    <div>{message.content}</div>
+                  </>
                   {message.imageUrl && <img src={message.imageUrl.startsWith('blob:') ? message.imageUrl : `http://localhost:80/${message.content}`} alt='Image envoyée' className='max-w-xs max-h-60 rounded-lg mt-2' style={{ objectFit: 'cover' }} />}
                 </div>
-                {}
               </div>
             );
           })}

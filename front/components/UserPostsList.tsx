@@ -26,11 +26,56 @@ export function UserPostsList({ userId }: { userId: string }) {
   const [localPosts, setLocalPosts] = useState<Post[]>([]);
   const router = useRouter();
 
-  // When posts load, update local state
+  // When posts load, update local state with image processing
   useEffect(() => {
-    if (posts && posts.length > 0) {
-      setLocalPosts(posts);
-    }
+    const processPostsWithImages = async () => {
+      if (posts && posts.length > 0) {
+        const postsWithImages = await Promise.all(
+          posts.map(async (post: any) => {
+            let imageProfileUrl = post.image_profile_url;
+            if (imageProfileUrl) {
+              try {
+                const profileImageResponse = await fetch(`/api/avatars/${imageProfileUrl}`, { method: 'GET' });
+                if (profileImageResponse.ok) {
+                  const profileImageBlob = await profileImageResponse.blob();
+                  imageProfileUrl = URL.createObjectURL(profileImageBlob);
+                } else {
+                  imageProfileUrl = null;
+                }
+              } catch (profileImageError) {
+                console.error(`Failed to fetch profile image for post ${post.id}:`, profileImageError);
+                imageProfileUrl = null;
+              }
+            }
+
+            let imageContentUrl = post.image_content_url;
+            if (imageContentUrl) {
+              try {
+                const requestOptions = {
+                  method: 'GET',
+                };
+
+                const imageResponse = await fetch(`/api/postImages/${imageContentUrl}`, requestOptions);
+                if (imageResponse.ok) {
+                  const imageBlob = await imageResponse.blob();
+                  imageContentUrl = URL.createObjectURL(imageBlob);
+                }
+              } catch (imageError) {
+                console.error(`Failed to fetch image for post ${post.id}:`, imageError);
+              }
+            }
+            return {
+              ...post,
+              image_profile_url: imageProfileUrl,
+              image_content_url: imageContentUrl,
+            };
+          })
+        );
+        setLocalPosts(postsWithImages);
+      }
+    };
+
+    processPostsWithImages();
   }, [posts]);
 
   const handleLike = async (postId: string): Promise<void> => {

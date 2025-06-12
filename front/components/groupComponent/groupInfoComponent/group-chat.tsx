@@ -1,23 +1,12 @@
-"use client";
-
-import { useEffect, useState, useRef } from "react";
-import { Send, Users, Image as ImageIcon } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useWebSocket } from "@/contexts/websocket-context";
-import { useAuth } from "@/hooks/user/checkAuth";
-import { showToast } from "@/components/ui/toast";
-
-interface GroupMessage {
-  id: string;
-  content: string;
-  sender_id: string;
-  sender_name: string;
-  sender_username: string;
-  image_url?: string;
-  created_at: string;
-  group_id: string;
-}
+import React, { useState, useRef, useEffect } from 'react';
+import { useGroupMessages } from "@/hooks/group/useGroupMessage";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { ScrollArea } from '@/components/ui/scroll-area';
+import { Send, Image, Loader2 } from 'lucide-react';
+import { formatDistanceToNow } from 'date-fns';
+import { fr } from 'date-fns/locale';
 
 interface GroupChatProps {
   groupId: string;
@@ -26,264 +15,175 @@ interface GroupChatProps {
 }
 
 export function GroupChat({ groupId, isAdmin, isMember }: GroupChatProps) {
-  const [messages, setMessages] = useState<GroupMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-  const [loading, setLoading] = useState(false);
+  const [message, setMessage] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [sending, setSending] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  const { user } = useAuth();
-  const { messages: wsMessages, sendMessage: wsSendMessage } = useWebSocket();
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  // Fetch initial messages
-  const fetchMessages = async () => {
-    try {
-      const response = await fetch(`http://localhost:80/api/group/message?groupId=${groupId}`, {
-        credentials: "include"
-      });
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch group messages");
-      }
-      
-      const data = await response.json();
-      setMessages(Array.isArray(data) ? data : []);
-    } catch (error) {
-      console.error("Error fetching group messages:", error);
-      setMessages([]);
-    }
-  };
+  const { messages, loading, error, sendGroupMessage, refreshMessages } = useGroupMessages(groupId);
 
-  useEffect(() => {
-    if (isMember) {
-      fetchMessages();
-    }
-  }, [groupId, isMember]);
-
-  // Listen to WebSocket messages
-  useEffect(() => {
-    const groupMessages = wsMessages.filter(
-      msg => msg.type === 'group_message' && msg.conversationId === groupId
-    );
-    
-    groupMessages.forEach(wsMsg => {
-      const newMessage: GroupMessage = {
-        id: wsMsg.id,
-        content: wsMsg.content,
-        sender_id: wsMsg.senderId || '',
-        sender_name: wsMsg.senderId || '',
-        sender_username: wsMsg.senderId || '',
-        created_at: wsMsg.timestamp as string || new Date().toISOString(),
-        group_id: groupId,
-        image_url: wsMsg.imageFile
-      };
-      
-      setMessages(prev => {
-        const exists = prev.some(msg => msg.id === newMessage.id);
-        if (!exists) {
-          return [...prev, newMessage];
-        }
-        return prev;
-      });
-    });
-  }, [wsMessages, groupId]);
-
-  // Auto scroll to bottom
+  // Auto-scroll vers le bas
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Gérer l'envoi de message
   const handleSendMessage = async () => {
-    if (!newMessage.trim() && !imageFile) return;
-    if (!user?.id) return;
+    if ((!message.trim() && !imageFile) || sending) return;
 
-    setLoading(true);
-    
+    setSending(true);
     try {
-      const formData = new FormData();
-      formData.append('groupId', groupId);
-      formData.append('content', newMessage);
-      
-      if (imageFile) {
-        formData.append('image', imageFile);
-      }
-
-      const response = await fetch('http://localhost:80/api/group/message', {
-        method: 'POST',
-        credentials: 'include',
-        body: formData
+      await sendGroupMessage({
+        groupId,
+        content: message.trim() || undefined,
+        imageFile: imageFile || undefined,
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send message');
-      }
-
-      // Clear input
-      setNewMessage('');
+      setMessage('');
       setImageFile(null);
-      
-      // Refresh messages
-      await fetchMessages();
-      
-      showToast('Message envoyé !', 'success');
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     } catch (error) {
       console.error('Error sending message:', error);
-      showToast('Erreur lors de l\'envoi du message', 'error');
     } finally {
-      setLoading(false);
+      setSending(false);
     }
   };
 
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessage();
-    }
-  };
-
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // Gérer le fichier image
+  const handleImageSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
     if (file) {
-      if (file.size > 5 * 1024 * 1024) { // 5MB limit
-        showToast('Le fichier est trop volumineux (max 5MB)', 'error');
-        return;
-      }
       setImageFile(file);
-    }
-  };
-
-  const formatTime = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleTimeString('fr-FR', { 
-        hour: '2-digit', 
-        minute: '2-digit' 
-      });
-    } catch {
-      return '';
     }
   };
 
   if (!isMember) {
     return (
-      <Card>
-        <CardContent className="p-6 text-center">
-          <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <p className="text-muted-foreground">
-            Vous devez être membre du groupe pour accéder au chat
-          </p>
-        </CardContent>
-      </Card>
+        <div className="flex items-center justify-center p-8 text-muted-foreground">
+          Vous devez être membre du groupe pour voir les messages
+        </div>
     );
   }
 
   return (
-    <Card className="h-[600px] flex flex-col">
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Users className="h-5 w-5" />
-          Chat du groupe
-        </CardTitle>
-      </CardHeader>
-      
-      <CardContent className="flex-1 flex flex-col p-0">
-        {/* Messages container */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
-          {messages.length === 0 ? (
-            <div className="text-center text-muted-foreground py-8">
-              <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
-              <p>Aucun message dans ce groupe</p>
-              <p className="text-sm">Soyez le premier à écrire !</p>
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div key={message.id} className="flex gap-3">
-                <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm font-semibold">
-                  {message.sender_username?.charAt(0)?.toUpperCase() || 'U'}
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-semibold text-sm">
-                      {message.sender_name || message.sender_username}
-                    </span>
-                    <span className="text-xs text-muted-foreground">
-                      {formatTime(message.created_at)}
-                    </span>
-                  </div>
-                  <div className="text-sm">
-                    {message.content}
-                  </div>
-                  {message.image_url && (
-                    <div className="mt-2">
-                      <img
-                        src={`http://localhost:80/api/groupMessages/${message.image_url}`}
-                        alt="Message image"
-                        className="max-w-xs rounded-lg"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-            ))
-          )}
-          <div ref={messagesEndRef} />
+      <div className="flex flex-col h-96 border rounded-lg">
+        {/* En-tête */}
+        <div className="flex items-center p-4 border-b">
+          <h3 className="font-semibold">Chat du groupe</h3>
+          {loading && <Loader2 className="ml-2 h-4 w-4 animate-spin" />}
         </div>
 
-        {/* Input container */}
-        <div className="border-t p-4">
-          {imageFile && (
-            <div className="mb-2 p-2 bg-muted rounded-lg flex items-center gap-2">
-              <ImageIcon className="h-4 w-4" />
-              <span className="text-sm">{imageFile.name}</span>
-              <Button
-                size="sm"
-                variant="ghost"
-                onClick={() => setImageFile(null)}
-              >
-                ×
-              </Button>
-            </div>
+        {/* Messages */}
+        <ScrollArea className="flex-1 p-4">
+          {error && (
+              <div className="text-red-500 text-sm mb-4">
+                Erreur: {error}
+              </div>
           )}
-          
-          <div className="flex gap-2">
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleFileSelect}
-              accept="image/*"
-              className="hidden"
+
+          <div className="space-y-4">
+            {messages.map((msg) => (
+                <div key={msg.id} className="flex items-start space-x-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                        src={msg.sender.profilePic ? `/api/avatars/${msg.sender.profilePic}` : undefined}
+                        alt={msg.sender.username}
+                    />
+                    <AvatarFallback>
+                      {msg.sender.firstname?.[0]}{msg.sender.lastname?.[0]}
+                    </AvatarFallback>
+                  </Avatar>
+
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center space-x-2">
+                  <span className="font-medium text-sm">
+                    {msg.sender.firstname} {msg.sender.lastname}
+                  </span>
+                      <span className="text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(msg.created_at), {
+                      addSuffix: true,
+                      locale: fr
+                    })}
+                  </span>
+                    </div>
+
+                    {msg.type === 1 ? (
+                        <img
+                            src={`/api/messageImages/${msg.content}`}
+                            alt="Message image"
+                            className="mt-1 max-w-xs rounded-lg"
+                        />
+                    ) : (
+                        <p className="mt-1 text-sm">{msg.content}</p>
+                    )}
+                  </div>
+                </div>
+            ))}
+            <div ref={messagesEndRef} />
+          </div>
+        </ScrollArea>
+
+        {/* Zone de saisie */}
+        <div className="p-4 border-t">
+          {imageFile && (
+              <div className="mb-2 p-2 bg-muted rounded-lg flex items-center justify-between">
+                <span className="text-sm">Image: {imageFile.name}</span>
+                <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      setImageFile(null);
+                      if (fileInputRef.current) fileInputRef.current.value = '';
+                    }}
+                >
+                  ×
+                </Button>
+              </div>
+          )}
+
+          <div className="flex space-x-2">
+            <Input
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
+                placeholder="Tapez votre message..."
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendMessage();
+                  }
+                }}
+                disabled={sending}
             />
-            
+
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageSelect}
+                className="hidden"
+            />
+
             <Button
-              variant="outline"
-              size="icon"
-              onClick={() => fileInputRef.current?.click()}
-              disabled={loading}
+                size="icon"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={sending}
             >
-              <ImageIcon className="h-4 w-4" />
+              <Image className="h-4 w-4" />
             </Button>
-            
-            <div className="flex-1 relative">
-              <textarea
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                onKeyPress={handleKeyPress}
-                placeholder="Tapez votre message... (Emojis supportés! 😊🎉💬)"
-                className="w-full resize-none border rounded-lg p-2 pr-10 min-h-[40px] max-h-32"
-                disabled={loading}
-              />
-            </div>
-            
+
             <Button
-              onClick={handleSendMessage}
-              disabled={(!newMessage.trim() && !imageFile) || loading}
+                size="icon"
+                onClick={handleSendMessage}
+                disabled={sending || (!message.trim() && !imageFile)}
             >
-              <Send className="h-4 w-4" />
+              {sending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
             </Button>
           </div>
         </div>
-      </CardContent>
-    </Card>
+      </div>
   );
 }
