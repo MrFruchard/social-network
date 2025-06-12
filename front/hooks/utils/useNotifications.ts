@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useWebSocket } from '@/contexts/websocket-context';
 
 // Types pour les notifications
-export type NotificationType = 'LIKE' | 'DISLIKE' | 'COMMENT' | 'COMMENT_LIKE' | 'COMMENT_DISLIKE' | 'ASK_FOLLOW' | 'INVITE_GROUP' | 'NEW_FOLLOWER';
+export type NotificationType = 'LIKE' | 'DISLIKE' | 'COMMENT' | 'COMMENT_LIKE' | 'COMMENT_DISLIKE' | 'ASK_FOLLOW' | 'INVITE_GROUP' | 'NEW_FOLLOWER' | 'EVENT_GROUP';
 
 export interface User {
   id: string;
@@ -47,13 +47,27 @@ export interface GroupInviteData {
   user: User;
 }
 
+export interface EventGroupData {
+  event_id: string;
+  group_id: string;
+  group_name: string;
+  group_pic: string;
+  title: string;
+  description: string;
+  option_a: string;
+  option_b: string;
+  date_time: string;
+  created_at: string;
+  user: User;
+}
+
 export interface Notification {
   id: string;
   user_id: string;
   type: NotificationType;
   read: boolean;
   created_at: string;
-  data: LikeData | CommentData | FollowRequestData | GroupInviteData;
+  data: LikeData | CommentData | FollowRequestData | GroupInviteData | EventGroupData;
 }
 
 export function useNotifications() {
@@ -129,23 +143,26 @@ export function useNotifications() {
           
           // S'assurer que les notifications ont les structures de données valides selon leur type
           if (notif.type === 'LIKE' || notif.type === 'DISLIKE') {
-            if (!notif.data.user) {
+            const data = notif.data as LikeData;
+            if (!data.user) {
               console.warn(`Notification ${notif.type} sans objet user:`, notif);
               // Ajouter un objet user minimal pour éviter les erreurs
-              notif.data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+              data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
             }
           } else if (notif.type === 'COMMENT' || notif.type === 'COMMENT_LIKE' || notif.type === 'COMMENT_DISLIKE') {
-            if (!notif.data.user) {
+            const data = notif.data as CommentData;
+            if (!data.user) {
               console.warn(`Notification ${notif.type} sans objet user:`, notif);
               // Ajouter un objet user minimal pour éviter les erreurs
-              notif.data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+              data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
             }
           } else if (notif.type === 'ASK_FOLLOW' || notif.type === 'NEW_FOLLOWER') {
+            const data = notif.data as FollowRequestData;
             // Vérifier que sender existe et a un id
-            if (!notif.data.sender || !notif.data.sender.id) {
+            if (!data.sender || !data.sender.id) {
               console.warn(`Notification ${notif.type} sans objet sender valide:`, notif);
               // Ajouter un objet sender minimal
-              notif.data.sender = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+              data.sender = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
             }
             
             // Pour le débogage
@@ -153,15 +170,32 @@ export function useNotifications() {
               console.log('Notification ASK_FOLLOW:', notif.id, 'traitée:', processedIds.includes(notif.id));
             }
           } else if (notif.type === 'INVITE_GROUP') {
-            if (!notif.data.user) {
+            const data = notif.data as GroupInviteData;
+            if (!data.user) {
               console.warn(`Notification ${notif.type} sans objet user:`, notif);
               // Ajouter un objet user minimal pour éviter les erreurs
-              notif.data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+              data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
             }
             // Vérifier également que group_name existe
-            if (!notif.data.group_name) {
+            if (!data.group_name) {
               console.warn(`Notification ${notif.type} sans nom de groupe:`, notif);
-              notif.data.group_name = 'inconnu';
+              data.group_name = 'inconnu';
+            }
+          } else if (notif.type === 'EVENT_GROUP') {
+            const data = notif.data as EventGroupData;
+            if (!data.user) {
+              console.warn(`Notification ${notif.type} sans objet user:`, notif);
+              // Ajouter un objet user minimal pour éviter les erreurs
+              data.user = { id: '', username: 'utilisateur', firstname: 'Utilisateur', lastname: '', profilePic: '' };
+            }
+            // Vérifier également que group_name et title existent
+            if (!data.group_name) {
+              console.warn(`Notification ${notif.type} sans nom de groupe:`, notif);
+              data.group_name = 'inconnu';
+            }
+            if (!data.title) {
+              console.warn(`Notification ${notif.type} sans titre d'événement:`, notif);
+              data.title = 'Événement';
             }
           }
           
@@ -481,6 +515,14 @@ export function useNotifications() {
           return `Vous êtes invité à rejoindre le groupe ${groupData.group_name || 'inconnu'}.`;
         }
         return `${groupData.user?.firstname || 'Utilisateur'} ${groupData.user?.lastname || ''} (@${groupData.user?.username || 'utilisateur'}) vous invite à rejoindre le groupe ${groupData.group_name || 'inconnu'}.`;
+      case 'EVENT_GROUP':
+        const eventData = notification.data as EventGroupData;
+        // Vérifier si l'objet user existe
+        if (!eventData.user) {
+          console.error('EVENT_GROUP notification sans objet user:', notification.id);
+          return `Un nouvel événement "${eventData.title || 'Événement'}" a été créé dans le groupe ${eventData.group_name || 'inconnu'}.`;
+        }
+        return `${eventData.user?.firstname || 'Utilisateur'} ${eventData.user?.lastname || ''} (@${eventData.user?.username || 'utilisateur'}) a créé l'événement "${eventData.title || 'Événement'}" dans le groupe ${eventData.group_name || 'inconnu'}.`;
       default:
         return 'Nouvelle notification';
     }
