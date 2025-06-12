@@ -85,6 +85,7 @@ export default function NotificationsPage() {
       case 'COMMENT_DISLIKE': return <ThumbsDown className={`${className} text-red-500`} />;
       case 'ASK_FOLLOW': return <UserPlus className={`${className} text-purple-500`} />;
       case 'INVITE_GROUP': return <Users className={`${className} text-orange-500`} />;
+      case 'EVENT_GROUP': return <Users className={`${className} text-purple-500`} />;
       default: return <Bell className={className} />;
     }
   };
@@ -102,6 +103,8 @@ export default function NotificationsPage() {
       case 'ASK_FOLLOW':
         return `/profile?id=${(notification.data as any).sender.id}`;
       case 'INVITE_GROUP':
+        return `/group/${(notification.data as any).group_id}`;
+      case 'EVENT_GROUP':
         return `/group/${(notification.data as any).group_id}`;
       default:
         return '#';

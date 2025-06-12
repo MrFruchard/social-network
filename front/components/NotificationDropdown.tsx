@@ -82,6 +82,7 @@ export default function NotificationDropdown() {
       case 'ASK_FOLLOW': return <UserPlus className="h-4 w-4 text-purple-500" />;
       case 'NEW_FOLLOWER': return <UserPlus className="h-4 w-4 text-green-600" />;
       case 'INVITE_GROUP': return <Users className="h-4 w-4 text-orange-500" />;
+      case 'EVENT_GROUP': return <Users className="h-4 w-4 text-purple-500" />;
       default: return <Bell className="h-4 w-4" />;
     }
   };
@@ -100,6 +101,8 @@ export default function NotificationDropdown() {
       case 'NEW_FOLLOWER':
         return `/profile?id=${(notification.data as any).sender.id}`;
       case 'INVITE_GROUP':
+        return `/group/${(notification.data as any).group_id}`;
+      case 'EVENT_GROUP':
         return `/group/${(notification.data as any).group_id}`;
       default:
         return '#';

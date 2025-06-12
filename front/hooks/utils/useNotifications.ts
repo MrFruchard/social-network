@@ -452,7 +452,7 @@ export function useNotifications() {
           console.error('LIKE notification sans objet user:', notification.id);
           return `Quelqu'un a aimé votre publication.`;
         }
-        return `${likeData.user?.firstname || 'Utilisateur'} ${likeData.user?.lastname || ''} (@${likeData.user?.username || 'utilisateur'}) a aimé votre publication.`;
+        return `${likeData.user?.firstname || 'Utilisateur'} ${likeData.user?.lastname || ''} (@${likeData.user?.username}) a aimé votre publication.`;
       case 'DISLIKE':
         const dislikeData = notification.data as LikeData;
         // Ajouter un log pour déboguer les données de notification problématiques
@@ -462,7 +462,7 @@ export function useNotifications() {
           console.error('DISLIKE notification sans objet user:', notification.id);
           return `Quelqu'un n'a pas aimé votre publication.`;
         }
-        return `${dislikeData.user?.firstname || 'Utilisateur'} ${dislikeData.user?.lastname || ''} (@${dislikeData.user?.username || 'utilisateur'}) n'a pas aimé votre publication.`;
+        return `${dislikeData.user?.firstname || 'Utilisateur'} ${dislikeData.user?.lastname || ''} (@${dislikeData.user?.username}) n'a pas aimé votre publication.`;
       case 'COMMENT':
         const commentData = notification.data as CommentData;
         // Vérifier si l'objet user existe
@@ -470,7 +470,7 @@ export function useNotifications() {
           console.error('COMMENT notification sans objet user:', notification.id);
           return `Quelqu'un a commenté votre publication.`;
         }
-        return `${commentData.user?.firstname || 'Utilisateur'} ${commentData.user?.lastname || ''} (@${commentData.user?.username || 'utilisateur'}) a commenté votre publication.`;
+        return `${commentData.user?.firstname || 'Utilisateur'} ${commentData.user?.lastname || ''} (@${commentData.user?.username}) a commenté votre publication.`;
       case 'COMMENT_LIKE':
         const commentLikeData = notification.data as CommentData;
         // Vérifier si l'objet user existe
@@ -478,7 +478,7 @@ export function useNotifications() {
           console.error('COMMENT_LIKE notification sans objet user:', notification.id);
           return `Quelqu'un a aimé votre commentaire.`;
         }
-        return `${commentLikeData.user?.firstname || 'Utilisateur'} ${commentLikeData.user?.lastname || ''} (@${commentLikeData.user?.username || 'utilisateur'}) a aimé votre commentaire.`;
+        return `${commentLikeData.user?.firstname || 'Utilisateur'} ${commentLikeData.user?.lastname || ''} (@${commentLikeData.user?.username}) a aimé votre commentaire.`;
       case 'COMMENT_DISLIKE':
         const commentDislikeData = notification.data as CommentData;
         // Vérifier si l'objet user existe
@@ -486,7 +486,7 @@ export function useNotifications() {
           console.error('COMMENT_DISLIKE notification sans objet user:', notification.id);
           return `Quelqu'un n'a pas aimé votre commentaire.`;
         }
-        return `${commentDislikeData.user?.firstname || 'Utilisateur'} ${commentDislikeData.user?.lastname || ''} (@${commentDislikeData.user?.username || 'utilisateur'}) n'a pas aimé votre commentaire.`;
+        return `${commentDislikeData.user?.firstname || 'Utilisateur'} ${commentDislikeData.user?.lastname || ''} (@${commentDislikeData.user?.username}) n'a pas aimé votre commentaire.`;
       case 'ASK_FOLLOW':
         const followData = notification.data as FollowRequestData;
         // Vérifier si l'objet sender existe
@@ -496,9 +496,9 @@ export function useNotifications() {
         }
         // Vérifier si la demande a été acceptée
         if (followData.status === 'accepted') {
-          return `${followData.sender?.firstname || 'Utilisateur'} ${followData.sender?.lastname || ''} (@${followData.sender?.username || 'utilisateur'}) vous suit maintenant.`;
+          return `${followData.sender?.firstname || 'Utilisateur'} ${followData.sender?.lastname || ''} (@${followData.sender?.username}) vous suit maintenant.`;
         }
-        return `${followData.sender?.firstname || 'Utilisateur'} ${followData.sender?.lastname || ''} (@${followData.sender?.username || 'utilisateur'}) souhaite vous suivre.`;
+        return `${followData.sender?.firstname || 'Utilisateur'} ${followData.sender?.lastname || ''} (@${followData.sender?.username}) souhaite vous suivre.`;
       case 'NEW_FOLLOWER':
         const newFollowerData = notification.data as FollowRequestData;
         // Vérifier si l'objet sender existe
@@ -506,7 +506,7 @@ export function useNotifications() {
           console.error('NEW_FOLLOWER notification sans objet sender:', notification.id);
           return `Quelqu'un vous suit maintenant.`;
         }
-        return `${newFollowerData.sender?.firstname || 'Utilisateur'} ${newFollowerData.sender?.lastname || ''} (@${newFollowerData.sender?.username || 'utilisateur'}) vous suit maintenant.`;
+        return `${newFollowerData.sender?.firstname || 'Utilisateur'} ${newFollowerData.sender?.lastname || ''} (@${newFollowerData.sender?.username}) vous suit maintenant.`;
       case 'INVITE_GROUP':
         const groupData = notification.data as GroupInviteData;
         // Vérifier si l'objet user existe
@@ -514,7 +514,7 @@ export function useNotifications() {
           console.error('INVITE_GROUP notification sans objet user:', notification.id);
           return `Vous êtes invité à rejoindre le groupe ${groupData.group_name || 'inconnu'}.`;
         }
-        return `${groupData.user?.firstname || 'Utilisateur'} ${groupData.user?.lastname || ''} (@${groupData.user?.username || 'utilisateur'}) vous invite à rejoindre le groupe ${groupData.group_name || 'inconnu'}.`;
+        return `@${groupData.user?.username} vous invite à rejoindre le groupe ${groupData.group_name || 'inconnu'}.`;
       case 'EVENT_GROUP':
         const eventData = notification.data as EventGroupData;
         // Vérifier si l'objet user existe
@@ -522,7 +522,7 @@ export function useNotifications() {
           console.error('EVENT_GROUP notification sans objet user:', notification.id);
           return `Un nouvel événement "${eventData.title || 'Événement'}" a été créé dans le groupe ${eventData.group_name || 'inconnu'}.`;
         }
-        return `${eventData.user?.firstname || 'Utilisateur'} ${eventData.user?.lastname || ''} (@${eventData.user?.username || 'utilisateur'}) a créé l'événement "${eventData.title || 'Événement'}" dans le groupe ${eventData.group_name || 'inconnu'}.`;
+        return `@${eventData.user?.username} a créé l'événement "${eventData.title || 'Événement'}" dans le groupe ${eventData.group_name || 'inconnu'}.`;
       default:
         return 'Nouvelle notification';
     }
