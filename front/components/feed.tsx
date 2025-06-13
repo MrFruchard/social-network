@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { reactToPost } from '@/api/post/postApi';
 import { Heart, MessageCircle, ThumbsUp, ThumbsDown, Users } from 'lucide-react';
 import Link from 'next/link';
@@ -6,7 +6,7 @@ import UserLink from '@/components/UserLink';
 import { useRouter } from 'next/navigation';
 import { PostDetail } from '@/components/post';
 
-export default function TwitterLikeFeed() {
+function TwitterLikeFeed() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -28,50 +28,11 @@ export default function TwitterLikeFeed() {
         const result = await response.json();
         console.log('Fetched posts:', result.data[0]);
 
-        const postsWithImages = await Promise.all(
-          result.data.map(async (post: any) => {
-            let imageProfileUrl = post.image_profile_url;
-            if (imageProfileUrl) {
-              try {
-                const profileImageResponse = await fetch(`/api/avatars/${imageProfileUrl}`, { method: 'GET' });
-                console.log(profileImageResponse);
-                // ...on garde l'image seulement si elle existe...
-                if (profileImageResponse.ok) {
-                  const profileImageBlob = await profileImageResponse.blob();
-                  imageProfileUrl = URL.createObjectURL(profileImageBlob);
-                } else {
-                  // Si l'image n'existe pas, on garde imageProfileUrl inchangé (fallback)
-                  imageProfileUrl = null;
-                }
-              } catch (profileImageError) {
-                console.error(`Failed to fetch profile image for post ${post.id}:`, profileImageError);
-                imageProfileUrl = null;
-              }
-            }
-
-            let imageContentUrl = post.image_content_url;
-            if (imageContentUrl) {
-              try {
-                const requestOptions = {
-                  method: 'GET',
-                };
-
-                const imageResponse = await fetch(`/api/postImages/${imageContentUrl}`, requestOptions);
-                if (imageResponse.ok) {
-                  const imageBlob = await imageResponse.blob();
-                  imageContentUrl = URL.createObjectURL(imageBlob);
-                }
-              } catch (imageError) {
-                console.error(`Failed to fetch image for post ${post.id}:`, imageError);
-              }
-            }
-            return {
-              ...post,
-              image_profile_url: imageProfileUrl,
-              image_content_url: imageContentUrl,
-            };
-          })
-        );
+        const postsWithImages = result.data.map((post: any) => ({
+          ...post,
+          image_profile_url: post.image_profile_url,
+          image_content_url: post.image_content_url,
+        }));
 
         setPosts(postsWithImages);
         setLoading(false);
@@ -93,11 +54,11 @@ export default function TwitterLikeFeed() {
     [key: string]: any; // To allow other properties in the post object
   }
 
-  const handleLike = async (postId: number): Promise<void> => {
+  const handleLike = useCallback(async (postId: number): Promise<void> => {
     try {
       await reactToPost(postId, 'liked');
-      setPosts(
-        posts.map((post: Post) => {
+      setPosts(prevPosts =>
+        prevPosts.map((post: Post) => {
           if (post.id === postId) {
             const newLiked = !post.liked;
             const likeCount = newLiked ? post.like_count + 1 : post.like_count - 1;
@@ -119,13 +80,13 @@ export default function TwitterLikeFeed() {
     } catch (error) {
       console.error('Failed to like post:', error);
     }
-  };
+  }, []);
 
-  const handleDislike = async (postId: number): Promise<void> => {
+  const handleDislike = useCallback(async (postId: number): Promise<void> => {
     try {
       await reactToPost(postId, 'disliked');
-      setPosts(
-        posts.map((post: Post) => {
+      setPosts(prevPosts =>
+        prevPosts.map((post: Post) => {
           if (post.id === postId) {
             const newDisliked = !post.disliked;
             const dislikeCount = newDisliked ? post.dislike_count + 1 : post.dislike_count - 1;
@@ -147,7 +108,7 @@ export default function TwitterLikeFeed() {
     } catch (error) {
       console.error('Failed to dislike post:', error);
     }
-  };
+  }, []);
 
   if (loading) {
     return (
@@ -208,15 +169,23 @@ export default function TwitterLikeFeed() {
                 }}
               >
                 {post.image_profile_url ? (
-                  <img src={post.image_profile_url} alt={`${post.first_name} ${post.last_name}`} className='w-12 h-12 rounded-full object-cover' />
-                ) : (
-                  <div className='w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center'>
-                    <span className='text-gray-500 text-lg font-semibold'>
-                      {post.first_name.charAt(0)}
-                      {post.last_name.charAt(0)}
-                    </span>
-                  </div>
-                )}
+                  <img 
+                    src={`/api/avatars/${post.image_profile_url}`} 
+                    alt={`${post.first_name} ${post.last_name}`} 
+                    className='w-12 h-12 rounded-full object-cover' 
+                    loading="lazy"
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      e.currentTarget.nextElementSibling?.classList.remove('hidden');
+                    }}
+                  />
+                ) : null}
+                <div className={`w-12 h-12 rounded-full bg-gray-200 flex items-center justify-center ${post.image_profile_url ? 'hidden' : ''}`}>
+                  <span className='text-gray-500 text-lg font-semibold'>
+                    {post.first_name.charAt(0)}
+                    {post.last_name.charAt(0)}
+                  </span>
+                </div>
               </div>
 
               <div className='flex-1'>
@@ -261,7 +230,12 @@ export default function TwitterLikeFeed() {
 
                 {post.image_content_url && (
                   <div className='mt-2 mb-3 rounded-lg overflow-hidden border border-gray-200'>
-                    <img src={post.image_content_url} alt='Contenu du post' className='w-full h-auto object-cover' />
+                    <img 
+                      src={`/api/postImages/${post.image_content_url}`} 
+                      alt='Contenu du post' 
+                      className='w-full h-auto object-cover'
+                      loading="lazy"
+                    />
                   </div>
                 )}
 
@@ -319,9 +293,12 @@ export default function TwitterLikeFeed() {
                     post.id === updatedPost.id ? updatedPost : post
                 )
             );
+
           }}
         />
       )}
     </div>
   );
 }
+
+export default memo(TwitterLikeFeed);

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useEffect, useRef, useState } from 'react';
+import React, { createContext, useContext, useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from '../hooks/user/checkAuth';
 
 export type MessageType = {
@@ -13,17 +13,30 @@ export type MessageType = {
   timestamp?: string | Date;
 };
 
+export type NotificationMessage = {
+  type: 'LIKE' | 'DISLIKE' | 'COMMENT' | 'COMMENT_LIKE' | 'COMMENT_DISLIKE' | 'ASK_FOLLOW' | 'INVITE_GROUP' | 'NEW_FOLLOWER' | 'EVENT_GROUP';
+  id: string;
+  user_id: string;
+  read: boolean;
+  created_at: string;
+  data: any;
+};
+
 type WebSocketContextType = {
   isConnected: boolean;
   sendMessage: (data: any) => void;
   messages: MessageType[];
+  notifications: NotificationMessage[];
 };
 
 const WebSocketContext = createContext<WebSocketContextType | undefined>(undefined);
 
 export function WebSocketProvider({ children }: { children: React.ReactNode }) {
   const [isConnected, setIsConnected] = useState(false);
-  const [messages, setMessages] = useState<any[]>([]);
+  const [messages, setMessages] = useState<MessageType[]>([]);
+  const [notifications, setNotifications] = useState<NotificationMessage[]>([]);
+  const maxMessages = 100;
+  const maxNotifications = 50;
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const maxReconnectAttempts = 5;
@@ -60,8 +73,35 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
+        // Traiter les messages
         if (formattedData.type === 'private_message' || formattedData.type === 'group_message') {
-          setMessages((prevMessages) => [...prevMessages, formattedData]);
+          setMessages((prevMessages) => {
+            const newMessages = [...prevMessages, formattedData];
+            return newMessages.length > maxMessages 
+              ? newMessages.slice(-maxMessages) 
+              : newMessages;
+          });
+        }
+        
+        // Traiter les notifications
+        if (['LIKE', 'DISLIKE', 'COMMENT', 'COMMENT_LIKE', 'COMMENT_DISLIKE', 'ASK_FOLLOW', 'INVITE_GROUP', 'NEW_FOLLOWER', 'EVENT_GROUP'].includes(receivedMessage.type)) {
+          const notificationData: NotificationMessage = {
+            type: receivedMessage.type,
+            id: receivedMessage.id || `notif-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            user_id: receivedMessage.user_id || '',
+            read: false,
+            created_at: receivedMessage.created_at || new Date().toISOString(),
+            data: receivedMessage.data || {}
+          };
+          
+          console.log('Nouvelle notification WebSocket reçue:', notificationData);
+          
+          setNotifications((prevNotifications) => {
+            const newNotifications = [notificationData, ...prevNotifications];
+            return newNotifications.length > maxNotifications 
+              ? newNotifications.slice(0, maxNotifications) 
+              : newNotifications;
+          });
         }
       } catch (error) {
         console.error('Erreur de parsing/formatting des données WebSocket dans le contexte:', error, 'Raw data:', event.data);
@@ -106,13 +146,13 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const sendMessage = (data: any) => {
+  const sendMessage = useCallback((data: any) => {
     if (wsRef.current && wsRef.current.readyState === WebSocket.OPEN) {
       wsRef.current.send(JSON.stringify(data));
     } else {
       console.error('WebSocket non connecté');
     }
-  };
+  }, []);
 
   // Nettoyer à la fermeture du composant
   useEffect(() => {
@@ -130,6 +170,7 @@ export function WebSocketProvider({ children }: { children: React.ReactNode }) {
         isConnected,
         sendMessage,
         messages,
+        notifications,
       }}
     >
       <WebSocketControls connect={connectWebSocket} disconnect={disconnectWebSocket} />

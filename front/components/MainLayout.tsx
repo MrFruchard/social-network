@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useState, useEffect } from 'react';
+import { ReactNode, useState, useEffect, memo, useCallback } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LogoutButton } from './logout-button';
@@ -8,30 +8,33 @@ import { NotificationIndicator } from './notificationsInd';
 import { useUserData } from '@/hooks/user/useUserData';
 import { PostModal } from '@/components/post';
 import { ToastContainer } from '@/components/ui/toast';
+import { NotificationBadge } from '@/components/NotificationBadge';
+import { useNotifications } from '@/hooks/utils/useNotifications';
 import { HomeIcon, Slack, UserIcon, BellIcon, MailIcon, UsersIcon, PlusIcon, SearchIcon, HashIcon, SettingsIcon, TrendingUpIcon } from 'lucide-react';
 
 type MainLayoutProps = {
   children: ReactNode;
 };
 
-export function MainLayout({ children }: MainLayoutProps) {
+function MainLayoutComponent({ children }: MainLayoutProps) {
   const pathname = usePathname();
   const { userData } = useUserData();
+  const { simulateNotification } = useNotifications();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
 
-  const openPostForm = () => {
+  const openPostForm = useCallback(() => {
     setIsModalOpen(true);
-  };
+  }, []);
 
-  const closePostForm = () => {
+  const closePostForm = useCallback(() => {
     setIsModalOpen(false);
-  };
+  }, []);
 
-  const handleHomeClick = () => {
+  const handleHomeClick = useCallback(() => {
     console.log('Home link clicked');
     setSelectedTag(null);
-  };
+  }, []);
 
   useEffect(() => {
     console.log('Pathname changed to:', pathname);
@@ -53,14 +56,31 @@ export function MainLayout({ children }: MainLayoutProps) {
         <nav className='space-y-2 flex-1'>
           <NavItem href='/home' icon={<HomeIcon className='h-5 w-5' />} label='Home' active={pathname === '/home'} />
           <NavItem href='/profile' icon={<UserIcon className='h-5 w-5' />} label='Profile' active={pathname.startsWith('/profile')} />
-          <NavItem href='/notifications' icon={<BellIcon className='h-5 w-5' />} label='Notifications' active={pathname === '/notifications'} />
+          <NavItem 
+            href='/notifications' 
+            icon={
+              <NotificationBadge>
+                <BellIcon className='h-5 w-5' />
+              </NotificationBadge>
+            } 
+            label='Notifications' 
+            active={pathname === '/notifications'} 
+          />
           <NavItem href='/messages' icon={<MailIcon className='h-5 w-5' />} label='Messages' active={pathname === '/messages'} />
           <NavItem href='/group' icon={<UsersIcon className='h-5 w-5' />} label='Groups' active={pathname === '/group'} />
           <NavItem href='/toto-ia' icon={<Slack className='h-5 w-5' />} label='ToToIA' active={pathname === '/toto-ia'} />
         </nav>
 
-        <button className='w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 font-medium mb-4' onClick={openPostForm}>
+        <button className='w-full bg-blue-500 hover:bg-blue-600 text-white rounded-full p-3 font-medium mb-2' onClick={openPostForm}>
           New Post
+        </button>
+        
+        {/* Bouton de test pour les notifications WebSocket */}
+        <button 
+          className='w-full bg-green-500 hover:bg-green-600 text-white rounded-full p-2 text-sm mb-4' 
+          onClick={() => simulateNotification('LIKE')}
+        >
+          Test Notification
         </button>
 
         <div className='mt-auto'>
@@ -242,7 +262,9 @@ export function MainLayout({ children }: MainLayoutProps) {
           <HashIcon className='h-6 w-6' />
         </Link>
         <Link href='/notifications' className={pathname === '/notifications' ? 'text-primary' : 'text-muted-foreground'}>
-          <BellIcon className='h-6 w-6' />
+          <NotificationBadge>
+            <BellIcon className='h-6 w-6' />
+          </NotificationBadge>
         </Link>
         <Link href='/messages' className={pathname === '/messages' ? 'text-primary' : 'text-muted-foreground'}>
           <MailIcon className='h-6 w-6' />
@@ -268,11 +290,13 @@ type NavItemProps = {
   onClick?: () => void;
 };
 
-function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
+const NavItem = memo(function NavItem({ href, icon, label, active, onClick }: NavItemProps) {
   return (
     <Link href={href} className={`flex items-center px-4 py-3 rounded-full text-lg hover:bg-muted transition-colors ${active ? 'font-semibold' : ''}`}>
       <span className={`mr-4 ${active ? 'text-primary' : 'text-muted-foreground'}`}>{icon}</span>
       <span className={active ? 'text-foreground' : 'text-muted-foreground'}>{label}</span>
     </Link>
   );
-}
+});
+
+export const MainLayout = memo(MainLayoutComponent);

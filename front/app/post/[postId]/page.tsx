@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useRouter } from 'next/navigation';
@@ -5,19 +6,20 @@ import { useEffect } from 'react';
 
 // Rendre cette page comme une redirection vers la page d'accueil
 // avec ouverture du PostDetail comme une modal
-export default function PostRedirect({
+export default async function PostRedirect({
   params,
 }: {
-  params: { postId: string };
+  params: Promise<{ postId: string }>;
 }) {
+  const { postId } = await params;
   const router = useRouter();
 
   useEffect(() => {
     // Stocker l'ID du post dans sessionStorage pour l'ouvrir en tant que modal
-    sessionStorage.setItem('openPostId', params.postId);
+    sessionStorage.setItem('openPostId', postId);
     // Rediriger vers la page d'accueil
     router.push('/home');
-  }, [params.postId, router]);
+  }, [postId, router]);
 
   return (
     <div className="flex justify-center items-center h-64">

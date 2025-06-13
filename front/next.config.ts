@@ -7,6 +7,17 @@ interface Rewrite {
 
 const nextConfig: NextConfig = {
   // Configuration moderne pour Next.js
+  images: {
+    domains: ['localhost'],
+    remotePatterns: [
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '80',
+        pathname: '/api/**',
+      },
+    ],
+  },
   async rewrites(): Promise<Rewrite[]> {
     return [
       {
